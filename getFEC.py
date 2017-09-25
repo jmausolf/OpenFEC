@@ -4,7 +4,6 @@ import json
 import csv
 
 
-
 def get_url(url):
     data = requests.get(url).json()
     return(data)
@@ -34,9 +33,8 @@ def write_csv_json(json_results, filename="jsondata.csv"):
     csv_file.close()
 
 
-def get_party_id(committee_id):
+def get_party_id_det(committee_id):
     stem = "https://api.open.fec.gov/v1/committee/"
-    end = "?employer=Goldman%20Sachs&per_page=100&api_key={}&page={}".format(api_key, page)
     end = "{}/candidates/?sort=name&page=1&api_key=DEMO_KEY&per_page=100".format(committee_id, api_key)
     url = stem+end
 
