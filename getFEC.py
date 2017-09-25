@@ -23,7 +23,7 @@ def write_csv_json(json_results, filename="jsondata.csv"):
     csvwriter = csv.writer(csv_file)
 
     count = 0
-    for row in results:
+    for row in json_results:
         if count == 0:
             header = row.keys()
             csvwriter.writerow(header)
@@ -33,7 +33,6 @@ def write_csv_json(json_results, filename="jsondata.csv"):
 
     csv_file.close()
 
-    
 
 def get_party_id(committee_id):
     stem = "https://api.open.fec.gov/v1/committee/"
@@ -48,6 +47,30 @@ def get_party_id(committee_id):
     print("[*] {}, {}, candidate for {}".format(name, party_id, office))
     return party_id
 
+
+def req_url_schedule_a(employer, api_key, year=2016, page=1):
+    firm = employer.replace(" ", "%20")
+    stem = "https://api.open.fec.gov/v1/schedules/schedule_a/?per_page=100&sort=contribution_receipt_date&"
+    end = "contributor_employer={}&api_key={}&two_year_transaction_period={}&page={}".format(firm, api_key, year, page)
+    url = stem+end
+    return url
+
+
+def get_schedule_a_employer_year(employer, api_key, year=2016):
+    firm = employer.replace(" ", "%20")
+
+
+    url = req_url_schedule_a(firm, api_key, year)
+    data = get_url(url)
+
+    pages = get_pages(data)
+    for page in range(1, pages+1):
+        print("[*] getting FEC SCHEDULE A results for {} in {}...page {} of {}".format(employer, year, page, (pages)))
+        filename = "{}_{}_schedule_a.csv".format(year, employer.replace(" ", "_"))
+        url = req_url_schedule_a(firm, api_key, year, page)
+        page_data = get_url(url)
+        results = page_data['results']
+        write_csv_json(results, filename)
 
 
 ############################################################################
@@ -64,4 +87,9 @@ def get_party_id(committee_id):
 
 ############################################################################
 ## STEP 3: Get All Party IDs, Election for Committees on Schedule A
+############################################################################
+
+
+############################################################################
+## STEP 4: Merge Data
 ############################################################################
