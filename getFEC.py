@@ -17,12 +17,25 @@ def get_pages(data):
 
 def get_count(data):
     count = data['pagination']['count']
+    pages = data['pagination']['pages']
+    print("[*] Total expected results: {}".format(count))
+    print("[*] Total expected rows: {}".format(count-pages))
     return count
 
 def get_last_index_contrib(data):
     last_index = data['pagination']['last_indexes']['last_index']
     last_contrib = data['pagination']['last_indexes']['last_contribution_receipt_date']
     return [last_index, last_contrib]
+
+def get_last_index_contrib(data):
+    try:
+        last_index = data['pagination']['last_indexes']['last_index']
+        last_contrib = data['pagination']['last_indexes']['last_contribution_receipt_date']
+        return [last_index, last_contrib]
+    except:
+        last_index = data['pagination']['last_indexes']['last_index']
+        print(data['pagination']['last_indexes'])
+        return [last_index, last_index]
 
 def still_results(data):
     results = data['results']
@@ -98,6 +111,7 @@ def req_loop_url_schedule_a(start_url, last_indexes):
 def get_schedule_a_employer_year(employer, year, api_key=api_key):
     start_url = req_start_url_schedule_a(employer, year, api_key)
     data = get_url(start_url)
+    get_count(data)
     if still_results(data) <= 0:
         warnings.warn('WARNING: no data found for requested year')
         return
@@ -119,12 +133,19 @@ def get_schedule_a_employer_year(employer, year, api_key=api_key):
     write_json_to_csv()
 
     while results_count > 0:
+        time.sleep(0.0085)
         page +=1
         #Last Indexes From the Most Recent Data
-        last_indexes = get_last_index_contrib(data)
-        next_url = req_loop_url_schedule_a(start_url, last_indexes)
-        data = get_url(next_url)
-        results_count = still_results(data)
+        #TODO There seem to be inconsistencies on the last page of some company year, like walmart 2012. Try /except this
+        try:
+            last_indexes = get_last_index_contrib(data)
+            next_url = req_loop_url_schedule_a(start_url, last_indexes)
+            data = get_url(next_url)
+            results_count = still_results(data)
+        except:
+            print("[*] ERROR: there may still be api results, check count...")
+            break
+
         try:
             if results_count > 0:
                 write_json_to_csv()
@@ -160,6 +181,7 @@ def collapse_csvs(company, schedule_type, year=None):
     combined_csv = pd.concat( [ pd.read_csv(f) for f in filenames ] )
     dedupe_csv = combined_csv.drop_duplicates()
     dedupe_csv.to_csv(outfile_name, index=False)
+    print("[*] outfile size: {} results".format(dedupe_csv.shape[0]))
     print("[*] done")
     return [outfile_name, dedupe_csv.shape, filenames]
 
@@ -181,6 +203,11 @@ def remove_files(collapse_signature):
 
 companies = ["Walmart", "Exxon Mobile", "Goldman Sachs", "Apple", "Berkshire Hathaway", "Amazon", "Boeing"]
 years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
+
+#companies = ["Goldman Sachs"]
+#years = ["2008"]
+#companies = ["Walmart"]
+#years = ["2012"]
 
 for company in companies:
     for year in years:
