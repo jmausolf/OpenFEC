@@ -204,9 +204,10 @@ def search_party_id(committee_id, year=None):
         print("[*] unknown error, unknown results", party_results)
         party_id = "ERROR"
 
+    #return party_id, (party_id+"duplicate")
     return party_id
 
-#TEST
+#TEST WORKS
 in_file = "2012__Boeing__schedule_a_merged.csv"
 out_file = in_file.replace(".csv", "_PARTY_IDs.csv")
 df = pd.read_csv(in_file)
@@ -214,3 +215,6 @@ df = df[['committee_id','cycle']].drop_duplicates()
 df['party_id'] = np.vectorize(search_party_id)(df['committee_id'], df['cycle'])
 print(df)
 df.to_csv(out_file)
+
+
+#MERGE
