@@ -1,5 +1,7 @@
 from credentials import *
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 import json
 import csv
 from glob import glob
@@ -7,8 +9,29 @@ import pandas as pd
 import warnings
 import os, time
 
+
+def requests_retry_session(
+    retries=3,
+    backoff_factor=0.3,
+    status_forcelist=(500, 502, 504),
+    session=None,
+):
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
 def get_url(url):
-    data = requests.get(url).json()
+    data = requests_retry_session().get(url, timeout=5).json()
+    #data = requests.get(url).json()
     return(data)
 
 def get_pages(data):
@@ -133,7 +156,7 @@ def get_schedule_a_employer_year(employer, year, api_key=api_key):
     write_json_to_csv()
 
     while results_count > 0:
-        time.sleep(0.0085)
+        time.sleep(1.25)
         page +=1
         #Last Indexes From the Most Recent Data
         #TODO There seem to be inconsistencies on the last page of some company year, like walmart 2012. Try /except this
@@ -194,43 +217,3 @@ def remove_files(collapse_signature):
         [ os.remove(f) for f in collapse_signature[2]]
     else:
         return
-
-#TODO Integrate Party ID Assignments with Spreadsheets
-
-############################################################################
-## STEP 1: Define Companies
-############################################################################
-
-companies = ["Walmart", "Exxon Mobile", "Goldman Sachs", "Apple", "Berkshire Hathaway", "Amazon", "Boeing"]
-years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
-
-#companies = ["Goldman Sachs"]
-#years = ["2008"]
-#companies = ["Walmart"]
-#years = ["2012"]
-
-for company in companies:
-    for year in years:
-        print(company, year)
-        get_schedule_a_employer_year(company, year)
-        collapse_signature = collapse_csvs(company, "schedule a", year)
-        remove_files(collapse_signature)
-
-
-
-
-############################################################################
-## STEP 2: Get All Schedule A for Companies
-############################################################################
-
-
-
-
-############################################################################
-## STEP 3: Get All Party IDs, Election for Committees on Schedule A
-############################################################################
-
-
-############################################################################
-## STEP 4: Merge Data
-############################################################################
