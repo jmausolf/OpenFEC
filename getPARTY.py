@@ -207,16 +207,17 @@ def search_party_id(committee_id, year=None):
     #return party_id, (party_id+"duplicate")
     return party_id
 
-#TEST WORKS
-in_file = "2012__Boeing__schedule_a_merged.csv"
-out_file = in_file.replace(".csv", "_PARTY_IDs.csv")
-df = pd.read_csv(in_file)
-df = df[['committee_id','cycle']].drop_duplicates()
-df['party_id'] = np.vectorize(search_party_id)(df['committee_id'], df['cycle'])
-print(df)
-df.to_csv(out_file, index=False)
 
-#TODO The index is getting written in the above process, need to remove
+def getPARTY(contrib_file):
+    in_file = contrib_file
+    out_file = in_file.replace(".csv", "_PARTY_IDs.csv")
+    df = pd.read_csv(in_file)
+    df = df[['committee_id','cycle']].drop_duplicates()
+    print("[*] finding party id's for requested committees...")
+    df['party_id'] = np.vectorize(search_party_id)(df['committee_id'], df['cycle'])
+    print("[*] writing results to csv...")
+    df.to_csv(out_file, index=False)
+    return df
 
 #MERGE
 def merge_contrib_pid(year, company):
