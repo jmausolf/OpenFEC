@@ -214,7 +214,17 @@ df = pd.read_csv(in_file)
 df = df[['committee_id','cycle']].drop_duplicates()
 df['party_id'] = np.vectorize(search_party_id)(df['committee_id'], df['cycle'])
 print(df)
-df.to_csv(out_file)
+df.to_csv(out_file, index=False)
 
+#TODO The index is getting written in the above process, need to remove
 
 #MERGE
+def merge_contrib_pid(year, company):
+    glob_string = "{}__{}__schedule_a_merged".format(year, company)
+    df_contrib = pd.read_csv(glob_string+".csv")
+    df_pid = pd.read_csv(glob_string+"_PARTY_IDs.csv")
+    df_merged = pd.merge(df_contrib, df_pid)
+    df_merged.to_csv(glob_string+"_ANALYSIS.csv")
+    return df_merged
+
+#df_merged = merge_contrib_pid("2012", "Boeing")
