@@ -8,6 +8,7 @@ from glob import glob
 import pandas as pd
 import warnings
 import os, time
+from random import random
 
 
 def requests_retry_session(
@@ -133,6 +134,7 @@ def req_loop_url_schedule_a(start_url, last_indexes):
 
 def get_schedule_a_employer_year(employer, year, api_key=api_key):
     start_url = req_start_url_schedule_a(employer, year, api_key)
+    #print(start_url)
     data = get_url(start_url)
     get_count(data)
     if still_results(data) <= 0:
@@ -160,13 +162,28 @@ def get_schedule_a_employer_year(employer, year, api_key=api_key):
         page +=1
         #Last Indexes From the Most Recent Data
         #TODO There seem to be inconsistencies on the last page of some company year, like walmart 2012. Try /except this
+        
+        base_sleep_time = 1
+
         try:
             last_indexes = get_last_index_contrib(data)
             next_url = req_loop_url_schedule_a(start_url, last_indexes)
             data = get_url(next_url)
             results_count = still_results(data)
         except:
-            print("[*] ERROR: there may still be api results, check count...")
+            for attempt in range(1, 5+1):
+                try:
+                    print("[*] ERROR there may still be api results...attempt {}".format(attempt))
+                    time.sleep(pow(2, attempt) * base_sleep_time * random())
+                    last_indexes = get_last_index_contrib(data)
+                    next_url = req_loop_url_schedule_a(start_url, last_indexes)
+                    data = get_url(next_url)
+                    results_count = still_results(data)
+                    pass
+                except:
+                    if attempt>=5:
+                        print(next_url)
+                        print("[*] FINAL ERROR: there may still be api results, check count...")
             break
 
         try:
@@ -212,8 +229,8 @@ def collapse_csvs(company, schedule_type, year=None):
 def remove_files(collapse_signature):
     if pd.read_csv(str(collapse_signature[0])).shape == collapse_signature[1]:
         print("[*] infile matches output signature")
-        print("[*] removing {} files in 5 seconds, control-c to abort...".format(len(collapse_signature[2])))
-        time.sleep(5)
+        print("[*] removing {} files in 10 seconds, control-c to abort...".format(len(collapse_signature[2])))
+        time.sleep(10)
         [ os.remove(f) for f in collapse_signature[2]]
     else:
         return
