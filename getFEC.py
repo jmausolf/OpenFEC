@@ -163,7 +163,7 @@ def get_schedule_a_employer_year(employer, year, api_key=api_key):
         #Last Indexes From the Most Recent Data
         #TODO There seem to be inconsistencies on the last page of some company year, like walmart 2012. Try /except this
         
-        base_sleep_time = 1
+        base_sleep_time = 5
 
         try:
             last_indexes = get_last_index_contrib(data)
@@ -171,7 +171,7 @@ def get_schedule_a_employer_year(employer, year, api_key=api_key):
             data = get_url(next_url)
             results_count = still_results(data)
         except:
-            for attempt in range(1, 5+1):
+            for attempt in range(1, 10+1):
                 try:
                     print("[*] ERROR there may still be api results...attempt {}".format(attempt))
                     time.sleep(pow(2, attempt) * base_sleep_time * random())
