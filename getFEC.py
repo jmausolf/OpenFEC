@@ -119,6 +119,10 @@ def req_start_url_schedule_a(employer, year, api_key=api_key):
     "contributor_employer={}&two_year_transaction_period={}&api_key={}".format(firm, year, api_key)
     return url
 
+def replacement_url_schedule_a(start_url, api_key=new_api_key):
+    replacement_url_start = start_url.split("&api_key=")[0]+"&api_key={}".format(new_api_key)
+    return replacement_url_start
+
 def req_loop_url_schedule_a(start_url, last_indexes):
     """
     ::start_url = schedule_a url created by req_start_url_schedule_a
@@ -158,12 +162,13 @@ def get_schedule_a_employer_year(employer, year, api_key=api_key):
     write_json_to_csv()
 
     while results_count > 0:
-        time.sleep(1.25)
+        time.sleep(1.5)
         page +=1
         #Last Indexes From the Most Recent Data
         #TODO There seem to be inconsistencies on the last page of some company year, like walmart 2012. Try /except this
         
-        base_sleep_time = 5
+        base_sleep_time = 1
+        attempts = 4
 
         try:
             last_indexes = get_last_index_contrib(data)
@@ -171,17 +176,22 @@ def get_schedule_a_employer_year(employer, year, api_key=api_key):
             data = get_url(next_url)
             results_count = still_results(data)
         except:
-            for attempt in range(1, 10+1):
+            for attempt in range(1, attempts+1):
                 try:
                     print("[*] ERROR there may still be api results...attempt {}".format(attempt))
                     time.sleep(pow(2, attempt) * base_sleep_time * random())
                     last_indexes = get_last_index_contrib(data)
-                    next_url = req_loop_url_schedule_a(start_url, last_indexes)
+
+                    #Try new API KEY
+                    new_start_url = replacement_url_schedule_a(start_url, new_api_key)
+                    next_url = req_loop_url_schedule_a(new_start_url, last_indexes)
+                    print(start_url, '\n', new_start_url, '\n', next_url)
                     data = get_url(next_url)
                     results_count = still_results(data)
-                    pass
+                    if results_count > 0:
+                        break
                 except:
-                    if attempt>=5:
+                    if attempt>=attempts:
                         print(next_url)
                         print("[*] FINAL ERROR: there may still be api results, check count...")
             break
@@ -199,6 +209,8 @@ def get_schedule_a_employer_year(employer, year, api_key=api_key):
                 break
 
     else:
+        if page < pages:
+            print(next_url)
         print("[*] SUCCESS: collected all api results requested.")
         pass
 
@@ -219,6 +231,7 @@ def collapse_csvs(company, schedule_type, year=None):
     assert len(filenames) > 0, "No matching file types, check filename input"
     print("[*] collapsing {} csv files...".format(len(filenames)))
     combined_csv = pd.concat( [ pd.read_csv(f) for f in filenames ] )
+    print("[*] original combined size: {} results".format(combined_csv.shape[0]))
     dedupe_csv = combined_csv.drop_duplicates()
     dedupe_csv.to_csv(outfile_name, index=False)
     print("[*] outfile size: {} results".format(dedupe_csv.shape[0]))
