@@ -238,6 +238,46 @@ def collapse_csvs(company, schedule_type, year=None):
     print("[*] done")
     return [outfile_name, dedupe_csv.shape, filenames]
 
+def collapse_csvs(company, schedule_type, year=None, name=""):
+
+    schedule_type = str(schedule_type).replace(" ", "_")    
+    
+    print(company, schedule_type, year)
+    print(type(company), type(schedule_type), type(year))
+    
+    #all schedule files (all companies, all years)
+    if company == None and year is None:
+        print("A")
+        file_type = "{}".format(schedule_type)
+        filenames = glob('*{}*'.format(file_type))
+        outfile_name = "{}__merged{}.csv".format(schedule_type, name)     
+    
+    #all schedule, for company X in all years
+    elif company is not None and year is None:
+        company = str(company).replace(" ", "_")
+        print("B")
+        file_type = "{}__{}".format(company, schedule_type)
+        print(file_type)
+        filenames = glob('*{}*'.format(file_type))
+        outfile_name = "{}__{}__merged{}.csv".format(company, schedule_type, name)
+    #all schedule, for company X in year Y
+    else:
+        company = str(company).replace(" ", "_")
+        print("C")
+        file_type = "{}_{}_{}".format(year, company, schedule_type)
+        filenames = glob('*{}*'.format(file_type))
+        outfile_name = "{}__{}__{}_merged{}.csv".format(year, company, schedule_type, name)
+
+    assert len(filenames) > 0, "No matching file types, check filename input"
+    print("[*] collapsing {} csv files...".format(len(filenames)))
+    combined_csv = pd.concat( [ pd.read_csv(f) for f in filenames ] )
+    print("[*] original combined size: {} results".format(combined_csv.shape[0]))
+    dedupe_csv = combined_csv.drop_duplicates()
+    dedupe_csv.to_csv(outfile_name, index=False)
+    print("[*] outfile size: {} results".format(dedupe_csv.shape[0]))
+    print("[*] done")
+    return [outfile_name, dedupe_csv.shape, filenames]
+
 
 def remove_files(collapse_signature):
     if pd.read_csv(str(collapse_signature[0])).shape == collapse_signature[1]:

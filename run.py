@@ -1,5 +1,6 @@
 from getFEC import *
 from random import random
+import traceback
 
 
 class openFEC:
@@ -8,6 +9,19 @@ class openFEC:
 		self.years = years
 
 
+	#Combine = Collapse/Remove Across Years
+	def combine(companies):
+		for company in companies:
+			try:
+				print("{}\n[*] Combining yearly data for {}".format("--"*20, company))
+				collapse_signature = collapse_csvs(company, "schedule a")
+				remove_files(collapse_signature)
+			except Exception as exc:
+				print(traceback.format_exc())
+				print(exc)
+				pass
+
+	#Run = Download, Collapse, Remove
 	def run(companies, years):
 
 		base_sleep_time = 1
@@ -60,8 +74,8 @@ class openFEC:
 ## STEP 1: Define Companies
 ############################################################################
 
-#companies = ["Goldman Sachs", "Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
-companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
+companies = ["Goldman Sachs", "Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
+#companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
 years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 
 #companies = ["Exxon Mobile", "Amazon", "Boeing"]
@@ -70,13 +84,13 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #companies = ["Apple"]
 
 #companies = ["Goldman Sachs"]
-#years = ["2008"]
+years = ["2008"]
 #companies = ["Walmart"]
 #years = ["2012"]
 #years = ["2016"]
 
-openFEC.run(companies, years)
-
+#openFEC.run(companies, years)
+openFEC.combine(companies)
 
 
 
