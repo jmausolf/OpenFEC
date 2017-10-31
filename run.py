@@ -10,11 +10,11 @@ class openFEC:
 
 
 	#Combine = Collapse/Remove Across Years
-	def combine(companies):
+	def combine(companies, name=""):
 		for company in companies:
 			try:
 				print("{}\n[*] Combining yearly data for {}".format("--"*20, company))
-				collapse_signature = collapse_csvs(company, "schedule a")
+				collapse_signature = collapse_csvs(company, "schedule a", None, name)
 				remove_files(collapse_signature)
 			except Exception as exc:
 				print(traceback.format_exc())
@@ -84,7 +84,7 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #companies = ["Apple"]
 
 #companies = ["Goldman Sachs"]
-years = ["2008"]
+#years = ["2008"]
 #companies = ["Walmart"]
 #years = ["2012"]
 #years = ["2016"]
