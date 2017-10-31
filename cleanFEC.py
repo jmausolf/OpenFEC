@@ -1,7 +1,7 @@
 import pandas as pd
 import csv
 from glob import glob
-#from company_name_ids import *
+from company_name_ids import *
 
 def read_company_csv(company):
 	company = str(company).replace(" ", "_")
@@ -10,36 +10,15 @@ def read_company_csv(company):
 	filename = glob('*{}*'.format(file_type))
 	print(filename)
 	df = pd.read_csv(filename[0])
-	return df
-
-#df = read_company_csv("Goldman Sachs")
-#print(df.shape)
-
-
-#print(df['contributor_employer'])
-
-print("TESTING")
-#print(df["employer_clean"])
-
-
-company_name_ids = {
-	"Goldman Sachs" : ['goldman sachs', 'goldman sachs investment', 'goldman sachs bank', 'goldman sachs asset management', 'goldman sachs capital'],
-	"Apple" : ['apple', 'apple computer', 'apple store', 'apple retail store', 'appleinc']
-}
-
-#print(company_name_ids)
-#print(company_name_ids["Goldman Sachs"])
-
-#df = df[df['employer_clean'].isin(goldman_sachs_ids)]
-#print(df.shape)
-
-def remove_non_ascii_2(text):
-	import re
-	return re.sub(r'[^\x00-\x7F]+', "", text)
+	return df, filename[0]
 
 
 def filter_company_ids(company, dev=False):
-	df = read_company_csv(company)
+	read_df = read_company_csv(company)
+	df = read_df[0]
+	outfile = read_df[1].split(".csv")[0]+"_cleaned.csv"
+	print(outfile)
+
 	print(df.shape)
 
 	stop_words = ['and', 'the', 'company', 'companies', 'corporation', 'group', 'international']
@@ -56,30 +35,29 @@ def filter_company_ids(company, dev=False):
 
 	#unique values
 	if dev is True:
-		#print("TRUE")
 		all_cids = df.employer_clean.unique().tolist()
 		print(len(all_cids), str(all_cids))
-		#print(len(all_cids))
-		#all_cids.sort()
-		#print(all_cids.sort())
 	elif dev is False:
-		#print("FALSE")
 		cid = company_name_ids[company]
 		#TODO split on dict items
 		df = df[df['employer_clean'].isin(cid)]
 		print(df.shape)
 		print(df.employer_clean.unique().tolist()) #check its working
 	else:
-		print("OTHER")
+		pass
 
-
+	#write outfile
+	df.to_csv(outfile, index=False)
 
 
 #filter_company_ids("Goldman Sachs", True)
 #filter_company_ids("Goldman Sachs")
 
 #filter_company_ids("Apple", True)
-filter_company_ids("Apple")
+#filter_company_ids("Apple")
+
+#filter_company_ids("Exxon Mobile", True)
+filter_company_ids("Exxon Mobile")
 
 
 
