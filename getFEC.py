@@ -215,24 +215,24 @@ def get_schedule_a_employer_year(employer, year, api_key=api_key):
         pass
 
 
-def collapse_csvs(company, schedule_type, year=None):
+def dedupe_merged_csvs(company, column=None):
     company = str(company).replace(" ", "_")
-    schedule_type = str(schedule_type).replace(" ", "_")
-
-    if year is None:
-        file_type = "{}_{}".format(company, schedule_type)
-        filenames = glob('*{}*'.format(file_type))
-        outfile_name = "{}__{}__merged.csv".format(company, schedule_type)
-    else:
-        file_type = "{}_{}_{}".format(year, company, schedule_type)
-        filenames = glob('*{}*'.format(file_type))
-        outfile_name = "{}__{}__{}_merged.csv".format(year, company, schedule_type)
+    file_type = "{}".format(company)
+    filenames = glob('*{}*'.format(file_type))
+    outfile_name = "{}__merged_deduped.csv".format(company)
+    
 
     assert len(filenames) > 0, "No matching file types, check filename input"
     print("[*] collapsing {} csv files...".format(len(filenames)))
     combined_csv = pd.concat( [ pd.read_csv(f) for f in filenames ] )
     print("[*] original combined size: {} results".format(combined_csv.shape[0]))
-    dedupe_csv = combined_csv.drop_duplicates()
+    
+    if column is not None:
+        df = combined_csv.drop(column, axis=1)
+    else:
+        df = combined_csv
+
+    dedupe_csv = df.drop_duplicates()
     dedupe_csv.to_csv(outfile_name, index=False)
     print("[*] outfile size: {} results".format(dedupe_csv.shape[0]))
     print("[*] done")

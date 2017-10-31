@@ -21,6 +21,16 @@ class openFEC:
 				print(exc)
 				pass
 
+	def dedupe(companies, column=None):
+		for company in companies:
+			try:
+				print("{}\n[*] Combining/deduping data for {}".format("--"*20, company))
+				collapse_signature = dedupe_merged_csvs(company, column)
+				remove_files(collapse_signature)
+			except Exception as exc:
+				print(exc)
+				pass
+
 	#Run = Download, Collapse, Remove
 	def run(companies, years):
 
@@ -89,8 +99,13 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #years = ["2012"]
 #years = ["2016"]
 
+
+#dedupe multiple runs (need to remove json/dict column)
+#dedupe_merged_csvs("Goldman Sachs", "committee")
+openFEC.dedupe(companies, "committee")
+
 #openFEC.run(companies, years)
-openFEC.combine(companies)
+#openFEC.combine(companies)
 
 
 
