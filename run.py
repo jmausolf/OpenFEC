@@ -84,7 +84,7 @@ class openFEC:
 	#Run = Download, Collapse, Remove
 	def getPARTY(companies):
 
-		base_sleep_time = 1
+		base_sleep_time = 15
 
 		def tasks(company, test_break=False):
 			if test_break is True:
@@ -105,7 +105,7 @@ class openFEC:
 					for attempt in range(1, 5+1):
 						try:
 							print("[*] ERROR COLLECTING PARTY IDS FOR {}...attempt {}".format(company, attempt))
-							time.sleep(pow(1, attempt) * base_sleep_time)
+							time.sleep(pow(3, attempt) * base_sleep_time)
 							tasks(company)
 							return
 						except:
@@ -139,7 +139,7 @@ class openFEC:
 ## STEP 1: Define Companies
 ############################################################################
 
-companies = ["Goldman Sachs", "Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
+companies = ["Exxon Mobile", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
 #companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
 years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 
