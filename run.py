@@ -116,9 +116,16 @@ class openFEC:
 
 
 		for company in companies:
-			print("{}\n[*] {} {}".format("--"*20, company))
+			print("{}\n[*] {}".format("--"*20, company))
+
 			try:
-				retry(company)
+				company = str(company).replace(" ", "_")
+				filenames = glob('*{}*'.format(company))
+				if len(filenames)==1:
+					retry(company)
+				else:
+					print("Only one file expected, check file exists and perform merge first...")
+
 			except:
 				d = 3600
 				print("[*] Possible rate limiting, trying again in {} minutes".format(d/60))
@@ -140,7 +147,7 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #companies = ["Walmart"]
 #companies = ["General Electric"]
 #companies = ["Apple"]
-companies = ["Exxon Mobile"]
+#companies = ["Exxon Mobile"]
 
 #companies = ["Goldman Sachs"]
 #years = ["2008"]

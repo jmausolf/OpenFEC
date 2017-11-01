@@ -213,19 +213,7 @@ def search_party_id(committee_id, year=None):
     return party_id
 #print(search_party_id("C00053553"))
 
-def getPARTY(contrib_file):
-    in_file = contrib_file
-    out_file = in_file.replace(".csv", "_PARTY_IDs.csv")
-    df = pd.read_csv(in_file)
-    df = df[['committee_id','cycle']].drop_duplicates()
-    print("[*] finding party id's for requested committees...")
-    df['party_id'] = np.vectorize(search_party_id)(df['committee_id'], df['cycle'])
-    print("[*] writing results to csv...")
-    df.to_csv(out_file, index=False)
-    return df
-
-
-def getPARTY2(company):
+def getPARTY(company):
 
     company = str(company).replace(" ", "_")
     filenames = glob('*{}*'.format(company))
@@ -246,7 +234,7 @@ def getPARTY2(company):
     return in_file, out_file
 
 
-#getPARTY2("Exxon Mobile")
+#getPARTY("Exxon Mobile")
 
     
 
@@ -280,7 +268,7 @@ def merge_contrib_pid(filenames, company=None):
     df_merged.to_csv(out_file)
     return out_file
 
-filenames = getPARTY2("Exxon Mobile")
-merge_contrib_pid(filenames)
+#filenames = getPARTY("Exxon Mobile")
+#merge_contrib_pid(filenames)
 #merge_contrib_pid(None, "Exxon Mobile")
 
