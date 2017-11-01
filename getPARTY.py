@@ -71,6 +71,8 @@ def get_party_id(committee_id):
         party_id = data[0]['party_full']
         return party_id
 
+#C00053553 (NRA is UNKNOWN ALL METHODS)
+#print(get_party_id("C00053553"))
 
 def get_committee_details(committee_id):
     stem = "https://api.open.fec.gov/v1/committee/"
@@ -84,6 +86,8 @@ def get_committee_details(committee_id):
     #name = data[0]['name']
     #return data[0]['party']
     return party_id, candidate_ids
+
+#print(get_committee_details("C00053553"))
 
 def alt_receipt_id(rid, s, sample_frame):
     if rid == None:
@@ -168,12 +172,13 @@ def find_schedule_b_results(committee_ids):
             #return "UNCLEAR Schedule B Party ID"
             return(party_id)
 
+#print(find_schedule_b_results("C00053553"))
 
 def search_party_id(committee_id, year=None):
     #TODO add years to other searches where applicable
     try:
         party_results = get_committee_details(committee_id)
-        time.sleep(0.5)
+        time.sleep(0.75)
         #TODO Add new column if the results are from a PAC or Not
         if party_results[0] is None and len(party_results[1]) == 0:
             #print("no party results, further_tests_needed", party_results)
@@ -206,7 +211,7 @@ def search_party_id(committee_id, year=None):
 
     #return party_id, (party_id+"duplicate")
     return party_id
-
+#print(search_party_id("C00053553"))
 
 def getPARTY(contrib_file):
     in_file = contrib_file
@@ -219,13 +224,63 @@ def getPARTY(contrib_file):
     df.to_csv(out_file, index=False)
     return df
 
-#MERGE
-def merge_contrib_pid(year, company):
-    glob_string = "{}__{}__schedule_a_merged".format(year, company)
-    df_contrib = pd.read_csv(glob_string+".csv")
-    df_pid = pd.read_csv(glob_string+"_PARTY_IDs.csv")
-    df_merged = pd.merge(df_contrib, df_pid)
-    df_merged.to_csv(glob_string+"_ANALYSIS.csv")
-    return df_merged
 
-#df_merged = merge_contrib_pid("2012", "Boeing")
+def getPARTY2(company):
+
+    company = str(company).replace(" ", "_")
+    filenames = glob('*{}*'.format(company))
+    assert len(filenames) == 1, "Only one file expected, check files and perform merge first..."
+    
+    in_file = filenames[0]
+    out_file = in_file.replace(".csv", "_PARTY_IDs.csv")
+
+
+    #in_file = contrib_file
+    #out_file = in_file.replace(".csv", "_PARTY_IDs.csv")
+    df = pd.read_csv(in_file)
+    df = df[['committee_id','cycle']].drop_duplicates()
+    print("[*] finding party id's for {}, searching for requested committees...".format(company))
+    df['party_id'] = np.vectorize(search_party_id)(df['committee_id'], df['cycle'])
+    print("[*] writing results to csv...")
+    df.to_csv(out_file, index=False)
+    return in_file, out_file
+
+
+#getPARTY2("Exxon Mobile")
+
+    
+
+
+#MERGE
+def merge_contrib_pid(filenames, company=None):
+    """
+    Requires filenames from getPARTY
+
+    or
+
+    A company and two already generated filenames
+    """
+
+    if company is not None:
+        company = str(company).replace(" ", "_")
+        filenames = glob('{}__*'.format(company))
+        assert len(filenames) == 2, "Two matching files required, check input"
+    
+    else:
+        pass
+
+
+    out_file = filenames[0].replace(".csv", "_ANALYSIS.csv")
+    #out_file = filenames[0].split('.csv')[0]+'_ANALYSIS.csv'
+    #print(filenames, out_file)
+    
+    df_contrib = pd.read_csv(filenames[0])
+    df_pid = pd.read_csv(filenames[1])
+    df_merged = pd.merge(df_contrib, df_pid)
+    df_merged.to_csv(out_file)
+    return out_file
+
+filenames = getPARTY2("Exxon Mobile")
+merge_contrib_pid(filenames)
+#merge_contrib_pid(None, "Exxon Mobile")
+
