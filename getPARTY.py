@@ -178,14 +178,14 @@ def search_party_id(committee_id, year=None):
     #TODO add years to other searches where applicable
     try:
         party_results = get_committee_details(committee_id)
-        time.sleep(0.75)
+        time.sleep(1.25)
         #TODO Add new column if the results are from a PAC or Not
         if party_results[0] is None and len(party_results[1]) == 0:
             #print("no party results, further_tests_needed", party_results)
             print("[*] conducting schedule b search...")
             #import pdb
             #pdb.set_trace()
-
+            time.sleep(4)
             schedule_b_receipts = get_schedule_b_receipts(committee_id, year)
             party_id = find_schedule_b_results(schedule_b_receipts)
             #return party_id
@@ -197,7 +197,7 @@ def search_party_id(committee_id, year=None):
             #return party_id
 
         elif party_results[0] is not None:
-            print("[*] party id found in committee details: ")
+            print("[*] party id found in committee details")
             party_id = party_results[0]
             #return party_id
 
