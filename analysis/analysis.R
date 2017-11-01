@@ -9,7 +9,7 @@ fec <- read_csv("Exxon_Mobile__merged_deduped_ANALYSIS_cleaned.csv")
 fec <- read_csv("Goldman_Sachs__merged_deduped_ANALYSIS_cleaned.csv")
 
 
-fec <- fec %>% 
+fec3 <- fec %>% 
   mutate(pid = fct_collapse(party_id,
                                   "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
          pid = fct_lump(pid, n=5)) %>% 
@@ -21,11 +21,17 @@ fec2 <- fec %>%
                             "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
          pid5 = fct_lump(pid, n=5)) %>% 
   mutate(pid3 = fct_lump(pid, n=2)) %>% 
-  filter(pid3 != "Other")
+  filter(pid3 != "Other") %>% 
+  mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+  mutate(lncval = log(contribution_receipt_amount+1))
 
 table(fec$party_id)
 table(fec$pid)
 table(fec2$pid3)
+table(fec2$contributor_occupation)
+table(fec2$occ)
+table(fec2$contribution_receipt_amount)
+
 
 ggplot(fec) +
    geom_bar(aes(party_id, color=employer_clean)) 
@@ -39,7 +45,25 @@ ggplot(fec) +
   geom_bar(aes(party_id)) +
   facet_wrap(~contributor_occupation)
 
+ggplot(fec2) +
+  geom_bar(aes(pid3)) +
+  facet_wrap(~occ)
 
+#Number of Contributions by Party ID and Cycle
+#Great Plot
+ggplot(fec2) +
+  geom_bar(aes(pid3)) +
+  facet_wrap(~cycle) 
+
+ggplot(fec2) +
+  geom_boxplot(aes(pid3, lncval)) +
+  facet_wrap(~cycle) 
+
+ggplot(fec2) +
+  geom_bar(aes(pid3)) +
+  facet_wrap(~cycle) 
+
+table(fec2$con)
 
 #amounts by year
 ggplot(fec) +
@@ -57,8 +81,17 @@ ggplot(fec, aes(as.numeric(contribution_receipt_date), contribution_receipt_amou
 
 ggplot(fec2, aes(as.numeric(contribution_receipt_date), contribution_receipt_amount, color=pid3)) +
   geom_smooth()
+lims <- as.POSIXct(c(1984, 2016))
 
+#Good plot
+lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+ggplot(fec2, aes(contribution_receipt_date, contribution_receipt_amount, color=pid3)) +
+  geom_smooth() + 
+  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims)
 
+ggplot(fec2, aes(as.numeric(contribution_receipt_date), lncval, color=pid3)) +
+  geom_hex(alpha=0.2) +
+  geom_smooth() 
 
 ggplot(fec, aes(as.numeric(contribution_receipt_date), contribution_receipt_amount)) +
   geom_point() + 
