@@ -84,7 +84,7 @@ class openFEC:
 	#Run = Download, Collapse, Remove
 	def getPARTY(companies):
 
-		base_sleep_time = 15
+		base_sleep_time = 1
 
 		def tasks(company, test_break=False):
 			if test_break is True:
@@ -102,30 +102,23 @@ class openFEC:
 					tasks(company) #not broken
 					return
 				except:
-					for attempt in range(1, 5+1):
+					for attempt in range(1, 10+1):
 						try:
 							print("[*] ERROR COLLECTING PARTY IDS FOR {}...attempt {}".format(company, attempt))
-							time.sleep(pow(3, attempt) * base_sleep_time)
+							time.sleep(pow(2, attempt) * base_sleep_time * random())
 							tasks(company)
 							return
 						except:
-							if attempt>=5:
+							if attempt>=10:
 								print("[*] MAXIMUM retries exceeded...FINAL ERROR COLLECTING {}".format(company))
 				finally:
 					pass
 
 
 		for company in companies:
-			print("{}\n[*] {}".format("--"*20, company))
-
+			print("{}\n[*] {} {}".format("--"*20, company))
 			try:
-				company = str(company).replace(" ", "_")
-				filenames = glob('*{}*'.format(company))
-				if len(filenames)==1:
-					retry(company)
-				else:
-					print("Only one file expected, check file exists and perform merge first...")
-
+				retry(company)
 			except:
 				d = 3600
 				print("[*] Possible rate limiting, trying again in {} minutes".format(d/60))
@@ -139,7 +132,7 @@ class openFEC:
 ## STEP 1: Define Companies
 ############################################################################
 
-companies = ["Exxon Mobile", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
+companies = ["Goldman Sachs", "Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
 #companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
 years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 
@@ -147,7 +140,7 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #companies = ["Walmart"]
 #companies = ["General Electric"]
 #companies = ["Apple"]
-#companies = ["Exxon Mobile"]
+companies = ["Exxon Mobile"]
 
 #companies = ["Goldman Sachs"]
 #years = ["2008"]

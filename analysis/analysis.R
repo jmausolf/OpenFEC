@@ -1,6 +1,31 @@
 library(tidyverse)
+library(stargazer)
+library(knitr)
+library(pastecs)
+library(forcats)
+
 
 fec <- read_csv("Exxon_Mobile__merged_deduped_ANALYSIS_cleaned.csv")
+fec <- read_csv("Goldman_Sachs__merged_deduped_ANALYSIS_cleaned.csv")
+
+
+fec <- fec %>% 
+  mutate(pid = fct_collapse(party_id,
+                                  "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
+         pid = fct_lump(pid, n=5)) %>% 
+  filter(pid == c("DEMOCRATIC PARTY", "REPUBLICAN PARTY"))
+
+
+fec2 <- fec %>% 
+  mutate(pid = fct_collapse(party_id,
+                            "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
+         pid5 = fct_lump(pid, n=5)) %>% 
+  mutate(pid3 = fct_lump(pid, n=2)) %>% 
+  filter(pid3 != "Other")
+
+table(fec$party_id)
+table(fec$pid)
+table(fec2$pid3)
 
 ggplot(fec) +
    geom_bar(aes(party_id, color=employer_clean)) 
@@ -24,6 +49,21 @@ ggplot(fec) +
 
 ggplot(fec) +
   geom_point(aes(two_year_transaction_period, contribution_receipt_amount, color=party_id))
+
+#very interstesting if filtered down to the two major parties
+#contributor aggregate not available for older years
+ggplot(fec, aes(as.numeric(contribution_receipt_date), contribution_receipt_amount, color=pid)) +
+  geom_smooth()
+
+ggplot(fec2, aes(as.numeric(contribution_receipt_date), contribution_receipt_amount, color=pid3)) +
+  geom_smooth()
+
+
+
+ggplot(fec, aes(as.numeric(contribution_receipt_date), contribution_receipt_amount)) +
+  geom_point() + 
+  geom_smooth()
+
 
 
 ggplot(fec, aes(two_year_transaction_period, contributor_aggregate_ytd, color=party_id)) +
