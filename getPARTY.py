@@ -227,6 +227,7 @@ def getPARTY(company):
     #out_file = in_file.replace(".csv", "_PARTY_IDs.csv")
     df = pd.read_csv(in_file)
     df = df[['committee_id','cycle']].drop_duplicates()
+    print("Total unique committee's requested: {}".format(df.shape[0]))
     print("[*] finding party id's for {}, searching for requested committees...".format(company))
     df['party_id'] = np.vectorize(search_party_id)(df['committee_id'], df['cycle'])
     print("[*] writing results to csv...")
