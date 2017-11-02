@@ -102,14 +102,14 @@ class openFEC:
 					tasks(company) #not broken
 					return
 				except:
-					for attempt in range(1, 5+1):
+					for attempt in range(1, 10+1):
 						try:
 							print("[*] ERROR COLLECTING PARTY IDS FOR {}...attempt {}".format(company, attempt))
 							time.sleep(pow(3, attempt) * base_sleep_time)
 							tasks(company)
 							return
 						except:
-							if attempt>=5:
+							if attempt>=10:
 								print("[*] MAXIMUM retries exceeded...FINAL ERROR COLLECTING {}".format(company))
 				finally:
 					pass
