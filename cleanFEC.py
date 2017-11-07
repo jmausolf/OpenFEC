@@ -21,6 +21,9 @@ def filter_company_ids(company, dev=False):
 
 	print(df.shape)
 
+	#add company cid col
+	df["cid"] = company
+
 	stop_words = ['and', 'the', 'company', 'companies', 'corporation', 'group', 'international']
 	stop_abb = ['inc', 'co', 'comp', 'corp', 'pcs', 'pc', 'llp', 'llc', 'lp', 'int']
 	spaces = [' ', '   ', '    ', '  ']
