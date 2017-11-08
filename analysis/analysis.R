@@ -25,14 +25,30 @@ fec3 <- fec %>%
   filter(pid == c("DEMOCRATIC PARTY", "REPUBLICAN PARTY"))
 
 
-fec2 <- fec %>% 
+fec_plt_a <- fec %>% 
   mutate(pid = fct_collapse(party_id,
                             "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
          pid5 = fct_lump(pid, n=5)) %>% 
   mutate(pid3 = fct_lump(pid, n=2)) %>% 
   filter(pid3 != "Other") %>% 
   mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
-  mutate(lncval = log(contribution_receipt_amount+1))
+  mutate(lncval = log(contribution_receipt_amount+1)) %>% 
+  #Get Data Specific Company
+  filter(cid == "Goldman Sachs")
+
+df_plt_a <- function(company){
+  df <- fec %>% 
+    mutate(pid = fct_collapse(party_id,
+                              "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
+           pid5 = fct_lump(pid, n=5)) %>% 
+    mutate(pid3 = fct_lump(pid, n=2)) %>% 
+    filter(pid3 != "Other") %>% 
+    mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+    mutate(lncval = log(contribution_receipt_amount+1)) %>% 
+    #Get Data Specific Company
+    filter(cid == company)
+  return(df)
+}
 
 ################################################
 ## Make Graphs
@@ -52,6 +68,9 @@ plt_a <- function(df){
   ggplot(df, aes(contribution_receipt_date, contribution_receipt_amount, color=pid3)) +
     geom_smooth() + 
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    #scale_color_manual(values=c("#dem", "#rep")) +
+    #scale_color_manual(values=c("#262F7F", "#7F0000")) +
+    scale_color_manual(values=c("#2129B0", "#BF1200")) +
     xlab("Contribution Date") +
     ylab("Contribution Receipt Amount in USD") +
     ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
@@ -60,7 +79,10 @@ plt_a <- function(df){
     theme(plot.title = element_text(hjust = 0.5))
   
   #save
-  ggsave(outfile)  
+  ggsave(outfile)
+  
+  #return
+  return(plt_a)
 }
 
 
@@ -68,6 +90,7 @@ plt_a <- function(df){
 ## Run
 ################################################
 
-plt_a(fec2)
+#plt_a(fec2)
+plt_a(df_plt_a("Goldman Sachs"))
 
 
