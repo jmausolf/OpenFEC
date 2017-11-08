@@ -5,6 +5,7 @@ library(knitr)
 library(pastecs)
 library(forcats)
 library(stringr)
+library(lubridate)
 
 
 ##Load Data
@@ -50,6 +51,44 @@ df_plt_a <- function(company){
   return(df)
 }
 
+df_plt_b <- function(company){
+  df <- fec %>% 
+    mutate(pid = fct_collapse(party_id,
+                              "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
+           pid5 = fct_lump(pid, n=5)) %>% 
+    mutate(pid3 = fct_lump(pid, n=2)) %>% 
+    filter(pid3 != "Other") %>% 
+    mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+    mutate(lncval = log(contribution_receipt_amount+1)) %>% 
+    #Get Data Specific Company
+    filter(cid == company) %>% 
+    group_by(contribution_receipt_date, pid3) %>% 
+    mutate(contrib_count = n())
+  
+
+  return(df)
+}
+
+df_plt_c <- function(company){
+  df <- fec %>% 
+    mutate(pid = fct_collapse(party_id,
+                              "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
+           pid5 = fct_lump(pid, n=5)) %>% 
+    mutate(pid3 = fct_lump(pid, n=2)) %>% 
+    filter(pid3 != "Other") %>% 
+    mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+    mutate(lncval = log(contribution_receipt_amount+1)) %>% 
+    #Get Data Specific Company
+    filter(cid == company) %>% 
+    group_by(cycle, pid3) %>% 
+    mutate(contrib_count = n())
+  
+  
+  return(df)
+}
+
+#fec_plt_b <- df_plt_b("Goldman Sachs")
+
 ################################################
 ## Make Graphs
 ################################################
@@ -85,6 +124,59 @@ plt_a <- function(df){
   return(plt_a)
 }
 
+## Plot B
+## PLOT TS-PARTY - All Individual Contributions (Contribution Level)
+plt_b <- function(df){
+  lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+  cid <- as.character(df$cid[1])
+  outfile <- wout("plt_b", cid)
+  ggplot(df, aes(contribution_receipt_date, contrib_count, color=pid3, shape=pid3)) +
+    geom_point(alpha=0.25) +
+    geom_smooth() + 
+    scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    #scale_color_manual(values=c("#dem", "#rep")) +
+    #scale_color_manual(values=c("#262F7F", "#7F0000")) +
+    scale_color_manual(values=c("#2129B0", "#BF1200")) +
+    scale_shape_manual(values = c(3, 1)) +
+    xlab("Contribution Date") +
+    ylab("Number of Schedule A Contributions") +
+    ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
+    theme(legend.position="bottom") +
+    theme(legend.title=element_blank()) + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  #save
+  ggsave(outfile)
+  
+  #return
+  return(plt_b)
+}
+
+plt_c <- function(df){
+  #lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+  cid <- as.character(df$cid[1])
+  outfile <- wout("plt_c", cid)
+  ggplot(df, aes(make_datetime(cycle), contrib_count, color=pid3, shape=pid3)) +
+    geom_point(alpha=0.25) +
+    geom_line() + 
+    scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    #scale_color_manual(values=c("#dem", "#rep")) +
+    #scale_color_manual(values=c("#262F7F", "#7F0000")) +
+    scale_color_manual(values=c("#2129B0", "#BF1200")) +
+    scale_shape_manual(values = c(3, 1)) +
+    xlab("Contribution Cycle") +
+    ylab("Number of Schedule A Contributions") +
+    ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
+    theme(legend.position="bottom") +
+    theme(legend.title=element_blank()) + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  #save
+  ggsave(outfile)
+  
+  #return
+  return(plt_c)
+}
 
 ################################################
 ## Run
@@ -93,4 +185,6 @@ plt_a <- function(df){
 #plt_a(fec2)
 plt_a(df_plt_a("Goldman Sachs"))
 
+plt_b(df_plt_b("Goldman Sachs"))
 
+plt_c(df_plt_c("Goldman Sachs"))
