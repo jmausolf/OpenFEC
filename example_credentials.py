@@ -17,7 +17,8 @@ def get_api_key(api_keys):
 			yield key
 
 #CALL IN THE SCRIPT TO CYCLE KEYS
-#newkey = get_api_key(api_keys)
+newkey = get_api_key(api_keys)
+#next(newkey)
 
 
 

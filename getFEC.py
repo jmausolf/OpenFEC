@@ -94,6 +94,7 @@ def write_csv_json_dict(json_results, filename="jsondata.csv"):
 
 
 def get_party_id_det(committee_id):
+    api_key = next(newkey)
     stem = "https://api.open.fec.gov/v1/committee/"
     end = "{}/candidates/?sort=name&page=1&api_key=DEMO_KEY&per_page=100".format(committee_id, api_key)
     url = stem+end
@@ -107,6 +108,7 @@ def get_party_id_det(committee_id):
 
 
 def req_url_schedule_a(employer, api_key, year=2016, page=1):
+    api_key = next(newkey)
     firm = employer.replace(" ", "%20")
     stem = "https://api.open.fec.gov/v1/schedules/schedule_a/?per_page=100&sort=contribution_receipt_date&"
     end = "contributor_employer={}&api_key={}&two_year_transaction_period={}&page={}".format(firm, api_key, year, page)
@@ -114,13 +116,15 @@ def req_url_schedule_a(employer, api_key, year=2016, page=1):
     return url
 
 def req_start_url_schedule_a(employer, year, api_key=api_key):
+    api_key = next(newkey)
     firm = employer.replace(" ", "%20")
     url = "https://api.open.fec.gov/v1/schedules/schedule_a/?sort=contribution_receipt_date&per_page=100&"+\
     "contributor_employer={}&two_year_transaction_period={}&api_key={}".format(firm, year, api_key)
     return url
 
 def replacement_url_schedule_a(start_url, api_key=new_api_key):
-    replacement_url_start = start_url.split("&api_key=")[0]+"&api_key={}".format(new_api_key)
+    api_key = next(newkey)
+    replacement_url_start = start_url.split("&api_key=")[0]+"&api_key={}".format(api_key)
     return replacement_url_start
 
 def req_loop_url_schedule_a(start_url, last_indexes):
@@ -137,6 +141,7 @@ def req_loop_url_schedule_a(start_url, last_indexes):
 
 
 def get_schedule_a_employer_year(employer, year, api_key=api_key):
+    api_key = next(newkey)
     start_url = req_start_url_schedule_a(employer, year, api_key)
     #print(start_url)
     data = get_url(start_url)
