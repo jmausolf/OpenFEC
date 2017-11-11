@@ -166,6 +166,8 @@ def get_schedule_a_employer_year(employer, year):
     #First Page
     write_json_to_csv()
 
+    count = 0
+
     while results_count > 0:
         time.sleep(1.5)
         page +=1
@@ -177,17 +179,28 @@ def get_schedule_a_employer_year(employer, year):
 
         try:
             last_indexes = get_last_index_contrib(data)
+            start_url = req_start_url_schedule_a(employer, year)
             next_url = req_loop_url_schedule_a(start_url, last_indexes)
+            #print(next_url)
             data = get_url(next_url)
             results_count = still_results(data)
+            #test failure
+            #if count<5:
+            #    count+=1
+            #    len(x)
+            #else:
+            #    pass
         except:
             for attempt in range(1, attempts+1):
-                try:
+                if attempt<attempts:
+                    count+=1
+                    print(count)
                     print("[*] ERROR there may still be api results...attempt {}".format(attempt))
                     time.sleep(pow(2, attempt) * base_sleep_time * random())
                     last_indexes = get_last_index_contrib(data)
 
                     #Try new API KEY
+                    start_url = req_start_url_schedule_a(employer, year)
                     new_start_url = replacement_url_schedule_a(start_url)
                     next_url = req_loop_url_schedule_a(new_start_url, last_indexes)
                     print(start_url, '\n', new_start_url, '\n', next_url)
@@ -195,11 +208,11 @@ def get_schedule_a_employer_year(employer, year):
                     results_count = still_results(data)
                     if results_count > 0:
                         break
-                except:
-                    if attempt>=attempts:
-                        print(next_url)
-                        print("[*] FINAL ERROR: there may still be api results, check count...")
-            break
+                else:
+                    print(next_url)
+                    print("[*] FINAL ERROR: there may still be api results, check count...")
+                    pass
+
 
         try:
             if results_count > 0:

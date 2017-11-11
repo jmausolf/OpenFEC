@@ -1,4 +1,6 @@
-from getFEC import * from getPARTY import * from random import random
+from getFEC import *
+from getPARTY import *
+from random import random
 import traceback
 
 
