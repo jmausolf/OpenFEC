@@ -1,6 +1,4 @@
-from getFEC import *
-from getPARTY import *
-from random import random
+from getFEC import * from getPARTY import * from random import random
 import traceback
 
 
@@ -139,7 +137,7 @@ class openFEC:
 ## STEP 1: Define Companies
 ############################################################################
 
-companies = ["Exxon", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
+companies = ["Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS"]
 #companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
 years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 
@@ -147,10 +145,10 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #companies = ["Walmart"]
 #companies = ["General Electric"]
 #companies = ["Apple"]
-companies = ["Exxon"]
+#companies = ["Exxon"]
 
 #companies = ["Goldman Sachs"]
-years = ["2000"]
+#years = ["2000"]
 #companies = ["Walmart"]
 #years = ["2012"]
 #years = ["2016"]
