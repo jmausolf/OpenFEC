@@ -107,7 +107,7 @@ def get_party_id_det(committee_id):
     return party_id
 
 
-def req_url_schedule_a(employer, api_key, year=2016, page=1):
+def req_url_schedule_a(employer, year=2016, page=1):
     api_key = next(newkey)
     firm = employer.replace(" ", "%20")
     stem = "https://api.open.fec.gov/v1/schedules/schedule_a/?per_page=100&sort=contribution_receipt_date&"
@@ -115,14 +115,14 @@ def req_url_schedule_a(employer, api_key, year=2016, page=1):
     url = stem+end
     return url
 
-def req_start_url_schedule_a(employer, year, api_key=api_key):
+def req_start_url_schedule_a(employer, year):
     api_key = next(newkey)
     firm = employer.replace(" ", "%20")
     url = "https://api.open.fec.gov/v1/schedules/schedule_a/?sort=contribution_receipt_date&per_page=100&"+\
     "contributor_employer={}&two_year_transaction_period={}&api_key={}".format(firm, year, api_key)
     return url
 
-def replacement_url_schedule_a(start_url, api_key=new_api_key):
+def replacement_url_schedule_a(start_url):
     api_key = next(newkey)
     replacement_url_start = start_url.split("&api_key=")[0]+"&api_key={}".format(api_key)
     return replacement_url_start
@@ -140,9 +140,9 @@ def req_loop_url_schedule_a(start_url, last_indexes):
     return url
 
 
-def get_schedule_a_employer_year(employer, year, api_key=api_key):
+def get_schedule_a_employer_year(employer, year):
     api_key = next(newkey)
-    start_url = req_start_url_schedule_a(employer, year, api_key)
+    start_url = req_start_url_schedule_a(employer, year)
     #print(start_url)
     data = get_url(start_url)
     get_count(data)
@@ -188,7 +188,7 @@ def get_schedule_a_employer_year(employer, year, api_key=api_key):
                     last_indexes = get_last_index_contrib(data)
 
                     #Try new API KEY
-                    new_start_url = replacement_url_schedule_a(start_url, new_api_key)
+                    new_start_url = replacement_url_schedule_a(start_url)
                     next_url = req_loop_url_schedule_a(new_start_url, last_indexes)
                     print(start_url, '\n', new_start_url, '\n', next_url)
                     data = get_url(next_url)

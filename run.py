@@ -139,7 +139,7 @@ class openFEC:
 ## STEP 1: Define Companies
 ############################################################################
 
-companies = ["Exxon Mobile", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
+companies = ["Exxon", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
 #companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
 years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 
@@ -147,10 +147,10 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #companies = ["Walmart"]
 #companies = ["General Electric"]
 #companies = ["Apple"]
-#companies = ["Exxon Mobile"]
+companies = ["Exxon"]
 
 #companies = ["Goldman Sachs"]
-#years = ["2008"]
+years = ["2000"]
 #companies = ["Walmart"]
 #years = ["2012"]
 #years = ["2016"]
@@ -159,9 +159,9 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #dedupe multiple runs (need to remove json/dict column)
 #openFEC.dedupe(companies, "committee")
 
-#openFEC.getFEC(companies, years)
-#openFEC.combine(companies)
-
+#test run 
+openFEC.getFEC(companies, years)
+openFEC.combine(companies)
 openFEC.getPARTY(companies)
 
 ############################################################################
