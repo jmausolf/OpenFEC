@@ -217,7 +217,7 @@ def get_schedule_a_employer_year(employer, year):
                         pass
                 except:
                     print("[*] OTHER ERROR: there may still be api results, check count...")
-                    return
+                    break
 
 
 
