@@ -148,12 +148,14 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #companies = ["General Electric"]
 #companies = ["Apple"]
 #companies = ["Exxon"]
+#companies = ["Microsoft"]
 
 #companies = ["Goldman Sachs"]
 #years = ["2000"]
 #companies = ["Walmart"]
 #years = ["2012"]
 #years = ["2016"]
+#years = ["2008"]
 
 
 #dedupe multiple runs (need to remove json/dict column)

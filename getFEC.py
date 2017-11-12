@@ -190,28 +190,35 @@ def get_schedule_a_employer_year(employer, year):
             #    len(x)
             #else:
             #    pass
+
+
         except:
             for attempt in range(1, attempts+1):
-                if attempt<attempts:
-                    count+=1
-                    print(count)
-                    print("[*] ERROR there may still be api results...attempt {}".format(attempt))
-                    time.sleep(pow(2, attempt) * base_sleep_time * random())
-                    last_indexes = get_last_index_contrib(data)
+                try:
+                    if attempt<attempts:
+                        count+=1
+                        #print(count)
+                        print("[*] ERROR there may still be api results...attempt {}".format(attempt))
+                        time.sleep(pow(2, attempt) * base_sleep_time * random())
+                        last_indexes = get_last_index_contrib(data)
 
-                    #Try new API KEY
-                    start_url = req_start_url_schedule_a(employer, year)
-                    new_start_url = replacement_url_schedule_a(start_url)
-                    next_url = req_loop_url_schedule_a(new_start_url, last_indexes)
-                    print(start_url, '\n', new_start_url, '\n', next_url)
-                    data = get_url(next_url)
-                    results_count = still_results(data)
-                    if results_count > 0:
-                        break
-                else:
-                    print(next_url)
-                    print("[*] FINAL ERROR: there may still be api results, check count...")
-                    pass
+                        #Try new API KEY
+                        start_url = req_start_url_schedule_a(employer, year)
+                        new_start_url = replacement_url_schedule_a(start_url)
+                        next_url = req_loop_url_schedule_a(new_start_url, last_indexes)
+                        print(next_url)
+                        data = get_url(next_url)
+                        results_count = still_results(data)
+                        if results_count > 0:
+                            break
+                    else:
+                        print(next_url)
+                        print("[*] FINAL ERROR: there may still be api results, check count...")
+                        pass
+                except:
+                    print("[*] OTHER ERROR: there may still be api results, check count...")
+                    return
+
 
 
         try:
