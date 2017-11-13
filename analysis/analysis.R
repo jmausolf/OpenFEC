@@ -25,15 +25,23 @@ fec3 <- fec %>%
          pid = fct_lump(pid, n=5)) %>% 
   filter(pid == c("DEMOCRATIC PARTY", "REPUBLICAN PARTY"))
 
-
-fec_plt_a <- fec %>% 
+#Work on Base Cleaning
+df <- fec %>% 
+  select(-`Unnamed: 0`) %>% 
   mutate(pid = fct_collapse(party_id,
                             "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
-         pid5 = fct_lump(pid, n=5)) %>% 
-  mutate(pid3 = fct_lump(pid, n=2)) %>% 
+         pid5 = fct_lump(pid, n=5), 
+         pid3 = fct_lump(pid, n=2)) %>% 
   filter(pid3 != "Other") %>% 
+  #filter(entity_type_desc == "INDIVIDUAL") %>% #not available pre 2004, just strips old obs
   mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
-  mutate(lncval = log(contribution_receipt_amount+1)) %>% 
+  mutate(lncval = log(contribution_receipt_amount+1))
+
+table(df$entity_type, df$cycle, useNA = "always")
+
+#Get variance
+var(as.numeric(df$pid3))
+
   #Get Data Specific Company
   filter(cid == "Goldman Sachs")
 
@@ -134,8 +142,6 @@ plt_b <- function(df){
     geom_point(alpha=0.25) +
     geom_smooth() + 
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
-    #scale_color_manual(values=c("#dem", "#rep")) +
-    #scale_color_manual(values=c("#262F7F", "#7F0000")) +
     scale_color_manual(values=c("#2129B0", "#BF1200")) +
     scale_shape_manual(values = c(3, 1)) +
     xlab("Contribution Date") +
@@ -152,16 +158,14 @@ plt_b <- function(df){
   return(plt_b)
 }
 
+## PLOT C - Cycles by Party
 plt_c <- function(df){
-  #lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
   cid <- as.character(df$cid[1])
   outfile <- wout("plt_c", cid)
   ggplot(df, aes(make_datetime(cycle), contrib_count, color=pid3, shape=pid3)) +
     geom_point(alpha=0.25) +
     geom_line() + 
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
-    #scale_color_manual(values=c("#dem", "#rep")) +
-    #scale_color_manual(values=c("#262F7F", "#7F0000")) +
     scale_color_manual(values=c("#2129B0", "#BF1200")) +
     scale_shape_manual(values = c(3, 1)) +
     xlab("Contribution Cycle") +
@@ -177,6 +181,31 @@ plt_c <- function(df){
   #return
   return(plt_c)
 }
+
+plt_d <- function(df){
+  cid <- as.character(df$cid[1])
+  outfile <- wout("plt_c", cid)
+  ggplot(df) +
+    #geom_point(alpha=0.25) +
+    #geom_line(aes(make_datetime(cycle), varpid3)) + 
+    geom_line(aes(make_datetime(cycle), varpid5)) + 
+    scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    scale_color_manual(values=c("#2129B0", "#BF1200")) +
+    scale_shape_manual(values = c(3, 1)) +
+    xlab("Contribution Cycle") +
+    ylab("Variance of Party Contributions") +
+    ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
+    theme(legend.position="bottom") +
+    theme(legend.title=element_blank()) + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  #save
+  ggsave(outfile)
+  
+  #return
+  return(plt_c)
+}
+
 
 ################################################
 ## Run
