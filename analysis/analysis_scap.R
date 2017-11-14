@@ -166,7 +166,7 @@ df <- fec %>%
   summarize(varpid3 = var(as.numeric(pid3)),
             varpid5 = var(as.numeric(pid5)))
 
-
+table(df$occ)
 table(df$contribution_receipt_date, df$varpid)
 
 

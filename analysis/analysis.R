@@ -37,13 +37,13 @@ df <- fec %>%
   mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
   mutate(lncval = log(contribution_receipt_amount+1))
 
-table(df$entity_type, df$cycle, useNA = "always")
+#table(df$entity_type, df$cycle, useNA = "always")
 
 #Get variance
-var(as.numeric(df$pid3))
+#var(as.numeric(df$pid3))
 
-  #Get Data Specific Company
-  filter(cid == "Goldman Sachs")
+#Get Data Specific Company
+#filter(cid == "Goldman Sachs")
 
 df_plt_a <- function(company){
   df <- fec %>% 
@@ -182,29 +182,29 @@ plt_c <- function(df){
   return(plt_c)
 }
 
-plt_d <- function(df){
-  cid <- as.character(df$cid[1])
-  outfile <- wout("plt_c", cid)
-  ggplot(df) +
-    #geom_point(alpha=0.25) +
-    #geom_line(aes(make_datetime(cycle), varpid3)) + 
-    geom_line(aes(make_datetime(cycle), varpid5)) + 
-    scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
-    scale_color_manual(values=c("#2129B0", "#BF1200")) +
-    scale_shape_manual(values = c(3, 1)) +
-    xlab("Contribution Cycle") +
-    ylab("Variance of Party Contributions") +
-    ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
-    theme(legend.position="bottom") +
-    theme(legend.title=element_blank()) + 
-    theme(plot.title = element_text(hjust = 0.5))
-  
-  #save
-  ggsave(outfile)
-  
-  #return
-  return(plt_c)
-}
+# plt_d <- function(df){
+#   cid <- as.character(df$cid[1])
+#   outfile <- wout("plt_c", cid)
+#   ggplot(df) +
+#     #geom_point(alpha=0.25) +
+#     geom_line(aes(make_datetime(cycle), varpid3)) + 
+#     #geom_line(aes(make_datetime(cycle), varpid5)) + 
+#     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+#     scale_color_manual(values=c("#2129B0", "#BF1200")) +
+#     scale_shape_manual(values = c(3, 1)) +
+#     xlab("Contribution Cycle") +
+#     ylab("Variance of Party Contributions") +
+#     ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
+#     theme(legend.position="bottom") +
+#     theme(legend.title=element_blank()) + 
+#     theme(plot.title = element_text(hjust = 0.5))
+#   
+#   #save
+#   ggsave(outfile)
+#   
+#   #return
+#   return(plt_c)
+# }
 
 
 ################################################
