@@ -147,6 +147,13 @@ class openFEC:
 				print(exc)
 				pass
 
+	#Merge All Cleaned Files
+	def merge_master(filestem):
+		"""openFEC.merge_master("schedule_a__merged_ANALYSIS_cleaned")"""
+		print("[*] combining all files of type *{}* ...".format(filestem))
+		collapse_signature = collapse_csvs(None, filestem, None, "_MASTER")
+		remove_files(collapse_signature)
+
 
 ############################################################################
 ## STEP 1: Define Companies
@@ -180,7 +187,8 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #openFEC.getPARTY(companies)
 
 #test clean
-openFEC.clean(companies)
+#openFEC.clean(companies)
+openFEC.merge_master("ANALYSIS_cleaned")
 
 ############################################################################
 ## STEP 2: Get All Schedule A for Companies
