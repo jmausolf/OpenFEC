@@ -37,6 +37,19 @@ df <- fec %>%
   mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
   mutate(lncval = log(contribution_receipt_amount+1))
 
+df <- fec %>% 
+  select(-`Unnamed: 0`) %>% 
+  mutate(pid = fct_collapse(party_id,
+                            "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
+         pid5 = fct_lump(pid, n=5), 
+         pid3 = fct_lump(pid, n=2)) %>% 
+  filter(pid3 != "Other") %>% 
+  mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+  mutate(lncval = log(contribution_receipt_amount+1)) %>% 
+  group_by(cycle) %>% 
+  summarize(varpid3 = var(as.numeric(pid3)),
+            varpid5 = var(as.numeric(pid5)))
+
 #table(df$entity_type, df$cycle, useNA = "always")
 
 #Get variance
@@ -46,7 +59,8 @@ df <- fec %>%
 #filter(cid == "Goldman Sachs")
 
 df_plt_a <- function(company){
-  df <- fec %>% 
+  df <- fec %>%
+    filter(cid == company) %>%
     mutate(pid = fct_collapse(party_id,
                               "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
            pid5 = fct_lump(pid, n=5)) %>% 
@@ -54,13 +68,12 @@ df_plt_a <- function(company){
     filter(pid3 != "Other") %>% 
     mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
     mutate(lncval = log(contribution_receipt_amount+1)) %>% 
-    #Get Data Specific Company
-    filter(cid == company)
   return(df)
 }
 
 df_plt_b <- function(company){
   df <- fec %>% 
+    filter(cid == company) %>%
     mutate(pid = fct_collapse(party_id,
                               "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
            pid5 = fct_lump(pid, n=5)) %>% 
@@ -68,17 +81,14 @@ df_plt_b <- function(company){
     filter(pid3 != "Other") %>% 
     mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
     mutate(lncval = log(contribution_receipt_amount+1)) %>% 
-    #Get Data Specific Company
-    filter(cid == company) %>% 
     group_by(contribution_receipt_date, pid3) %>% 
     mutate(contrib_count = n())
-  
-
   return(df)
 }
 
 df_plt_c <- function(company){
   df <- fec %>% 
+    filter(cid == company) %>%
     mutate(pid = fct_collapse(party_id,
                               "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
            pid5 = fct_lump(pid, n=5)) %>% 
@@ -86,12 +96,25 @@ df_plt_c <- function(company){
     filter(pid3 != "Other") %>% 
     mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
     mutate(lncval = log(contribution_receipt_amount+1)) %>% 
-    #Get Data Specific Company
-    filter(cid == company) %>% 
     group_by(cycle, pid3) %>% 
     mutate(contrib_count = n())
-  
-  
+  return(df)
+}
+
+df_plt_d <- function(company){
+  df <- fec %>%
+    filter(cid == company) %>% 
+    select(-`Unnamed: 0`) %>% 
+    mutate(pid = fct_collapse(party_id,
+                              "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
+           pid5 = fct_lump(pid, n=5), 
+           pid3 = fct_lump(pid, n=2)) %>% 
+    filter(pid3 != "Other") %>% 
+    mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+    mutate(lncval = log(contribution_receipt_amount+1)) %>% 
+    group_by(cycle, cid) %>% 
+    summarize(varpid3 = var(as.numeric(pid3)),
+              varpid5 = var(as.numeric(pid5)))
   return(df)
 }
 
@@ -160,6 +183,7 @@ plt_b <- function(df){
 
 ## PLOT C - Cycles by Party
 plt_c <- function(df){
+  lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
   cid <- as.character(df$cid[1])
   outfile <- wout("plt_c", cid)
   ggplot(df, aes(make_datetime(cycle), contrib_count, color=pid3, shape=pid3)) +
@@ -182,29 +206,30 @@ plt_c <- function(df){
   return(plt_c)
 }
 
-# plt_d <- function(df){
-#   cid <- as.character(df$cid[1])
-#   outfile <- wout("plt_c", cid)
-#   ggplot(df) +
-#     #geom_point(alpha=0.25) +
-#     geom_line(aes(make_datetime(cycle), varpid3)) + 
-#     #geom_line(aes(make_datetime(cycle), varpid5)) + 
-#     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
-#     scale_color_manual(values=c("#2129B0", "#BF1200")) +
-#     scale_shape_manual(values = c(3, 1)) +
-#     xlab("Contribution Cycle") +
-#     ylab("Variance of Party Contributions") +
-#     ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
-#     theme(legend.position="bottom") +
-#     theme(legend.title=element_blank()) + 
-#     theme(plot.title = element_text(hjust = 0.5))
-#   
-#   #save
-#   ggsave(outfile)
-#   
-#   #return
-#   return(plt_c)
-# }
+plt_d <- function(df){
+  lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+  cid <- as.character(df$cid[1])
+  outfile <- wout("plt_d", cid)
+  ggplot(df) +
+    #geom_point(alpha=0.25) +
+    geom_line(aes(make_datetime(cycle), varpid3)) +
+    #geom_line(aes(make_datetime(cycle), varpid5)) +
+    scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    scale_color_manual(values=c("#2129B0", "#BF1200")) +
+    scale_shape_manual(values = c(3, 1)) +
+    xlab("Contribution Cycle") +
+    ylab("Variance of Party Contributions") +
+    ggtitle(paste("Partisan Variance of Individual Contributions:", cid, sep=" ")) +
+    theme(legend.position="bottom") +
+    theme(legend.title=element_blank()) +
+    theme(plot.title = element_text(hjust = 0.5))
+
+  #save
+  ggsave(outfile)
+
+  #return
+  return(plt_d)
+}
 
 
 ################################################
@@ -217,3 +242,5 @@ plt_a(df_plt_a("Goldman Sachs"))
 plt_b(df_plt_b("Goldman Sachs"))
 
 plt_c(df_plt_c("Goldman Sachs"))
+
+plt_d(df_plt_d("Goldman Sachs"))

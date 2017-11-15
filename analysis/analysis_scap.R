@@ -5,7 +5,7 @@ library(pastecs)
 library(forcats)
 
 
-fec <- read_csv("Exxon_Mobile__merged_deduped_ANALYSIS_cleaned.csv")
+#fec <- read_csv("Exxon_Mobile__merged_deduped_ANALYSIS_cleaned.csv")
 fec <- read_csv("Goldman_Sachs__merged_deduped_ANALYSIS_cleaned.csv")
 
 fec$`Unnamed: 0`
@@ -162,22 +162,21 @@ df <- fec %>%
   filter(pid3 != "Other") %>% 
   mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
   mutate(lncval = log(contribution_receipt_amount+1)) %>% 
-  group_by(cycle) %>% 
+  group_by(cycle, occ) %>% 
   summarize(varpid3 = var(as.numeric(pid3)),
             varpid5 = var(as.numeric(pid5)))
 
-table(df$occ)
+table(df$occ, df$cycle, useNA = "always")
 table(df$contribution_receipt_date, df$varpid)
 
-
-ggplot(df, aes(make_datetime(cycle), varpid)) +
+lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+cid <- as.character(df$cid[1])
+ggplot(df, aes(make_datetime(cycle), varpid3, color=occ)) +
   geom_point(alpha=0.25) +
   geom_line() + 
   scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
-  #scale_color_manual(values=c("#dem", "#rep")) +
-  #scale_color_manual(values=c("#262F7F", "#7F0000")) +
-  scale_color_manual(values=c("#2129B0", "#BF1200")) +
-  scale_shape_manual(values = c(3, 1)) +
+  #scale_color_manual(values=c("#2129B0", "#BF1200")) +
+  #scale_shape_manual(values = c(3, 1)) +
   xlab("Contribution Cycle") +
   ylab("Number of Schedule A Contributions") +
   ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
