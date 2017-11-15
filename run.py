@@ -1,5 +1,6 @@
 from getFEC import *
 from getPARTY import *
+from cleanFEC import *
 from random import random
 import traceback
 
@@ -134,6 +135,18 @@ class openFEC:
 			finally:
 				pass
 
+	#Clean Company Results
+	def clean(companies, dev=False):
+		for company in companies:
+			try:
+				if dev is True:
+					filter_company_ids(company, True)
+				else:
+					filter_company_ids(company)
+			except Exception as exc:
+				print(exc)
+				pass
+
 
 ############################################################################
 ## STEP 1: Define Companies
@@ -162,9 +175,12 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #openFEC.dedupe(companies, "committee")
 
 #test run 
-openFEC.getFEC(companies, years)
-openFEC.combine(companies)
-openFEC.getPARTY(companies)
+#openFEC.getFEC(companies, years)
+#openFEC.combine(companies)
+#openFEC.getPARTY(companies)
+
+#test clean
+openFEC.clean(companies)
 
 ############################################################################
 ## STEP 2: Get All Schedule A for Companies

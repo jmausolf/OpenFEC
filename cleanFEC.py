@@ -2,6 +2,7 @@ import pandas as pd
 import csv
 from glob import glob
 from company_name_ids import *
+from collections import Counter
 
 def read_company_csv(company):
 	company = str(company).replace(" ", "_")
@@ -38,8 +39,10 @@ def filter_company_ids(company, dev=False):
 
 	#unique values
 	if dev is True:
-		all_cids = df.employer_clean.unique().tolist()
-		print(len(all_cids), str(all_cids))
+		all_cids_unique = df.employer_clean.unique().tolist()
+		all_cids = Counter(df.employer_clean.tolist())
+		#c = Counter( input )
+		print(len(all_cids_unique), all_cids.most_common())
 	elif dev is False:
 		cid = company_name_ids[company]
 		#TODO split on dict items
@@ -60,7 +63,7 @@ def filter_company_ids(company, dev=False):
 #filter_company_ids("Apple")
 
 #filter_company_ids("Exxon Mobile", True)
-filter_company_ids("Exxon Mobile")
+#filter_company_ids("Exxon Mobile")
 
-
-
+#filter_company_ids("Exxon", True)
+#filter_company_ids("Exxon")
