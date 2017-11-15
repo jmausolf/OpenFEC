@@ -8,7 +8,7 @@ library(forcats)
 fec <- read_csv("Exxon_Mobile__merged_deduped_ANALYSIS_cleaned.csv")
 fec <- read_csv("Goldman_Sachs__merged_deduped_ANALYSIS_cleaned.csv")
 
-
+fec$`Unnamed: 0`
 fec3 <- fec %>% 
   mutate(pid = fct_collapse(party_id,
                                   "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
@@ -146,3 +146,41 @@ test
 #   ylab("Salary in $1,000's") +
 #   ggtitle("Executive Salary by Age and Gender") +
 #   theme(plot.title = element_text(hjust = 0.5)) 
+
+
+
+
+fec <- read_csv("Goldman_Sachs__merged_deduped_ANALYSIS_cleaned.csv")
+
+#Work on Base Cleaning
+df <- fec %>% 
+  select(-`Unnamed: 0`) %>% 
+  mutate(pid = fct_collapse(party_id,
+                            "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
+         pid5 = fct_lump(pid, n=5), 
+         pid3 = fct_lump(pid, n=2)) %>% 
+  filter(pid3 != "Other") %>% 
+  mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+  mutate(lncval = log(contribution_receipt_amount+1)) %>% 
+  group_by(cycle) %>% 
+  summarize(varpid3 = var(as.numeric(pid3)),
+            varpid5 = var(as.numeric(pid5)))
+
+table(df$occ)
+table(df$contribution_receipt_date, df$varpid)
+
+
+ggplot(df, aes(make_datetime(cycle), varpid)) +
+  geom_point(alpha=0.25) +
+  geom_line() + 
+  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  #scale_color_manual(values=c("#dem", "#rep")) +
+  #scale_color_manual(values=c("#262F7F", "#7F0000")) +
+  scale_color_manual(values=c("#2129B0", "#BF1200")) +
+  scale_shape_manual(values = c(3, 1)) +
+  xlab("Contribution Cycle") +
+  ylab("Number of Schedule A Contributions") +
+  ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
+  theme(legend.position="bottom") +
+  theme(legend.title=element_blank()) + 
+  theme(plot.title = element_text(hjust = 0.5))
