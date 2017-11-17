@@ -2,3 +2,10 @@
 credentials.*
 __pycache__/*
 __pycache__
+
+*.DS_Store
+*.Rhistory
+*.pyc
+
+analysis/images/*
+analysis/images/*.png
