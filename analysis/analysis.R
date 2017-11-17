@@ -6,14 +6,16 @@ library(pastecs)
 library(forcats)
 library(stringr)
 library(lubridate)
+library(scales)
 
-#source("assemble_plots.R")
+source("assemble_plots.R")
 
 ##Load Data
 #fec <- read_csv("Exxon_Mobile__merged_deduped_ANALYSIS_cleaned.csv")
-fec <- read_csv("Goldman_Sachs__schedule_a__merged_ANALYSIS_cleaned.csv")
+#fec <- read_csv("Goldman_Sachs__schedule_a__merged_ANALYSIS_cleaned.csv")
 #fec <- read_csv("ANALYSIS_cleaned__merged_MASTER.csv")
-# fec <- read_csv("ANALYSIS_cleaned__merged_MASTER_v2.csv")
+fec <- read_csv("ANALYSIS_cleaned_deduped__merged_MASTER.csv")
+#fec <- read_csv("ANALYSIS_cleaned__merged_MASTER_v2.csv")
 # fec <- read_csv("Boeing__schedule_a__merged_ANALYSIS.csv")
 # fec <- read_csv("Boeing__merged_deduped_ANALYSIS_cleaned.csv")
 
@@ -75,7 +77,7 @@ df_plt_a <- function(company){
 
 # df <- df_plt_a("Chevron")
 # df <- df_plt_a("Ford Motor")
-# df <- df_plt_a("Boeing")
+df <- df_plt_c("Boeing")
 
 df_plt_b <- function(company){
   df <- fec %>% 
@@ -120,11 +122,17 @@ df_plt_d <- function(company){
     mutate(lncval = log(contribution_receipt_amount+1)) %>% 
     group_by(cycle, cid) %>% 
     summarize(varpid3 = var(as.numeric(pid3)),
-              varpid5 = var(as.numeric(pid5)))
+              varpid5 = var(as.numeric(pid5))) 
   return(df)
 }
 
-#fec_plt_b <- df_plt_b("Goldman Sachs")
+# df <- df_plt_d("Goldman Sachs")
+# df
+# x <- df$varpid3
+# mean(x)
+# normalize(x)
+# c(scale(x))
+
 
 ################################################
 ## Make Graphs
@@ -144,12 +152,13 @@ plt_a <- function(df){
   g <- ggplot(df, aes(contribution_receipt_date, contribution_receipt_amount, color=pid3)) +
     geom_smooth() + 
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    scale_y_continuous(labels = comma) +
     #scale_color_manual(values=c("#dem", "#rep")) +
     #scale_color_manual(values=c("#262F7F", "#7F0000")) +
     scale_color_manual(values=c("#2129B0", "#BF1200")) +
     xlab("Contribution Date") +
     ylab("Contribution Receipt Amount in USD") +
-    ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
+    ggtitle(paste("Contribution Value by Party:", cid, sep=" ")) +
     theme(legend.position="bottom") +
     theme(legend.title=element_blank()) + 
     theme(plot.title = element_text(hjust = 0.5))
@@ -171,11 +180,41 @@ plt_b <- function(df){
     geom_point(alpha=0.25) +
     geom_smooth() + 
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    scale_y_continuous(labels = comma) +
     scale_color_manual(values=c("#2129B0", "#BF1200")) +
     scale_shape_manual(values = c(3, 1)) +
     xlab("Contribution Date") +
     ylab("Number of Schedule A Contributions") +
-    ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
+    ggtitle(paste("Contributions by Party:", cid, sep=" ")) +
+    theme(legend.position="bottom") +
+    theme(legend.title=element_blank()) + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  #save
+  ggsave(outfile)
+  
+  #return
+  return(g)
+}
+
+options(scipen=10000)
+
+## PLOT C - Cycles by Party
+plt_c <- function(df){
+  lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+  cid <- as.character(df$cid[1])
+  outfile <- wout("plt_c", cid)
+  g <- ggplot(df, aes(make_datetime(cycle), contrib_count, color=pid3, shape=pid3)) +
+    geom_point(alpha=0.25) +
+    geom_line() + 
+    scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    scale_y_continuous(labels = comma) +
+    #scale_y_log10(labels = comma) +
+    scale_color_manual(values=c("#2129B0", "#BF1200")) +
+    scale_shape_manual(values = c(3, 1)) +
+    xlab("Contribution Cycle") +
+    ylab("Number of Schedule A Contributions") +
+    ggtitle(paste("Contributions by Party:", cid, sep=" ")) +
     theme(legend.position="bottom") +
     theme(legend.title=element_blank()) + 
     theme(plot.title = element_text(hjust = 0.5))
@@ -188,7 +227,7 @@ plt_b <- function(df){
 }
 
 ## PLOT C - Cycles by Party
-plt_c <- function(df){
+plt_clog <- function(df){
   lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
   cid <- as.character(df$cid[1])
   outfile <- wout("plt_c", cid)
@@ -196,11 +235,13 @@ plt_c <- function(df){
     geom_point(alpha=0.25) +
     geom_line() + 
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    #scale_y_continuous(labels = comma) +
+    scale_y_log10(labels = comma) +
     scale_color_manual(values=c("#2129B0", "#BF1200")) +
     scale_shape_manual(values = c(3, 1)) +
     xlab("Contribution Cycle") +
     ylab("Number of Schedule A Contributions") +
-    ggtitle(paste("Individual Contributions by Party:", cid, sep=" ")) +
+    ggtitle(paste("Contributions by Party:", cid, sep=" ")) +
     theme(legend.position="bottom") +
     theme(legend.title=element_blank()) + 
     theme(plot.title = element_text(hjust = 0.5))
@@ -221,11 +262,16 @@ plt_d <- function(df){
     geom_line(aes(make_datetime(cycle), varpid3)) +
     #geom_line(aes(make_datetime(cycle), varpid5)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    scale_y_continuous(labels = comma) +
     scale_color_manual(values=c("#2129B0", "#BF1200")) +
     scale_shape_manual(values = c(3, 1)) +
+    scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9"), 
+                      name="Experimental\nCondition",
+                      breaks=c("ctrl", "trt1", "trt2"),
+                      labels=c("Control", "Treatment 1", "Treatment 2")) +
     xlab("Contribution Cycle") +
     ylab("Variance of Party Contributions") +
-    ggtitle(paste("Partisan Variance of Individual Contributions:", cid, sep=" ")) +
+    ggtitle(paste("Partisan Variance:", cid, sep=" ")) +
     theme(legend.position="bottom") +
     theme(legend.title=element_blank()) +
     theme(plot.title = element_text(hjust = 0.5))
@@ -243,15 +289,15 @@ plt_d <- function(df){
 ################################################
 
 # #plt_a(fec2)
-g1 <- plt_a(df_plt_a("Goldman Sachs"))
-g2 <- plt_b(df_plt_b("Goldman Sachs"))
-g3 <- plt_c(df_plt_c("Goldman Sachs"))
-g4 <- plt_d(df_plt_d("Goldman Sachs"))
-
-# png("output/fig1_gs_test.png", 
-#        width = 6000, height = 3000,
-#        pointsize = 12, res = 600)
-# multiplot(g1, g2, g3, g4, cols=2)
+# g1 <- plt_a(df_plt_a("Goldman Sachs"))
+# g2 <- plt_b(df_plt_b("Goldman Sachs"))
+# g3 <- plt_c(df_plt_c("Goldman Sachs"))
+# g4 <- plt_d(df_plt_d("Goldman Sachs"))
+# 
+# png("output/fig1_gs_test.png",
+#        width = 8000, height = 3000,
+#        pointsize = 8, res = 600)
+# multiplot(g1, g3, g4, cols=3)
 # dev.off()
 
 # png("output/fig1_gs_test.png", 
@@ -273,23 +319,32 @@ g4 <- plt_d(df_plt_d("Goldman Sachs"))
 # plt_c(df_plt_c("Boeing"))
 # plt_d(df_plt_d("Boeing"))
 
+mp <- function(cid){
+  outfile <- paste0("output/", "mp_", str_replace_all(tolower(cid), " ", "_"), ".png")
+  png(outfile, 
+      width = 8000, height = 3000,
+      pointsize = 8, res = 600)
+  multiplot(g1, g3, g4, cols=3)
+  dev.off()
+}
 
-#companies <- c("Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS")
-# companies <- c("Goldman Sachs")
-# for (cid in companies){
-#   plt1 <- plt_a(df_plt_a(cid))
-#   plt2 <- plt_b(df_plt_b(cid))
-#   plt3 <- plt_c(df_plt_c(cid))
-#   #plt4 <- plt_d(df_plt_d(cid))
-# 
-#   png("output/fig1_gs_test.png", 
-#       width = 6000, height = 3000,
-#       pointsize = 12, res = 600)
-#   multiplot(plt1, plt2, plt3, cols=3)
-#   dev.off()
-# 
-# }
+#mp("Goldman Sachs")
 
+companies <- c("Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS")
+#companies <- c("Goldman Sachs")
+#make three graph plots
+for (cid in companies){
+  g1 <- plt_a(df_plt_a(cid))
+  g3 <- plt_c(df_plt_c(cid))
+  g4 <- plt_d(df_plt_d(cid))
+  
+  g5 <- plt_clog(df_plt_c(cid))
+
+  mp(cid)
+
+}
+
+#output <- vector("")
 
 
 
