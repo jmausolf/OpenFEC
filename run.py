@@ -148,11 +148,14 @@ class openFEC:
 				pass
 
 	#Merge All Cleaned Files
-	def merge_master(filestem):
+	def merge_master(filestem, rm=False):
 		"""openFEC.merge_master("schedule_a__merged_ANALYSIS_cleaned")"""
 		print("[*] combining all files of type *{}* ...".format(filestem))
 		collapse_signature = collapse_csvs(None, filestem, None, "_MASTER")
-		remove_files(collapse_signature)
+		if rm is True:
+			remove_files(collapse_signature)
+		else:
+			pass
 
 
 ############################################################################
@@ -171,7 +174,7 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #companies = ["Microsoft"]
 
 #companies = ["Goldman Sachs"]
-companies = ["Boeing", "Microsoft"]
+#companies = ["Boeing", "Microsoft", "All"]
 #years = ["2000"]
 #companies = ["Walmart"]
 #years = ["2012"]
@@ -183,13 +186,22 @@ companies = ["Boeing", "Microsoft"]
 #openFEC.dedupe(companies, "committee")
 
 #test run 
-openFEC.getFEC(companies, years)
-openFEC.combine(companies)
-openFEC.getPARTY(companies)
+#openFEC.getFEC(companies, years)
+#openFEC.combine(companies)
+#openFEC.getPARTY(companies)
 
+#TODO
+#MOVE ANALYSIS FILES TO NEW FOLDER, THEN CLEAN
 #test clean
-openFEC.clean(companies)
+#openFEC.clean(companies)
 #openFEC.merge_master("ANALYSIS_cleaned")
+
+#Merging Old Runs and New Partial Runs
+#companies = ["Boeing", "Microsoft", "All"]
+#openFEC.dedupe(companies, "committee")
+openFEC.merge_master("merged_deduped")
+
+
 
 ############################################################################
 ## STEP 2: Get All Schedule A for Companies

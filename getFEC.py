@@ -271,8 +271,8 @@ def collapse_csvs(company, schedule_type, year=None, name=""):
 
     schedule_type = str(schedule_type).replace(" ", "_")    
     
-    print(company, schedule_type, year)
-    print(type(company), type(schedule_type), type(year))
+    #print(company, schedule_type, year)
+    #print(type(company), type(schedule_type), type(year))
     
     #all schedule files (all companies, all years)
     if company == None and year is None:
