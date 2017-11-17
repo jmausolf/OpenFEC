@@ -217,9 +217,13 @@ def get_schedule_a_employer_year(employer, year):
                         pass
                 except:
                     print("[*] OTHER ERROR: there may still be api results, check count...")
-                    break
-
-
+                    try:
+                        print("Results: {}".format(still_results(data)))
+                    finally:
+                        if page < pages:
+                            break
+                        else:
+                            return
 
         try:
             if results_count > 0:

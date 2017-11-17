@@ -159,7 +159,7 @@ class openFEC:
 ## STEP 1: Define Companies
 ############################################################################
 
-companies = ["Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS"]
+#companies = ["Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS"]
 #companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
 years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 
@@ -171,6 +171,7 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #companies = ["Microsoft"]
 
 #companies = ["Goldman Sachs"]
+companies = ["Boeing", "Microsoft"]
 #years = ["2000"]
 #companies = ["Walmart"]
 #years = ["2012"]
@@ -182,13 +183,13 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #openFEC.dedupe(companies, "committee")
 
 #test run 
-#openFEC.getFEC(companies, years)
-#openFEC.combine(companies)
-#openFEC.getPARTY(companies)
+openFEC.getFEC(companies, years)
+openFEC.combine(companies)
+openFEC.getPARTY(companies)
 
 #test clean
-#openFEC.clean(companies)
-openFEC.merge_master("ANALYSIS_cleaned")
+openFEC.clean(companies)
+#openFEC.merge_master("ANALYSIS_cleaned")
 
 ############################################################################
 ## STEP 2: Get All Schedule A for Companies
