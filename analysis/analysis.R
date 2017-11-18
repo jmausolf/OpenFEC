@@ -29,6 +29,97 @@ system('mkdir -p images')
 
 
 #Work on Base Cleaning
+dfb <- fec %>% 
+  #filter(cid == company) %>%
+  #filter(cid == "Goldman Sachs") %>%
+  select(party_id, cycle, cid) %>% 
+  mutate(pid = fct_collapse(party_id,
+                            "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
+         pid5 = fct_lump(pid, n=5)) %>% 
+  mutate(pid3 = fct_lump(pid, n=3)) %>% 
+  filter(pid3 != "Other") %>% 
+  select(cycle, pid5, pid3, cid) %>% 
+  #mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+  #mutate(lncval = log(contribution_receipt_amount+1)) %>% 
+  group_by(cycle, cid, pid3) %>% 
+  mutate(contrib_count = n()) %>% 
+  unique()
+
+df1 <- dfb %>%
+  filter(as.integer(pid3) == 1)
+df2 <- dfb %>%
+  filter(as.integer(pid3) == 2)
+df3 <- dfb %>%
+  filter(as.integer(pid3) == 3)
+
+lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+ggplot(NULL, aes(make_datetime(cycle), contrib_count, group = cid)) +
+  #geom_point(alpha=0.25) +
+  geom_line(data = df1, aes(color=pid3)) + 
+  #geom_line(data = df2, aes(color=pid3)) + 
+  geom_line(data = df3, aes(color=pid3)) + 
+  geom_smooth(data = dfb, aes(color=pid3)) +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  #scale_y_continuous(labels = comma) +
+  #scale_y_log10(labels = comma) +
+  #scale_color_manual(values=c("#2129B0", "#BF1200")) +
+  #scale_shape_manual(values = c(3, 1)) +
+  xlab("Contribution Cycle") +
+  ylab("Number of Schedule A Contributions") +
+  ggtitle(paste("Contributions by Party:", cid, sep=" ")) +
+  theme(legend.position="bottom") +
+  theme(legend.title=element_blank()) + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+
+
+df <- fec %>% 
+  filter(cid!="Berkshire Hathaway") %>% 
+  select(cycle, cid) %>% 
+  mutate(cid = factor(cid, 
+                      levels = c("Amazon", "Apple", "Microsoft",
+                                 "Boeing", "Ford Motor", "General Motors",
+                                 "Chevron", "Exxon", "Marathon Oil",
+                                 "Citigroup", "Goldman Sachs", "Wells Fargo",
+                                 "CVS", "Home Depot", "Kroger", "Walmart"
+                                 ))) %>% 
+  group_by(cycle, cid) %>% 
+  mutate(contrib_count = n()) %>% 
+  unique()
+
+lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+ggplot(df, aes(make_datetime(cycle), contrib_count)) +
+  geom_line(aes(color=cid), alpha=0.5) +
+  geom_point(aes(shape=cid), alpha=0.5) +
+  geom_smooth(color='darkblue', aes(fill="Average")) +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  #scale_y_continuous(labels = comma) +
+  scale_y_log10(labels = comma) +
+  #scale_color_discrete(guide = guide_legend(title = "Company")) +
+  scale_color_manual(values=c(
+      "#F5A200", "#DB9100", "#B57800", "#F50094", 
+      "#81004E", "#4F0030", "#BF1220", "#BF1400", 
+      "#BF3200", "#068100", "#033600", "#044F00", 
+      "#007581", "#00484F", "#00C7DB", "#00DFF5"
+      )) +
+  scale_shape_manual(values=c(
+    0, 0, 0, 1, 
+    1, 1, 2, 2, 
+    2, 4, 4, 4, 
+    6, 6, 6, 6
+  )) +
+  #guides(color=guide_legend(ncol=5)) +
+  scale_fill_manual(values = c(Average="#c6c6c6")) +
+  xlab("Contribution Cycle") +
+  ylab("Number of Schedule A Contributions") +
+  ggtitle(paste("Total Individual Contributions by Company")) +
+  guides(shape = guide_legend(override.aes = list(size = 5))) +
+  #theme(legend.position="bottom") +
+  theme(legend.title=element_blank()) + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+
 # df <- fec %>% 
 #   select(-`Unnamed: 0`) %>% 
 #   mutate(pid = fct_collapse(party_id,
@@ -77,7 +168,7 @@ df_plt_a <- function(company){
 
 # df <- df_plt_a("Chevron")
 # df <- df_plt_a("Ford Motor")
-df <- df_plt_c("Boeing")
+#df <- df_plt_c("Boeing")
 
 df_plt_b <- function(company){
   df <- fec %>% 
@@ -230,7 +321,7 @@ plt_c <- function(df){
 plt_clog <- function(df){
   lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
   cid <- as.character(df$cid[1])
-  outfile <- wout("plt_c", cid)
+  outfile <- wout("plt_clog", cid)
   g <- ggplot(df, aes(make_datetime(cycle), contrib_count, color=pid3, shape=pid3)) +
     geom_point(alpha=0.25) +
     geom_line() + 
