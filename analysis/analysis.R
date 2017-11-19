@@ -22,135 +22,163 @@ fec <- read_csv("ANALYSIS_cleaned_deduped__merged_MASTER.csv")
 ##Make directory
 system('mkdir -p images')
 
+wout <- function(plt_type, cid){
+  outfile <- paste0("images/", plt_type, "_", str_replace_all(tolower(cid), " ", "_"), ".png")
+  return(outfile)
+}
 
 ################################################
 ## Clean data
 ################################################
 
-
-#Work on Base Cleaning
-dfb <- fec %>% 
-  #filter(cid == company) %>%
-  #filter(cid == "Goldman Sachs") %>%
-  select(party_id, cycle, cid) %>% 
+#All Contributions, All CID
+dfm <- fec %>% 
+  filter(cid!="Berkshire Hathaway") %>% 
+  filter(cid!="Home Depot") %>% 
   mutate(pid = fct_collapse(party_id,
                             "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
-         pid5 = fct_lump(pid, n=5)) %>% 
-  mutate(pid3 = fct_lump(pid, n=3)) %>% 
-  filter(pid3 != "Other") %>% 
-  select(cycle, pid5, pid3, cid) %>% 
-  #mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
-  #mutate(lncval = log(contribution_receipt_amount+1)) %>% 
-  group_by(cycle, cid, pid3) %>% 
-  mutate(contrib_count = n()) %>% 
-  unique()
-
-df1 <- dfb %>%
-  filter(as.integer(pid3) == 1)
-df2 <- dfb %>%
-  filter(as.integer(pid3) == 2)
-df3 <- dfb %>%
-  filter(as.integer(pid3) == 3)
-
-lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
-ggplot(NULL, aes(make_datetime(cycle), contrib_count, group = cid)) +
-  #geom_point(alpha=0.25) +
-  geom_line(data = df1, aes(color=pid3)) + 
-  #geom_line(data = df2, aes(color=pid3)) + 
-  geom_line(data = df3, aes(color=pid3)) + 
-  geom_smooth(data = dfb, aes(color=pid3)) +
-  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
-  #scale_y_continuous(labels = comma) +
-  #scale_y_log10(labels = comma) +
-  #scale_color_manual(values=c("#2129B0", "#BF1200")) +
-  #scale_shape_manual(values = c(3, 1)) +
-  xlab("Contribution Cycle") +
-  ylab("Number of Schedule A Contributions") +
-  ggtitle(paste("Contributions by Party:", cid, sep=" ")) +
-  theme(legend.position="bottom") +
-  theme(legend.title=element_blank()) + 
-  theme(plot.title = element_text(hjust = 0.5))
-
-
-
-
-df <- fec %>% 
-  filter(cid!="Berkshire Hathaway") %>% 
-  select(cycle, cid) %>% 
+         pid5 = fct_lump(party_id, n=4),
+         pid4 = fct_lump(party_id, n=3)) %>% 
+  mutate(pid3 = if_else(pid4!="Other", pid4, NULL, missing = NULL)) %>% 
+  mutate(pid2 = if_else(pid3!="UNKNOWN", pid3, NULL, missing = NULL)) %>% 
   mutate(cid = factor(cid, 
                       levels = c("Amazon", "Apple", "Microsoft",
                                  "Boeing", "Ford Motor", "General Motors",
                                  "Chevron", "Exxon", "Marathon Oil",
                                  "Citigroup", "Goldman Sachs", "Wells Fargo",
-                                 "CVS", "Home Depot", "Kroger", "Walmart"
-                                 ))) %>% 
-  group_by(cycle, cid) %>% 
+                                 "CVS", "Kroger", "Walmart"
+                      ))) 
+
+
+# All Companies, By Party
+dfb <- dfm %>% 
+  select(cycle, pid3, pid2, cid) %>% 
+  group_by(cycle, cid, pid3) %>% 
   mutate(contrib_count = n()) %>% 
   unique()
 
+
+df1 <- dfb %>%
+  filter(as.integer(pid3) == 1)
+df2 <- dfb %>%
+  filter(as.integer(pid3) == 2)
+# df3 <- dfb %>%
+#   filter(as.integer(pid3) == 3)
+
+outfile <- wout("plt_parties", "all_companies")
 lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
-ggplot(df, aes(make_datetime(cycle), contrib_count)) +
-  geom_line(aes(color=cid), alpha=0.5) +
-  geom_point(aes(shape=cid), alpha=0.5) +
-  geom_smooth(color='darkblue', aes(fill="Average")) +
+a1 <- ggplot(NULL, aes(make_datetime(cycle), contrib_count, group = cid)) +
+  geom_line(data = df1, aes(color=pid3)) + 
+  geom_line(data = df2, aes(color=pid3)) + 
+  geom_point(data = df1, aes(shape=cid), alpha=0.5) +
+  geom_point(data = df2, aes(shape=cid), alpha=0.5) +
   scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
-  #scale_y_continuous(labels = comma) +
   scale_y_log10(labels = comma) +
-  #scale_color_discrete(guide = guide_legend(title = "Company")) +
-  scale_color_manual(values=c(
-      "#F5A200", "#DB9100", "#B57800", "#F50094", 
-      "#81004E", "#4F0030", "#BF1220", "#BF1400", 
-      "#BF3200", "#068100", "#033600", "#044F00", 
-      "#007581", "#00484F", "#00C7DB", "#00DFF5"
-      )) +
+  scale_color_manual(values=c("#2129B0", "#BF1200", "#360033")) +
   scale_shape_manual(values=c(
     0, 0, 0, 1, 
     1, 1, 2, 2, 
     2, 4, 4, 4, 
-    6, 6, 6, 6
-  )) +
-  #guides(color=guide_legend(ncol=5)) +
+    6, 6, 6, 6)) +
+  xlab("Contribution Cycle") +
+  ylab("Number of Schedule A Contributions") +
+  ggtitle(paste("Contributions by Party: All Companies")) +
+  theme(legend.title=element_blank()) + 
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(outfile)
+
+
+#All Contributions, All CID
+df <-  dfm %>%
+  select(cycle, cid) %>% 
+  group_by(cycle, cid) %>% 
+  mutate(contrib_count = n()) %>% 
+  unique()
+  
+outfile <- wout("plt_contrib", "all_companies")
+lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+a2 <- ggplot(df, aes(make_datetime(cycle), contrib_count)) +
+  geom_line(aes(color=cid), alpha=0.5) +
+  geom_point(aes(shape=cid), alpha=0.5) +
+  geom_smooth(color='darkblue', aes(fill="Average")) +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  scale_y_log10(labels = comma) +
+  scale_color_manual(values=c(
+    "#F5A200", "#DB9100", "#B57800", 
+    "#F50094", "#81004E", "#4F0030", 
+    "#BF1220", "#BF1400", "#BF3200", 
+    "#068100", "#033600", "#044F00", 
+    "#007581", "#00C7DB", "#00DFF5")) +
+  scale_shape_manual(values=c(
+    0, 0, 0, 1, 
+    1, 1, 2, 2, 
+    2, 4, 4, 4, 
+    6, 6, 6, 6)) +
   scale_fill_manual(values = c(Average="#c6c6c6")) +
   xlab("Contribution Cycle") +
   ylab("Number of Schedule A Contributions") +
   ggtitle(paste("Total Individual Contributions by Company")) +
   guides(shape = guide_legend(override.aes = list(size = 5))) +
-  #theme(legend.position="bottom") +
   theme(legend.title=element_blank()) + 
   theme(plot.title = element_text(hjust = 0.5))
+ggsave(outfile)
 
 
-# df <- fec %>% 
-#   select(-`Unnamed: 0`) %>% 
-#   mutate(pid = fct_collapse(party_id,
-#                             "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
-#          pid5 = fct_lump(pid, n=5), 
-#          pid3 = fct_lump(pid, n=2)) %>% 
-#   filter(pid3 != "Other") %>% 
-#   #filter(entity_type_desc == "INDIVIDUAL") %>% #not available pre 2004, just strips old obs
-#   mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
-#   mutate(lncval = log(contribution_receipt_amount+1))
+#Contrib variance
+df <-  dfm %>%
+  select(cycle, cid, pid2) %>% 
+  filter(!is.na(pid2)) %>% 
+  group_by(cycle, cid) %>% 
+  summarize(varpid = var(as.numeric(pid2)))
 
-# df <- fec %>% 
-#   select(-`Unnamed: 0`) %>% 
-#   mutate(pid = fct_collapse(party_id,
-#                             "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
-#          pid5 = fct_lump(pid, n=5), 
-#          pid3 = fct_lump(pid, n=2)) %>% 
-#   filter(pid3 != "Other") %>% 
-#   mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
-#   mutate(lncval = log(contribution_receipt_amount+1)) %>% 
-#   group_by(cycle) %>% 
-#   summarize(varpid3 = var(as.numeric(pid3)),
-#             varpid5 = var(as.numeric(pid5)))
+# Perhaps make both
+# df <-  dfm %>%
+#   select(cycle, cid, pid4) %>% 
+#   filter(!is.na(pid4)) %>% 
+#   group_by(cycle, cid) %>% 
+#   summarize(varpid = var(as.numeric(pid4)))
 
-#table(df$entity_type, df$cycle, useNA = "always")
 
-#Get variance
-#var(as.numeric(df$pid3))
+outfile <- wout("plt_variance", "all_companies")
+lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+a3 <- ggplot(df, aes(make_datetime(cycle), varpid)) +
+  geom_line(aes(color=cid), alpha=0.5) +
+  geom_point(aes(shape=cid), alpha=0.5) +
+  geom_smooth(color='darkblue', aes(fill="Average")) +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  #scale_y_log10(labels = comma) +
+  scale_color_manual(values=c(
+    "#F5A200", "#DB9100", "#B57800", 
+    "#F50094", "#81004E", "#4F0030", 
+    "#BF1220", "#BF1400", "#BF3200", 
+    "#068100", "#033600", "#044F00", 
+    "#007581", "#00C7DB", "#00DFF5")) +
+  scale_shape_manual(values=c(
+    0, 0, 0, 1, 
+    1, 1, 2, 2, 
+    2, 4, 4, 4, 
+    6, 6, 6, 6)) +
+  scale_fill_manual(values = c(Average="#c6c6c6")) +
+  xlab("Contribution Cycle") +
+  ylab("Variance of Party Contributions") +
+  ggtitle(paste("Variance of Party Contributions by Company")) +
+  guides(shape = guide_legend(override.aes = list(size = 5))) +
+  theme(legend.title=element_blank()) + 
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(outfile)
 
-#Get Data Specific Company
-#filter(cid == "Goldman Sachs")
+
+
+#All individuals
+df <-  dfg %>%
+  select(cycle, cid, contributor_name) %>% 
+  group_by(cycle, cid, contributor_name) %>% 
+  mutate(contrib_count = n()) %>% 
+  unique()
+
+################################################
+## Company DF's
+################################################
 
 df_plt_a <- function(company){
   df <- fec %>%
@@ -166,9 +194,7 @@ df_plt_a <- function(company){
   return(df)
 }
 
-# df <- df_plt_a("Chevron")
-# df <- df_plt_a("Ford Motor")
-#df <- df_plt_c("Boeing")
+
 
 df_plt_b <- function(company){
   df <- fec %>% 
@@ -217,22 +243,14 @@ df_plt_d <- function(company){
   return(df)
 }
 
-# df <- df_plt_d("Goldman Sachs")
-# df
-# x <- df$varpid3
-# mean(x)
-# normalize(x)
-# c(scale(x))
+
 
 
 ################################################
 ## Make Graphs
 ################################################
 
-wout <- function(plt_type, cid){
-  outfile <- paste0("images/", plt_type, "_", str_replace_all(tolower(cid), " ", "_"), ".png")
-  return(outfile)
-}
+
 
 ## Plot A
 ## PLOT TS-PARTY - All Individual Contributions (Contribution Level)
@@ -379,36 +397,8 @@ plt_d <- function(df){
 ## Run
 ################################################
 
-# #plt_a(fec2)
-# g1 <- plt_a(df_plt_a("Goldman Sachs"))
-# g2 <- plt_b(df_plt_b("Goldman Sachs"))
-# g3 <- plt_c(df_plt_c("Goldman Sachs"))
-# g4 <- plt_d(df_plt_d("Goldman Sachs"))
-# 
-# png("output/fig1_gs_test.png",
-#        width = 8000, height = 3000,
-#        pointsize = 8, res = 600)
-# multiplot(g1, g3, g4, cols=3)
-# dev.off()
 
-# png("output/fig1_gs_test.png", 
-#     width = 6000, height = 3000,
-#     pointsize = 12, res = 600)
-# multiplot(c(plta, pltb, pltc), cols=3)
-# dev.off()
 
-# plt_d(df_plt_d("Goldman Sachs"))
-# 
-# 
-# plt_a(df_plt_a("Exxon"))
-# plt_b(df_plt_b("Exxon"))
-# plt_c(df_plt_c("Exxon"))
-# plt_d(df_plt_d("Exxon"))
-
-# plt_a(df_plt_a("Boeing"))
-# plt_b(df_plt_b("Boeing"))
-# plt_c(df_plt_c("Boeing"))
-# plt_d(df_plt_d("Boeing"))
 
 mp <- function(cid){
   outfile <- paste0("output/", "mp_", str_replace_all(tolower(cid), " ", "_"), ".png")
@@ -419,7 +409,17 @@ mp <- function(cid){
   dev.off()
 }
 
-#mp("Goldman Sachs")
+
+mpa <- function(cid){
+  outfile <- paste0("output/", "mpa_", str_replace_all(tolower(cid), " ", "_"), ".png")
+  png(outfile, 
+      width = 10000, height = 3000,
+      pointsize = 8, res = 600)
+  #multiplot(g1, g3, g4, cols=3)
+  multiplot(a1, a2, a3, cols=3)
+  dev.off()
+}
+
 
 companies <- c("Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS")
 #companies <- c("Goldman Sachs")
@@ -435,8 +435,8 @@ for (cid in companies){
 
 }
 
-#output <- vector("")
-
+#group graphs
+mpa("all companies")
 
 
 
