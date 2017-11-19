@@ -377,7 +377,7 @@ ggsave(outfile, width = 8, height = 8)
 
 
 ################################################
-## Company DF's
+## Company DF's - 2 PARTY
 ################################################
 
 df_plt_a <- function(company){
@@ -412,6 +412,7 @@ df_plt_c <- function(company){
   return(df)
 }
 
+
 df_plt_d <- function(company){
   df <- dfm %>%
     filter(cid == company) %>% 
@@ -425,10 +426,58 @@ df_plt_d <- function(company){
 }
 
 
+################################################
+## Company DF's - UNKNOWN
+################################################
+
+df_plt_a_uk <- function(company){
+  df <- dfm %>%
+    filter(cid == company) %>%
+    # filter(cid == "Marathon Oil") %>%
+    filter(!is.na(pid4)) %>% 
+    mutate(piduk = fct_collapse(pid4, UNKNOWN_PARTY = c("UNKNOWN", "Other")))
+  return(df)
+}
+
+
+df_plt_b_uk <- function(company){
+  df <- dfm %>% 
+    filter(cid == company) %>%
+    # filter(cid == "Marathon Oil") %>%
+    filter(!is.na(pid4)) %>%
+    mutate(piduk = fct_collapse(pid4, UNKNOWN_PARTY = c("UNKNOWN", "Other"))) %>% 
+    group_by(contribution_receipt_date, piduk) %>% 
+    mutate(contrib_count = n())
+  return(df)
+}
+
+
+df_plt_c_uk <- function(company){
+  df <- dfm %>% 
+    filter(cid == company) %>%
+    # filter(cid == "Marathon Oil") %>%
+    filter(!is.na(pid4)) %>%
+    mutate(piduk = fct_collapse(pid4, UNKNOWN_PARTY = c("UNKNOWN", "Other"))) %>% 
+    group_by(cycle, piduk) %>% 
+    mutate(contrib_count = n())
+  return(df)
+}
+
+df_plt_d_uk <- function(company){
+  df <- dfm %>%
+    filter(cid == company) %>%
+    # filter(cid == "Marathon Oil") %>%
+    select(cycle, cid, pid4) %>% 
+    filter(!is.na(pid4)) %>%
+    mutate(piduk = fct_collapse(pid4, UNKNOWN_PARTY = c("UNKNOWN", "Other"))) %>% 
+    group_by(cycle, cid) %>% 
+    summarize(varpiduk = var(as.numeric(piduk))) 
+  return(df)
+}
 
 
 ################################################
-## Make Graphs
+## Make Graphs 2 PARTY
 ################################################
 
 
@@ -574,6 +623,153 @@ plt_d <- function(df){
 }
 
 
+
+################################################
+## Make Graphs UNKNOWN PARTY
+################################################
+
+
+## Plot A
+## PLOT TS-PARTY - All Individual Contributions (Contribution Level)
+plt_a_uk <- function(df){
+  lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+  cid <- as.character(df$cid[1])
+  outfile <- wout("plt_a", cid)
+  g <- ggplot(df, aes(contribution_receipt_date, contribution_receipt_amount, color=piduk)) +
+    geom_smooth() + 
+    scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    scale_y_continuous(labels = comma) +
+    #scale_color_manual(values=c("#dem", "#rep")) +
+    #scale_color_manual(values=c("#262F7F", "#7F0000")) +
+    scale_color_manual(values=c("#2129B0", "#BF1200", "#360033")) +
+    xlab("Contribution Date") +
+    ylab("Contribution Receipt Amount in USD") +
+    ggtitle(paste("Contribution Value by Party:", cid, sep=" ")) +
+    theme(legend.position="bottom") +
+    theme(legend.title=element_blank()) + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  #save
+  ggsave(outfile)
+  
+  #return
+  return(g)
+}
+
+## Plot B
+## PLOT TS-PARTY - All Individual Contributions (Contribution Level)
+plt_b_uk <- function(df){
+  lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+  cid <- as.character(df$cid[1])
+  outfile <- wout("plt_b", cid)
+  g <- ggplot(df, aes(contribution_receipt_date, contrib_count, color=piduk, shape=piduk)) +
+    geom_point(alpha=0.25) +
+    geom_smooth() + 
+    scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    scale_y_continuous(labels = comma) +
+    scale_color_manual(values=c("#2129B0", "#BF1200", "#360033")) +
+    scale_shape_manual(values = c(3, 1, 0)) +
+    xlab("Contribution Date") +
+    ylab("Number of Schedule A Contributions") +
+    ggtitle(paste("Contributions by Party:", cid, sep=" ")) +
+    theme(legend.position="bottom") +
+    theme(legend.title=element_blank()) + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  #save
+  ggsave(outfile)
+  
+  #return
+  return(g)
+}
+
+options(scipen=10000)
+
+## PLOT C - Cycles by Party
+plt_c_uk <- function(df){
+  lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+  cid <- as.character(df$cid[1])
+  outfile <- wout("plt_c", cid)
+  g <- ggplot(df, aes(make_datetime(cycle), contrib_count, color=piduk, shape=piduk)) +
+    geom_point(alpha=0.25) +
+    geom_line() + 
+    scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    scale_y_continuous(labels = comma) +
+    #scale_y_log10(labels = comma) +
+    scale_color_manual(values=c("#2129B0", "#BF1200", "#360033")) +
+    scale_shape_manual(values = c(3, 1, 0)) +
+    xlab("Contribution Cycle") +
+    ylab("Number of Schedule A Contributions") +
+    ggtitle(paste("Contributions by Party:", cid, sep=" ")) +
+    theme(legend.position="bottom") +
+    theme(legend.title=element_blank()) + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  #save
+  ggsave(outfile)
+  
+  #return
+  return(g)
+}
+
+## PLOT C - Cycles by Party
+plt_clog_uk <- function(df){
+  lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+  cid <- as.character(df$cid[1])
+  outfile <- wout("plt_clog", cid)
+  g <- ggplot(df, aes(make_datetime(cycle), contrib_count, color=piduk, shape=piduk)) +
+    geom_point(alpha=0.25) +
+    geom_line() + 
+    scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    #scale_y_continuous(labels = comma) +
+    scale_y_log10(labels = comma) +
+    scale_color_manual(values=c("#2129B0", "#BF1200", "#360033")) +
+    scale_shape_manual(values = c(3, 1, 0)) +
+    xlab("Contribution Cycle") +
+    ylab("Number of Schedule A Contributions") +
+    ggtitle(paste("Contributions by Party:", cid, sep=" ")) +
+    theme(legend.position="bottom") +
+    theme(legend.title=element_blank()) + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  #save
+  ggsave(outfile)
+  
+  #return
+  return(g)
+}
+
+plt_d_uk <- function(df){
+  lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+  cid <- as.character(df$cid[1])
+  outfile <- wout("plt_d", cid)
+  g <- ggplot(df) +
+    #geom_point(alpha=0.25) +
+    geom_line(aes(make_datetime(cycle), varpiduk)) +
+    #geom_line(aes(make_datetime(cycle), varpid5)) +
+    scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+    scale_y_continuous(labels = comma) +
+    scale_color_manual(values=c("#2129B0", "#BF1200", "#360033")) +
+    scale_shape_manual(values = c(3, 1)) +
+    scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9"), 
+                      name="Experimental\nCondition",
+                      breaks=c("ctrl", "trt1", "trt2"),
+                      labels=c("Control", "Treatment 1", "Treatment 2")) +
+    xlab("Contribution Cycle") +
+    ylab("Variance of Party Contributions") +
+    ggtitle(paste("Partisan Variance:", cid, sep=" ")) +
+    theme(legend.position="bottom") +
+    theme(legend.title=element_blank()) +
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  #save
+  ggsave(outfile)
+  
+  #return
+  return(g)
+}
+
+
 ################################################
 ## Run
 ################################################
@@ -583,6 +779,15 @@ plt_d <- function(df){
 
 mp <- function(cid){
   outfile <- paste0("output/", "mp_", str_replace_all(tolower(cid), " ", "_"), ".png")
+  png(outfile, 
+      width = 8000, height = 3000,
+      pointsize = 8, res = 600)
+  multiplot(g1, g3, g4, cols=3)
+  dev.off()
+}
+
+mp_uk <- function(cid){
+  outfile <- paste0("output/", "mp_uk_", str_replace_all(tolower(cid), " ", "_"), ".png")
   png(outfile, 
       width = 8000, height = 3000,
       pointsize = 8, res = 600)
@@ -603,9 +808,14 @@ mpa <- function(cid){
 
 
 # companies <- c("Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS")
+
 companies <- c("Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Amazon", "Boeing", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS")
+
+#companies <- c("Exxon", "Marathon Oil", "Chevron")
 #companies <- c("Goldman Sachs")
 #make three graph plots
+
+#MAJOR 2-PARTY GRAPHS
 for (cid in companies){
   g1 <- plt_a(df_plt_a(cid))
   g3 <- plt_c(df_plt_c(cid))
@@ -617,8 +827,23 @@ for (cid in companies){
 
 }
 
+#UNKNOWN 3-PARTY GRAPHS
+for (cid in companies){
+  g1 <- plt_a_uk(df_plt_a_uk(cid))
+  g3 <- plt_c_uk(df_plt_c_uk(cid))
+  g4 <- plt_d_uk(df_plt_d_uk(cid))
+  
+  g5 <- plt_clog_uk(df_plt_c_uk(cid))
+  
+  mp_uk(cid)
+  
+}
+
+
 #group graphs
 mpa("all companies")
+
+
 
 
 
