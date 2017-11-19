@@ -98,20 +98,8 @@ dfocc <- dfm %>%
                                                )) %>% 
   mutate(occlevels = fct_lump(occdir, n=4))
 
-df <- dfocc %>% 
-  select(cycle, pid3, pid2, cid, occlevels) %>% 
-  filter(!is.na(pid2),
-         !is.na(occlevels),
-         cycle >= 2004) %>% 
-  group_by(cycle, cid, pid2, occlevels) %>%
-  mutate(contrib_count = n()) %>% 
-  unique()
 
-ggplot(df) +
-  geom_bar(aes(x = occlevels, fill = pid2), position = "fill") +
-  facet_grid(cid~cycle)
-
-df <- dfocc %>% 
+dfocc3 <- dfocc %>% 
   select(cycle, pid3, pid2, cid, occlevels) %>% 
   filter(!is.na(pid2),
          !is.na(occlevels),
@@ -127,17 +115,12 @@ df2 <- df %>%
                              "OTHERS" = c("ENGINEER", "Other")))
 
 
-
-ggplot(df) +
-  geom_bar(aes(x = occlevels, fill = pid2), position = "fill") +
-  facet_grid(cid~cycle)
-
 ##GRAPH
 #PARTISAN LEANING OCCLEVELS
 #ALL COMPANIES
 outfile <- wout("plt_partisan_occ", "by_all_companies")
 lims <- c(as.POSIXct(as.Date("2001/01/02")), NA)
-p1 <- ggplot(df) +
+p1 <- ggplot(dfocc3) +
   geom_bar(aes(make_datetime(cycle), fill = pid2), alpha=0.95, position = "fill") +
   facet_grid(cid~occ3) +
   scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
@@ -156,7 +139,7 @@ ggsave(outfile, width = 10, height = 14)
 #ALL COMPANIES
 outfile <- wout("plt_partisan_occ", "all_companies")
 lims <- c(as.POSIXct(as.Date("2001/01/02")), NA)
-ggplot(df) +
+ggplot(dfocc3) +
   geom_bar(aes(make_datetime(cycle), fill = pid2), alpha=0.95, position = "fill") +
   facet_grid(.~occ3) +
   scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
@@ -281,7 +264,6 @@ df <-  dfm %>%
 #   group_by(cycle, cid) %>% 
 #   summarize(varpid = var(as.numeric(pid4)))
 
-
 outfile <- wout("plt_variance", "all_companies")
 lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
 a3 <- ggplot(df, aes(make_datetime(cycle), varpid)) +
@@ -310,7 +292,49 @@ a3 <- ggplot(df, aes(make_datetime(cycle), varpid)) +
   theme(plot.title = element_text(hjust = 0.5))
 ggsave(outfile)
 
+#Variance Occupations
+df <-  dfocc3 %>%
+  select(cycle, cid, pid2, occ3) %>% 
+  filter(!is.na(pid2),
+         !is.na(occ3)) %>% 
+  group_by(cycle, cid, occ3) %>% 
+  summarize(varpid = var(as.numeric(pid2)))
 
+df1 <- df %>% 
+  filter(occ3=="CSUITE") 
+
+df2 <- df %>% 
+  filter(occ3=="MANAGEMENT") 
+
+df3 <-  df %>%
+  filter(occ3=="OTHERS")
+
+
+outfile <- wout("plt_variance_occ", "all_companies")
+lims <- c(as.POSIXct(as.Date("2001/01/02")), NA)
+ggplot(df, aes(make_datetime(cycle), varpid, color=occ3)) +
+  stat_smooth(se=FALSE, method = "lm") +
+  #geom_smooth(se=FALSE) +
+  #geom_point(alpha = 0.3) +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  scale_color_manual(values=c("#F2B809", "#03275A", "#1A7DD7")) +
+  facet_wrap(~cid, nrow = 5) +
+  xlab("Contribution Cycle") +
+  ylab("Variance of Party Contributions") +
+  labs(colour = "Organizational Hierarchy: ") +
+  ggtitle(paste("Variance of Party Contributions by Organizational Hierarchy and Company")) +
+  guides(shape = guide_legend(override.aes = list(size = 5))) +
+  theme(legend.position="bottom") +
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(outfile, width = 10, height = 14)
+
+#Variance Occupations
+df <-  dfocc3 %>%
+  select(cycle, cid, pid2, occ3) %>% 
+  filter(!is.na(pid2),
+         !is.na(occ3)) %>% 
+  group_by(cycle, cid, occ3) %>% 
+  summarize(varpid = var(as.numeric(pid2)))
 
 #All individuals
 df <-  dfg %>%
