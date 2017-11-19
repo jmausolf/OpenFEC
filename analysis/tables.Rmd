@@ -166,3 +166,18 @@ save_stargazer("output/descriptive_stats.tex",
 stargazer(as.data.frame(df_stats), type = "text", median = TRUE)
 ```
 
+
+#Variance table
+
+```{r}
+#Variance Occupations
+df <-  dfocc3 %>%
+  select(cycle, cid, pid2, occ3) %>% 
+  filter(!is.na(pid2),
+         !is.na(occ3)) %>% 
+  group_by(cycle, cid, occ3) %>% 
+  summarize(varpid = var(as.numeric(pid2)))
+
+
+```
+

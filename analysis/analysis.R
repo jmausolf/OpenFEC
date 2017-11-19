@@ -96,7 +96,10 @@ dfocc <- dfm %>%
                                                  "PRINCIPAL SOFTWARE ENGINEER", "SYSTEMS ENGINEER", "ELECTRICAL ENGINEER",
                                                  "COMPUTER ENGINEER")
                                                )) %>% 
-  mutate(occlevels = fct_lump(occdir, n=4))
+  mutate(occlevels = fct_lump(occdir, n=4)) %>% 
+  mutate(occ3 = fct_collapse(occlevels,
+                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
+                             "OTHERS" = c("ENGINEER", "Other")))
 
 
 dfocc3 <- dfocc %>% 
@@ -104,12 +107,6 @@ dfocc3 <- dfocc %>%
   filter(!is.na(pid2),
          !is.na(occlevels),
          cycle >= 2004) %>% 
-  mutate(occ3 = fct_collapse(occlevels,
-                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
-                             "OTHERS" = c("ENGINEER", "Other")))
-
-df2 <- df %>% 
-  #filter(cid == "Goldman Sachs") %>% 
   mutate(occ3 = fct_collapse(occlevels,
                              "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
                              "OTHERS" = c("ENGINEER", "Other")))
@@ -309,7 +306,7 @@ df2 <- df %>%
 df3 <-  df %>%
   filter(occ3=="OTHERS")
 
-
+##VARIANCE PLOT
 outfile <- wout("plt_variance_occ", "all_companies")
 lims <- c(as.POSIXct(as.Date("2001/01/02")), NA)
 ggplot(df, aes(make_datetime(cycle), varpid, color=occ3)) +
@@ -342,6 +339,42 @@ df <-  dfg %>%
   group_by(cycle, cid, contributor_name) %>% 
   mutate(contrib_count = n()) %>% 
   unique()
+
+
+df <- dfm %>% 
+  # filter(cid=="Goldman Sachs") %>% 
+  filter(!is.na(pid2))
+
+##SCATTER PLOT
+outfile <- wout("plt_scatter_avg", "all_companies")
+lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+ggplot(df, aes(contribution_receipt_date, contribution_receipt_amount)) +
+  #geom_line(aes(color=cid), alpha=0.5) +
+  geom_jitter(aes(color=pid2), alpha=0.2) +
+  geom_smooth(aes(color=pid2)) +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  scale_y_log10(labels = comma) +
+  # scale_color_manual(values=c(
+  #   "#2129B0", "#BF1200", "#F5A200", 
+  #   "#F50094", "#4F0030", "#BF1220", 
+  #   "#068100", "#BF1400", "#BF3200", 
+  #   "#00DFF5", "#033600", "#044F00", 
+  #   "#007581", "#00C7DB", "#00DFF5", "#360033")) +
+  # scale_shape_manual(values=c(
+  #   0, 0, 0, 1, 
+  #   1, 1, 2, 2, 
+  #   2, 4, 4, 4, 
+  #   6, 6, 6, 6)) +
+  # scale_fill_manual(values = c(Average="#c6c6c6")) +
+  scale_color_manual(values=c("#2129B0", "#BF1200", "#360033")) +
+  xlab("Contribution Date") +
+  ylab("Contribution Receipt Amount in USD") +
+  ggtitle(paste("Vale of Individual Contributions by Party")) +
+  guides(color = guide_legend(override.aes = list(size = 5))) +
+  theme(legend.title=element_blank()) + 
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(outfile, width = 8, height = 8)
+
 
 ################################################
 ## Company DF's
