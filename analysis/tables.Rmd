@@ -245,3 +245,18 @@ save_stargazer("output/vartable2.tex",
 
 ```
 
+
+#Variance table
+
+```{r}
+#Variance Occupations
+df <-  dfocc3 %>%
+  select(cycle, cid, pid2, occ3) %>% 
+  filter(!is.na(pid2),
+         !is.na(occ3)) %>% 
+  group_by(cycle, cid, occ3) %>% 
+  summarize(varpid = var(as.numeric(pid2)))
+
+
+```
+
