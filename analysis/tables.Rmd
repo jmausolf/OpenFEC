@@ -11,9 +11,9 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
 library(tidyverse)
 library(stargazer)
-library(Hmisc)
-library(stringr)
-library(car)
+# library(Hmisc)
+# library(stringr)
+# library(car)
 library(forcats)
 
 #Change Append = TRUE to Not Overwrite Files
@@ -112,7 +112,20 @@ dfocc <- dfm %>%
                                                  "PRINCIPAL SOFTWARE ENGINEER", "SYSTEMS ENGINEER", "ELECTRICAL ENGINEER",
                                                  "COMPUTER ENGINEER")
                                                )) %>% 
-  mutate(occlevels = fct_lump(occdir, n=4))
+  mutate(occlevels = fct_lump(occdir, n=4)) %>% 
+  mutate(occ3 = fct_collapse(occlevels,
+                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
+                             "OTHERS" = c("ENGINEER", "Other")))
+
+
+dfocc3 <- dfocc %>% 
+  select(cycle, pid3, pid2, cid, occlevels) %>% 
+  filter(!is.na(pid2),
+         !is.na(occlevels),
+         cycle >= 2004) %>% 
+  mutate(occ3 = fct_collapse(occlevels,
+                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
+                             "OTHERS" = c("ENGINEER", "Other")))
 ```
 
 
@@ -163,6 +176,72 @@ save_stargazer("output/descriptive_stats.tex",
                digits = 2,
                title = "Descriptive Statistics from the Federal Election Commission API" )
 
-stargazer(as.data.frame(df_stats), type = "text", median = TRUE)
+#stargazer(as.data.frame(df_stats), type = "text", median = TRUE)
+```
+
+
+#Variance table
+
+```{r, results='asis', echo=FALSE}
+#Get Variance by Organization Levels
+df1a <-  dfocc3 %>%
+  select(cycle, cid, pid2, occ3) %>% 
+  filter(!is.na(pid2),
+         !is.na(occ3)) %>%
+  mutate(occ = occ3) %>% 
+  group_by(cycle, cid, occ) %>% 
+  summarize(varpid = var(as.numeric(pid2)))
+
+#Get Variance All Levels
+df1b <-  dfocc3 %>%
+  select(cycle, cid, pid2, occ3) %>% 
+  filter(!is.na(pid2),
+         !is.na(occ3)) %>%
+  mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) %>% 
+  mutate(occ = occ4) %>% 
+  group_by(cycle, cid, occ) %>% 
+  summarize(varpid = var(as.numeric(pid2)))
+
+df1 <- rbind(df1a, df1b) %>% 
+  mutate(occ = factor(occ, 
+                      levels = c("CSUITE", "MANAGEMENT", "OTHERS", "ALL")))
+
+##VARIANCE TABLES
+
+df_var_table <- df1 %>% 
+  group_by(occ) %>% 
+  summarise(meanvar = mean(varpid, na.rm = T),
+            medvar = median(varpid, na.rm = T),
+            sdvar = sd(varpid, na.rm = T)
+            ) %>% 
+  rename("Organizational Hierarchy" = occ,
+         "Mean Variance" = meanvar,
+         "Median Variance" = medvar,
+         "SD" = sdvar)
+
+df_var_cycle_table <- df1 %>% 
+  group_by(occ, cycle) %>% 
+  summarise(meanvar = mean(varpid, na.rm = T)) %>% 
+  spread(cycle, meanvar) %>% 
+  rename("Organizational Hierarchy" = occ)
+
+save_stargazer("output/vartable1.tex",
+               as.data.frame(df_var_table), header=FALSE,
+               type = "latex", 
+               digits = 3, summary = FALSE,
+               font.size = "scriptsize",
+               title = "Variance of Major Party Contributions by Organizational Hierarchy" )
+
+save_stargazer("output/vartable2.tex",
+               as.data.frame(df_var_cycle_table), header=FALSE,
+               type = "latex", 
+               digits = 3, summary = FALSE,
+               font.size = "scriptsize",
+               title = "Variance of Major Party Contributions by Organizational Hierarchy and Year" )
+
+
+#stargazer(as.data.frame(df_var_table), type = "text", digits = 3, summary = FALSE)
+#stargazer(as.data.frame(df_var_cycle_table), type = "text", digits = 3, summary = FALSE)
+
 ```
 
