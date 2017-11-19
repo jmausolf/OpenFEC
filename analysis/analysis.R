@@ -181,65 +181,46 @@ df <-  dfg %>%
 ################################################
 
 df_plt_a <- function(company){
-  df <- fec %>%
+  df <- dfm %>%
     filter(cid == company) %>%
-    select(-`Unnamed: 0`) %>% 
-    mutate(pid = fct_collapse(party_id,
-                              "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
-           pid5 = fct_lump(pid, n=5), 
-           pid3 = fct_lump(pid, n=2)) %>% 
-    filter(pid3 != "Other") %>% 
+    filter(!is.na(pid2)) %>% 
     mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
     mutate(lncval = log(contribution_receipt_amount+1))
   return(df)
 }
 
 
-
 df_plt_b <- function(company){
-  df <- fec %>% 
+  df <- dfm %>% 
     filter(cid == company) %>%
-    mutate(pid = fct_collapse(party_id,
-                              "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
-           pid5 = fct_lump(pid, n=5)) %>% 
-    mutate(pid3 = fct_lump(pid, n=2)) %>% 
-    filter(pid3 != "Other") %>% 
+    filter(!is.na(pid2)) %>% 
     mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
     mutate(lncval = log(contribution_receipt_amount+1)) %>% 
-    group_by(contribution_receipt_date, pid3) %>% 
+    group_by(contribution_receipt_date, pid2) %>% 
     mutate(contrib_count = n())
   return(df)
 }
 
 df_plt_c <- function(company){
-  df <- fec %>% 
+  df <- dfm %>% 
     filter(cid == company) %>%
-    mutate(pid = fct_collapse(party_id,
-                              "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
-           pid5 = fct_lump(pid, n=5)) %>% 
-    mutate(pid3 = fct_lump(pid, n=2)) %>% 
-    filter(pid3 != "Other") %>% 
-    mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
-    mutate(lncval = log(contribution_receipt_amount+1)) %>% 
-    group_by(cycle, pid3) %>% 
+    filter(!is.na(pid2)) %>% 
+    #mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+    #mutate(lncval = log(contribution_receipt_amount+1)) %>% 
+    group_by(cycle, pid2) %>% 
     mutate(contrib_count = n())
   return(df)
 }
 
 df_plt_d <- function(company){
-  df <- fec %>%
+  df <- dfm %>%
     filter(cid == company) %>% 
-    #select(-`Unnamed: 0`) %>% 
-    mutate(pid = fct_collapse(party_id,
-                              "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
-           pid5 = fct_lump(pid, n=5), 
-           pid3 = fct_lump(pid, n=2)) %>% 
-    filter(pid3 != "Other") %>% 
-    mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
-    mutate(lncval = log(contribution_receipt_amount+1)) %>% 
+    select(cycle, cid, pid2) %>% 
+    filter(!is.na(pid2)) %>% 
+    #mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+    #mutate(lncval = log(contribution_receipt_amount+1)) %>% 
     group_by(cycle, cid) %>% 
-    summarize(varpid3 = var(as.numeric(pid3)),
-              varpid5 = var(as.numeric(pid5))) 
+    summarize(varpid2 = var(as.numeric(pid2))) 
   return(df)
 }
 
@@ -258,7 +239,7 @@ plt_a <- function(df){
   lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
   cid <- as.character(df$cid[1])
   outfile <- wout("plt_a", cid)
-  g <- ggplot(df, aes(contribution_receipt_date, contribution_receipt_amount, color=pid3)) +
+  g <- ggplot(df, aes(contribution_receipt_date, contribution_receipt_amount, color=pid2)) +
     geom_smooth() + 
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
     scale_y_continuous(labels = comma) +
@@ -285,7 +266,7 @@ plt_b <- function(df){
   lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
   cid <- as.character(df$cid[1])
   outfile <- wout("plt_b", cid)
-  g <- ggplot(df, aes(contribution_receipt_date, contrib_count, color=pid3, shape=pid3)) +
+  g <- ggplot(df, aes(contribution_receipt_date, contrib_count, color=pid2, shape=pid2)) +
     geom_point(alpha=0.25) +
     geom_smooth() + 
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
@@ -313,7 +294,7 @@ plt_c <- function(df){
   lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
   cid <- as.character(df$cid[1])
   outfile <- wout("plt_c", cid)
-  g <- ggplot(df, aes(make_datetime(cycle), contrib_count, color=pid3, shape=pid3)) +
+  g <- ggplot(df, aes(make_datetime(cycle), contrib_count, color=pid2, shape=pid2)) +
     geom_point(alpha=0.25) +
     geom_line() + 
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
@@ -340,7 +321,7 @@ plt_clog <- function(df){
   lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
   cid <- as.character(df$cid[1])
   outfile <- wout("plt_clog", cid)
-  g <- ggplot(df, aes(make_datetime(cycle), contrib_count, color=pid3, shape=pid3)) +
+  g <- ggplot(df, aes(make_datetime(cycle), contrib_count, color=pid2, shape=pid2)) +
     geom_point(alpha=0.25) +
     geom_line() + 
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
@@ -368,7 +349,7 @@ plt_d <- function(df){
   outfile <- wout("plt_d", cid)
   g <- ggplot(df) +
     #geom_point(alpha=0.25) +
-    geom_line(aes(make_datetime(cycle), varpid3)) +
+    geom_line(aes(make_datetime(cycle), varpid2)) +
     #geom_line(aes(make_datetime(cycle), varpid5)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
     scale_y_continuous(labels = comma) +
@@ -421,7 +402,8 @@ mpa <- function(cid){
 }
 
 
-companies <- c("Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS")
+# companies <- c("Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS")
+companies <- c("Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Amazon", "Boeing", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS")
 #companies <- c("Goldman Sachs")
 #make three graph plots
 for (cid in companies){
