@@ -1,0 +1,241 @@
+
+
+
+library(tidyverse)
+library(stargazer)
+# library(Hmisc)
+# library(stringr)
+# library(car)
+library(forcats)
+
+#Change Append = TRUE to Not Overwrite Files
+save_stargazer <- function(output.file, ...) {
+  output <- capture.output(stargazer(...))
+  cat(paste(output, collapse = "\n"), "\n", file=output.file, append = FALSE)
+}
+
+
+
+
+
+##Load Data
+#fec <- read_csv("Exxon_Mobile__merged_deduped_ANALYSIS_cleaned.csv")
+#fec <- read_csv("Goldman_Sachs__schedule_a__merged_ANALYSIS_cleaned.csv")
+#fec <- read_csv("ANALYSIS_cleaned__merged_MASTER.csv")
+fec <- read_csv("ANALYSIS_cleaned_deduped__merged_MASTER.csv")
+#fec <- read_csv("ANALYSIS_cleaned__merged_MASTER_v2.csv")
+# fec <- read_csv("Boeing__schedule_a__merged_ANALYSIS.csv")
+# fec <- read_csv("Boeing__merged_deduped_ANALYSIS_cleaned.csv")
+
+##Make directory
+system('mkdir -p images')
+
+wout <- function(plt_type, cid){
+  outfile <- paste0("images/", plt_type, "_", str_replace_all(tolower(cid), " ", "_"), ".png")
+  return(outfile)
+}
+
+################################################
+## Clean data
+################################################
+
+#All Contributions, All CID
+dfm <- fec %>% 
+  filter(cid!="Berkshire Hathaway") %>% 
+  filter(cid!="Home Depot") %>% 
+  mutate(pid = fct_collapse(party_id,
+                            "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
+         pid5 = fct_lump(party_id, n=4),
+         pid4 = fct_lump(party_id, n=3)) %>% 
+  mutate(pid3 = if_else(pid4!="Other", pid4, NULL, missing = NULL)) %>% 
+  mutate(pid2 = if_else(pid3!="UNKNOWN", pid3, NULL, missing = NULL)) %>% 
+  mutate(cid = factor(cid, 
+                      levels = c("Amazon", "Apple", "Microsoft",
+                                 "Boeing", "Ford Motor", "General Motors",
+                                 "Chevron", "Exxon", "Marathon Oil",
+                                 "Citigroup", "Goldman Sachs", "Wells Fargo",
+                                 "CVS", "Kroger", "Walmart"
+                      ))) %>% 
+  mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+  mutate(lncval = log(contribution_receipt_amount+1)) 
+
+
+##Clean Occupations
+occupations <-  as.data.frame(table(dfm$contributor_occupation))
+dfocc <- dfm %>% 
+  mutate(occdir = fct_collapse(contributor_occupation,
+                                  "CSUITE" = c("EXECUTIVE", "EXECUTIVE VICE PRESIDENT", "CHIEF EXECUTIVE OFFICER",
+                                               "EXECUTIVE V.P.", "CHAIRMAN & CHIEF EXECUTIVE OFFICER", "EXECUTIVE VP",
+                                               "EXECUTIVE VICE PRESIDENT, DOWNSTREAM", "PRESIDENT & CHIEF EXECUTIVE OFFICER",
+                                               "VICE PRESIDENT", "CORPORATE VICE PRESIDENT", "SENIOR VICE PRESIDENT",
+                                               "PRESIDENT", "EXECUTIVE VICE PRESIDENT", "SENIOR VICE PRESIDENT/INVEST",
+                                               "VICE PRESIDENT - TAXES", "PRESIDENT & CEO", "PRESIDENT AND CEO",
+                                               "CORP VICE PRESIDENT", "SR. VICE PRESIDENT", "CFO", "BUSINESS CFO",
+                                               "VP-CFO SSG FINANCIAL SERVICES", "VP & CFO - IDS", "VP CFO BOEING INTERNATIONAL",
+                                               "CFO BDS", "CFO BMA", "CFO EO&T", "VP & CFO-BCA", "EVP, CORPORATE PRESIDENT & CFO",
+                                               "CVP, CFO ONLINE SERVICES", "DIR-FIN REV MGMT CFO ASIA-PAC", "VP-CFO TECHNOLOGY",
+                                               "VP&CFO-BCA", "CFO - BOEING CAPITAL", "EVP&CFO", "SR VP & CFO - IDS", "CORP VP & CFO, MBD",
+                                               "VP-CFO NETWORK & SPACE SYSTEMS", "VP/CFO - FINL SERVICES", "CFO, OSD STRATEGIC ALLIANCES",
+                                               "CFO, IP&L", "CFO-BDS", "VICE CHAIRMAN", "CHAIRMAN", "CHAIRMAN AND CEO", 
+                                               "CHAIRMAN & CHIEF EXEC OFF", "CHAIRMAN PRESIDENT & CEO", "CHAIRMAN & CEO", "CHAIRMAN/CEO",
+                                               "VICE CHAIRMAN GOVERNMENT REL.", "VICE CHAIRMAN, PRES & CEO BCA", "SVP-TREASURER & BCC CHAIR",
+                                               "EVP-FMC; CHAIRMAN & CEO, FC", "COUNTRY CHAIR KOREA & GSC CALTEX RES D", 
+                                               "VICE CHAIRMAN, PRESIDENT & COO", "CHAIRMAN & CHIEF SOFTWARE ARCH", "COUNTRY CHAIR KOREA & GSC", 
+                                               "CHAIRMAN & C.E.O.", "VICE CHAIRMAN OF THE BOARD","CHAIRMAN OF THE BOARD", 
+                                               "CHAIRMAN PRESIDENT AND CEO", "GVP, CHAIRMAN, PRES. & CEO,", "VICE CHAIRMAN & CHIEF FINANC",
+                                               "CHAIRMAN, FORD LAND", "CHAIRMAN,PRESIDENT & CEO", "VICE-CHAIRMAN", "CHAIRMAN, PRESIDENT & CEO",
+                                               "BOARD MEMBER", "VICE PRESIDENT AND TREASURER", "VICE PRESIDENT/ASSISTANT TREASURER", 
+                                               "VP-FINANCE & TREASURER"),
+                                  "DIRECTOR" = c("DIRECTOR", "MANAGING DIRECTOR", "ENGINEERING DIRECTOR", "DIRECTOR,NON-TECH", 
+                                                 "DIRECTOR MANUFACTURING ENGRG", "PROCESS DIRECTOR", "DIRECTOR-MARKETING&SALES", 
+                                                 "CONTROLLER/DIRECTOR FINANCE", "EXECUTIVE DIRECTOR", "SENIOR DIRECTOR", 
+                                                 "DIRECTOR-PROGRAM MANAGEMENT", "DIRECTOR-ENGINEERING ACTIVITY", "DIRECTOR, TECHNICAL",
+                                                 "DIRECTOR-GOVERNMENT AFFAIRS", "CREATIVE DIRECTOR", "DIRECTOR OR EXEC DIRECTOR", "DIRECTOR-FINANCE"),
+                                  "MANAGER" = c("MANAGER", "PROGRAM MANAGER", "GENERAL MANAGER", "PROJECT MANAGER",
+                                                "SENIOR PROGRAM MANAGER", "SR CONSULTANT/MANAGER", "PROGRAM MANAGEMENT SPEC M", 
+                                                "DEPARTMENT MANAGER", "PRINCIPAL PROGRAM MANAGER", "MARKETING MANAGER", "PROGRAM MANAGER II",
+                                                "PRODUCT MANAGER", "PRINCIPAL PROGRAM MANAGER LEAD", "DEVELOPMENT MANAGER", 
+                                                "BUSINESS MANAGER", "SR MANAGER,NON-TECHNICAL", "FINANCE MANAGER",
+                                                "GROUP PROGRAM MANAGER", "GROUP MANAGER", "COMMERCIAL REL MANAGEMENT MANAGER", 
+                                                "ENGINEERING MANAGER", "LEAD PROGRAM MANAGER", "ENGINEERING GROUP MANAGER"),
+                                  "ENGINEER" = c("ENGINEER", "SOFTWARE ENGINEER", "SENIOR SOFTWARE ENGINEER", 
+                                                 "SOFTWARE DESIGN ENGINEER", "ENGINEERING MULTI-SKILL MGR M",
+                                                 "DISTINGUISHED ENGINEER", "SOFTWARE DEVELOPMENT ENGINEER",
+                                                 "PRINCIPAL SOFTWARE ENGINEER", "SYSTEMS ENGINEER", "ELECTRICAL ENGINEER",
+                                                 "COMPUTER ENGINEER")
+                                               )) %>% 
+  mutate(occlevels = fct_lump(occdir, n=4)) %>% 
+  mutate(occ3 = fct_collapse(occlevels,
+                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
+                             "OTHERS" = c("ENGINEER", "Other")))
+
+
+dfocc3 <- dfocc %>% 
+  select(cycle, pid3, pid2, cid, occlevels) %>% 
+  filter(!is.na(pid2),
+         !is.na(occlevels),
+         cycle >= 2004) %>% 
+  mutate(occ3 = fct_collapse(occlevels,
+                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
+                             "OTHERS" = c("ENGINEER", "Other")))
+
+
+
+
+
+
+
+
+#Summary Stats for Variables in Models
+df_stats <- dfocc %>% 
+  select(cycle, 
+         contributor_name,
+         contributor_id,
+         cid, 
+         contribution_receipt_amount,
+         contributor_aggregate_ytd,         
+         party_id,
+         pid2,
+         #pid3, 
+         #pid5, 
+         occlevels, contributor_occupation) %>% 
+  mutate(occ3 = fct_collapse(occlevels,
+                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
+                             "OTHERS" = c("ENGINEER", "Other"))) %>% 
+  mutate(contributor_name = as.numeric(as.factor(contributor_name)),
+         party_id = as.numeric(as.factor(party_id)),
+         pid2 = as.numeric(pid2),
+         #pid3 = as.numeric(pid3),
+         #pid5 = as.numeric(pid5),
+         cid = as.numeric(cid),
+         occ3 = as.numeric(occ3),
+         contributor_occupation = as.numeric(as.factor(contributor_occupation))) %>% 
+  rename("Contributor Name" = contributor_name,
+         "Contributor Aggregate YTD Contribution" = contributor_aggregate_ytd,
+         "Contribution Receipt Amount" = contribution_receipt_amount,
+         "Presidential Election Cycle" = cycle,
+         "Party Identification" = party_id,
+         "Major Party ID" = pid2,
+         "Company ID" = cid,
+         "Contributor Occupation" = contributor_occupation,
+         "Organizational Hierarchies" = occ3)
+
+
+save_stargazer("output/descriptive_stats.tex",
+               as.data.frame(df_stats), header=FALSE, type='latex',
+               median = TRUE,
+               font.size = "scriptsize",
+               digits = 2,
+               title = "Descriptive Statistics from the Federal Election Commission API" )
+
+#stargazer(as.data.frame(df_stats), type = "text", median = TRUE)
+
+
+
+#Variance table
+
+
+#Get Variance by Organization Levels
+df1a <-  dfocc3 %>%
+  select(cycle, cid, pid2, occ3) %>% 
+  filter(!is.na(pid2),
+         !is.na(occ3)) %>%
+  mutate(occ = occ3) %>% 
+  group_by(cycle, cid, occ) %>% 
+  summarize(varpid = var(as.numeric(pid2)))
+
+#Get Variance All Levels
+df1b <-  dfocc3 %>%
+  select(cycle, cid, pid2, occ3) %>% 
+  filter(!is.na(pid2),
+         !is.na(occ3)) %>%
+  mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) %>% 
+  mutate(occ = occ4) %>% 
+  group_by(cycle, cid, occ) %>% 
+  summarize(varpid = var(as.numeric(pid2)))
+
+df1 <- rbind(df1a, df1b) %>% 
+  mutate(occ = factor(occ, 
+                      levels = c("CSUITE", "MANAGEMENT", "OTHERS", "ALL")))
+
+##VARIANCE TABLES
+
+df_var_table <- df1 %>% 
+  group_by(occ) %>% 
+  summarise(meanvar = mean(varpid, na.rm = T),
+            medvar = median(varpid, na.rm = T),
+            sdvar = sd(varpid, na.rm = T)
+            ) %>% 
+  rename("Organizational Hierarchy" = occ,
+         "Mean Variance" = meanvar,
+         "Median Variance" = medvar,
+         "SD" = sdvar)
+
+df_var_cycle_table <- df1 %>% 
+  group_by(occ, cycle) %>% 
+  summarise(meanvar = mean(varpid, na.rm = T)) %>% 
+  spread(cycle, meanvar) %>% 
+  rename("Organizational Hierarchy" = occ)
+
+save_stargazer("output/vartable1.tex",
+               as.data.frame(df_var_table), header=FALSE,
+               type = "latex", 
+               digits = 3, summary = FALSE,
+               font.size = "scriptsize",
+               title = "Variance of Major Party Contributions by Organizational Hierarchy" )
+
+save_stargazer("output/vartable2.tex",
+               as.data.frame(df_var_cycle_table), header=FALSE,
+               type = "latex", 
+               digits = 3, summary = FALSE,
+               font.size = "scriptsize",
+               title = "Variance of Major Party Contributions by Organizational Hierarchy and Year" )
+
+
+#stargazer(as.data.frame(df_var_table), type = "text", digits = 3, summary = FALSE)
+#stargazer(as.data.frame(df_var_cycle_table), type = "text", digits = 3, summary = FALSE)
+
+
+
+
+
