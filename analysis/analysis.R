@@ -47,7 +47,150 @@ dfm <- fec %>%
                                  "Chevron", "Exxon", "Marathon Oil",
                                  "Citigroup", "Goldman Sachs", "Wells Fargo",
                                  "CVS", "Kroger", "Walmart"
-                      ))) 
+                      ))) %>% 
+  mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
+  mutate(lncval = log(contribution_receipt_amount+1)) 
+
+
+##Clean Occupations
+occupations <-  as.data.frame(table(dfm$contributor_occupation))
+dfocc <- dfm %>% 
+  mutate(occdir = fct_collapse(contributor_occupation,
+                                  "CSUITE" = c("EXECUTIVE", "EXECUTIVE VICE PRESIDENT", "CHIEF EXECUTIVE OFFICER",
+                                               "EXECUTIVE V.P.", "CHAIRMAN & CHIEF EXECUTIVE OFFICER", "EXECUTIVE VP",
+                                               "EXECUTIVE VICE PRESIDENT, DOWNSTREAM", "PRESIDENT & CHIEF EXECUTIVE OFFICER",
+                                               "VICE PRESIDENT", "CORPORATE VICE PRESIDENT", "SENIOR VICE PRESIDENT",
+                                               "PRESIDENT", "EXECUTIVE VICE PRESIDENT", "SENIOR VICE PRESIDENT/INVEST",
+                                               "VICE PRESIDENT - TAXES", "PRESIDENT & CEO", "PRESIDENT AND CEO",
+                                               "CORP VICE PRESIDENT", "SR. VICE PRESIDENT", "CFO", "BUSINESS CFO",
+                                               "VP-CFO SSG FINANCIAL SERVICES", "VP & CFO - IDS", "VP CFO BOEING INTERNATIONAL",
+                                               "CFO BDS", "CFO BMA", "CFO EO&T", "VP & CFO-BCA", "EVP, CORPORATE PRESIDENT & CFO",
+                                               "CVP, CFO ONLINE SERVICES", "DIR-FIN REV MGMT CFO ASIA-PAC", "VP-CFO TECHNOLOGY",
+                                               "VP&CFO-BCA", "CFO - BOEING CAPITAL", "EVP&CFO", "SR VP & CFO - IDS", "CORP VP & CFO, MBD",
+                                               "VP-CFO NETWORK & SPACE SYSTEMS", "VP/CFO - FINL SERVICES", "CFO, OSD STRATEGIC ALLIANCES",
+                                               "CFO, IP&L", "CFO-BDS", "VICE CHAIRMAN", "CHAIRMAN", "CHAIRMAN AND CEO", 
+                                               "CHAIRMAN & CHIEF EXEC OFF", "CHAIRMAN PRESIDENT & CEO", "CHAIRMAN & CEO", "CHAIRMAN/CEO",
+                                               "VICE CHAIRMAN GOVERNMENT REL.", "VICE CHAIRMAN, PRES & CEO BCA", "SVP-TREASURER & BCC CHAIR",
+                                               "EVP-FMC; CHAIRMAN & CEO, FC", "COUNTRY CHAIR KOREA & GSC CALTEX RES D", 
+                                               "VICE CHAIRMAN, PRESIDENT & COO", "CHAIRMAN & CHIEF SOFTWARE ARCH", "COUNTRY CHAIR KOREA & GSC", 
+                                               "CHAIRMAN & C.E.O.", "VICE CHAIRMAN OF THE BOARD","CHAIRMAN OF THE BOARD", 
+                                               "CHAIRMAN PRESIDENT AND CEO", "GVP, CHAIRMAN, PRES. & CEO,", "VICE CHAIRMAN & CHIEF FINANC",
+                                               "CHAIRMAN, FORD LAND", "CHAIRMAN,PRESIDENT & CEO", "VICE-CHAIRMAN", "CHAIRMAN, PRESIDENT & CEO",
+                                               "BOARD MEMBER", "VICE PRESIDENT AND TREASURER", "VICE PRESIDENT/ASSISTANT TREASURER", 
+                                               "VP-FINANCE & TREASURER"),
+                                  "DIRECTOR" = c("DIRECTOR", "MANAGING DIRECTOR", "ENGINEERING DIRECTOR", "DIRECTOR,NON-TECH", 
+                                                 "DIRECTOR MANUFACTURING ENGRG", "PROCESS DIRECTOR", "DIRECTOR-MARKETING&SALES", 
+                                                 "CONTROLLER/DIRECTOR FINANCE", "EXECUTIVE DIRECTOR", "SENIOR DIRECTOR", 
+                                                 "DIRECTOR-PROGRAM MANAGEMENT", "DIRECTOR-ENGINEERING ACTIVITY", "DIRECTOR, TECHNICAL",
+                                                 "DIRECTOR-GOVERNMENT AFFAIRS", "CREATIVE DIRECTOR", "DIRECTOR OR EXEC DIRECTOR", "DIRECTOR-FINANCE"),
+                                  "MANAGER" = c("MANAGER", "PROGRAM MANAGER", "GENERAL MANAGER", "PROJECT MANAGER",
+                                                "SENIOR PROGRAM MANAGER", "SR CONSULTANT/MANAGER", "PROGRAM MANAGEMENT SPEC M", 
+                                                "DEPARTMENT MANAGER", "PRINCIPAL PROGRAM MANAGER", "MARKETING MANAGER", "PROGRAM MANAGER II",
+                                                "PRODUCT MANAGER", "PRINCIPAL PROGRAM MANAGER LEAD", "DEVELOPMENT MANAGER", 
+                                                "BUSINESS MANAGER", "SR MANAGER,NON-TECHNICAL", "FINANCE MANAGER",
+                                                "GROUP PROGRAM MANAGER", "GROUP MANAGER", "COMMERCIAL REL MANAGEMENT MANAGER", 
+                                                "ENGINEERING MANAGER", "LEAD PROGRAM MANAGER", "ENGINEERING GROUP MANAGER"),
+                                  "ENGINEER" = c("ENGINEER", "SOFTWARE ENGINEER", "SENIOR SOFTWARE ENGINEER", 
+                                                 "SOFTWARE DESIGN ENGINEER", "ENGINEERING MULTI-SKILL MGR M",
+                                                 "DISTINGUISHED ENGINEER", "SOFTWARE DEVELOPMENT ENGINEER",
+                                                 "PRINCIPAL SOFTWARE ENGINEER", "SYSTEMS ENGINEER", "ELECTRICAL ENGINEER",
+                                                 "COMPUTER ENGINEER")
+                                               )) %>% 
+  mutate(occlevels = fct_lump(occdir, n=4))
+
+df <- dfocc %>% 
+  select(cycle, pid3, pid2, cid, occlevels) %>% 
+  filter(!is.na(pid2),
+         !is.na(occlevels),
+         cycle >= 2004) %>% 
+  group_by(cycle, cid, pid2, occlevels) %>%
+  mutate(contrib_count = n()) %>% 
+  unique()
+
+ggplot(df) +
+  geom_bar(aes(x = occlevels, fill = pid2), position = "fill") +
+  facet_grid(cid~cycle)
+
+df <- dfocc %>% 
+  select(cycle, pid3, pid2, cid, occlevels) %>% 
+  filter(!is.na(pid2),
+         !is.na(occlevels),
+         cycle >= 2004) %>% 
+  mutate(occ3 = fct_collapse(occlevels,
+                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
+                             "OTHERS" = c("ENGINEER", "Other")))
+
+df2 <- df %>% 
+  #filter(cid == "Goldman Sachs") %>% 
+  mutate(occ3 = fct_collapse(occlevels,
+                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
+                             "OTHERS" = c("ENGINEER", "Other")))
+
+
+
+ggplot(df) +
+  geom_bar(aes(x = occlevels, fill = pid2), position = "fill") +
+  facet_grid(cid~cycle)
+
+##GRAPH
+#PARTISAN LEANING OCCLEVELS
+#ALL COMPANIES
+outfile <- wout("plt_partisan_occ", "by_all_companies")
+lims <- c(as.POSIXct(as.Date("2001/01/02")), NA)
+p1 <- ggplot(df) +
+  geom_bar(aes(make_datetime(cycle), fill = pid2), alpha=0.95, position = "fill") +
+  facet_grid(cid~occ3) +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  scale_fill_manual(values=c("#2129B0", "#BF1200")) +
+  xlab("Contribution Cycle") +
+  ylab("Partisanship of Individual Contributions") +
+  ggtitle(paste("Contributions by Occupational Hierarchy and Company")) +
+  theme(legend.position="bottom") +
+  theme(legend.title=element_blank()) + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(strip.text.y = element_text(size = 7))
+ggsave(outfile, width = 10, height = 14)
+
+
+#PARTISAN LEANING OCCLEVELS
+#ALL COMPANIES
+outfile <- wout("plt_partisan_occ", "all_companies")
+lims <- c(as.POSIXct(as.Date("2001/01/02")), NA)
+ggplot(df) +
+  geom_bar(aes(make_datetime(cycle), fill = pid2), alpha=0.95, position = "fill") +
+  facet_grid(.~occ3) +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  scale_fill_manual(values=c("#2129B0", "#BF1200")) +
+  xlab("Contribution Cycle") +
+  ylab("Partisanship of Individual Contributions") +
+  ggtitle(paste("Contributions by Occupational Hierarchy: All Companies")) +
+  theme(legend.position="bottom") +
+  theme(legend.title=element_blank()) + 
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(outfile)
+
+# Plot
+ggplot(df2) +
+  geom_bar(aes(x = occlevels, fill = pid2), position = "fill")
+
+ggplot(df2, aes(make_datetime(cycle), occlevels, fill = pid2), position = "fill") +
+  geom_bar(position = position_dodge(width=0.5), stat="identity") +
+  #geom_text(aes(y = pos, label = label), size = 2) +
+  coord_flip()
+
+
+# All Companies, By Party
+df <- dfm %>% 
+  select(cycle, pid3, pid2, cid, occ) %>% 
+  group_by(cycle, cid, pid3) %>% 
+  mutate(contrib_count = n()) %>% 
+  unique()
+
+
+lims <- c(as.POSIXct(as.Date("1982/01/02")), NA)
+ggplot(dfm, aes()) +
+  geom_bar(aes(pid2)) +
+  facet_wrap(~cycle) 
 
 
 # All Companies, By Party
