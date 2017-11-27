@@ -76,8 +76,14 @@ def still_results(data):
 def req_start_url_schedule_a(employer, year):
     api_key = next(newkey)
     firm = employer.replace(" ", "%20")
-    url = "https://api.open.fec.gov/v1/schedules/schedule_a/?sort=contribution_receipt_date&per_page=100&"+\
-    "contributor_employer={}&two_year_transaction_period={}&api_key={}".format(firm, year, api_key)
+    url = "https://api.open.fec.gov/v1/schedules/schedule_a/"+\
+        "?sort=contribution_receipt_date"+\
+        "&per_page=100"+\
+        "&contributor_type=individual"+\
+        "&is_individual=true"+\
+        "&contributor_employer={}".format(firm)+\
+        "&two_year_transaction_period={}".format(year)+\
+        "&api_key={}".format(api_key)
     return url
 
 def replacement_url_schedule_a(start_url):
@@ -95,6 +101,7 @@ def req_loop_url_schedule_a(start_url, last_indexes):
 
     end = "&last_index={}&last_contribution_receipt_date={}".format(last_indexes[0], last_indexes[1])
     url = start_url+end
+    print(url)
     return url
 
 
