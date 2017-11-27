@@ -11,6 +11,10 @@ import os, time
 from random import random
 
 
+##############################################################
+## helper functions
+##############################################################
+
 def requests_retry_session(
     retries=3,
     backoff_factor=0.3,
@@ -65,61 +69,21 @@ def still_results(data):
     results = data['results']
     return len(results)
 
-
-
-def write_csv_json(json_results, filename="jsondata.csv"):
-    csv_file = open(filename, 'w')
-    csvwriter = csv.writer(csv_file)
-    count = 0
-    for row in json_results:
-        if count == 0:
-            header = row.keys()
-            csvwriter.writerow(header)
-            count += 1
-        csvwriter.writerow(row.values())
-    csv_file.close()
-
-
-def write_csv_json_dict(json_results, filename="jsondata.csv"):
-    with open(filename, 'w') as csvfile:
-        writer = csv.DictWriter(csvfile, json_results[0].keys())
-        count = 0
-        for row in json_results:
-            if count == 0:
-                writer.writeheader()
-                count += 1
-            else:
-                writer.writerow(row)
-        csvfile.close()
-
-
-def get_party_id_det(committee_id):
-    api_key = next(newkey)
-    stem = "https://api.open.fec.gov/v1/committee/"
-    end = "{}/candidates/?sort=name&page=1&api_key=DEMO_KEY&per_page=100".format(committee_id, api_key)
-    url = stem+end
-
-    data = get_url(url)
-    party_id = data['results'][0]['party']
-    office = data['results'][0]['office_full']
-    name = data['results'][0]['name']
-    print("[*] {}, {}, candidate for {}".format(name, party_id, office))
-    return party_id
-
-
-def req_url_schedule_a(employer, year=2016, page=1):
-    api_key = next(newkey)
-    firm = employer.replace(" ", "%20")
-    stem = "https://api.open.fec.gov/v1/schedules/schedule_a/?per_page=100&sort=contribution_receipt_date&"
-    end = "contributor_employer={}&api_key={}&two_year_transaction_period={}&page={}".format(firm, api_key, year, page)
-    url = stem+end
-    return url
+##############################################################
+## query functions
+##############################################################
 
 def req_start_url_schedule_a(employer, year):
     api_key = next(newkey)
     firm = employer.replace(" ", "%20")
-    url = "https://api.open.fec.gov/v1/schedules/schedule_a/?sort=contribution_receipt_date&per_page=100&"+\
-    "contributor_employer={}&two_year_transaction_period={}&api_key={}".format(firm, year, api_key)
+    url = "https://api.open.fec.gov/v1/schedules/schedule_a/"+\
+        "?sort=contribution_receipt_date"+\
+        "&per_page=100"+\
+        "&contributor_type=individual"+\
+        "&is_individual=true"+\
+        "&contributor_employer={}".format(firm)+\
+        "&two_year_transaction_period={}".format(year)+\
+        "&api_key={}".format(api_key)
     return url
 
 def replacement_url_schedule_a(start_url):
@@ -137,8 +101,31 @@ def req_loop_url_schedule_a(start_url, last_indexes):
 
     end = "&last_index={}&last_contribution_receipt_date={}".format(last_indexes[0], last_indexes[1])
     url = start_url+end
+    print(url)
     return url
 
+
+##############################################################
+## writing results
+##############################################################
+
+
+def write_csv_json_dict(json_results, filename="jsondata.csv"):
+    with open(filename, 'w') as csvfile:
+        writer = csv.DictWriter(csvfile, json_results[0].keys())
+        count = 0
+        for row in json_results:
+            if count == 0:
+                writer.writeheader()
+                count += 1
+            else:
+                writer.writerow(row)
+        csvfile.close()
+
+
+##############################################################
+## get FEC loop
+##############################################################
 
 def get_schedule_a_employer_year(employer, year):
     api_key = next(newkey)
@@ -243,6 +230,9 @@ def get_schedule_a_employer_year(employer, year):
         print("[*] SUCCESS: collected all api results requested.")
         pass
 
+##############################################################
+## merge files and collapse
+##############################################################
 
 def dedupe_merged_csvs(company, column=None):
     company = str(company).replace(" ", "_")
