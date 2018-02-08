@@ -240,21 +240,14 @@ def ren_cols(df, string):
 
 def map_dict_col(var, df, ren=None):
     """
-    ## Maps a col containing dict's to seperate columns
+    ## Maps a col containing dict or json to seperate columns
     ## Expected variable cell: '{u'key': u'value', u'key': u'value'}
+    ## To rename the dict/json keys being mapped, specify a ren string
     """
     s = df[var].map(eval)
-    #print(s)
-    #keys = [('cd_{}: {}'.format(k, v)) for row in s for k, v in row.items()]
-    #print(keys[0:1000])
-    
-    #s = s.apply(pd.Series)
-    #s = ren_cols(s, "cd_")
-    #print(s)
 
     if ren is not None:
         s = s.apply(pd.Series)
-        #s = ren_cols(s, "cd_")
         s = ren_cols(s, str(ren))
         df = pd.concat([df.drop([var], axis=1), s], axis=1)
 
@@ -264,13 +257,6 @@ def map_dict_col(var, df, ren=None):
     return df
 
 
-def expand_committee_details(company_df, column):
-    #company = str(company).replace(" ", "_")
-    #file_type = "{}".format(company)
-    #filenames = glob('*{}*'.format(file_type))
-    #outfile_name = "{}__merged_deduped.csv".format(company)
-
-    df = map_dict_col(column, df)
 
 
 def dedupe_merged_csvs(company, column=None):
@@ -286,7 +272,7 @@ def dedupe_merged_csvs(company, column=None):
     print("[*] original combined size: {} results".format(combined_csv.shape[0]))
     
     #TODO Json to columns
-    combined_csv = map_dict_col(column, combined_csv)
+    combined_csv = map_dict_col(column, combined_csv, "cd_")
 
 
 
@@ -350,7 +336,7 @@ def collapse_csvs(company, schedule_type, year=None, name=""):
     print(combined_csv.shape)
     print(combined_csv)
 
-    #TODO rename columns
+    #TODO get drop duplicates working again
     #dedupe_csv = combined_csv.drop_duplicates()
     #dedupe_csv.to_csv(outfile_name, index=False)
     #print("[*] outfile size: {} results".format(dedupe_csv.shape[0]))
