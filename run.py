@@ -160,7 +160,6 @@ class openFEC:
 
 	#Merge All Cleaned Files
 	def merge_master(filestem, rm=False):
-		"""openFEC.merge_master("schedule_a__merged_ANALYSIS_cleaned")"""
 		print("[*] combining all files of type *{}* ...".format(filestem))
 		collapse_signature = collapse_csvs(None, filestem, None, "_MASTER", False)
 		if rm is True:
@@ -179,14 +178,14 @@ class openFEC:
 
 
 #test run
-#openFEC.start(companies, years)
-#openFEC.getFEC(companies, years)
-#openFEC.combine(companies)
-#openFEC.getPARTY(companies)
+openFEC.start(companies, years)
+openFEC.getFEC(companies, years)
+openFEC.combine(companies)
+openFEC.getPARTY(companies)
 
 #TODO
 #MOVE ANALYSIS FILES TO NEW FOLDER, THEN CLEAN
-#openFEC.clean(companies)
+openFEC.clean(companies)
 openFEC.merge_master("ANALYSIS_cleaned")
 
 #Merging Old Runs and New Partial Runs

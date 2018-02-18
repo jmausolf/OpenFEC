@@ -15,4 +15,5 @@ companies = ["Goldman Sachs"]
 #companies = ["Walmart"]
 #years = ["2012"]
 #years = ["2016"]
-years = ["2004"]
+years = ["2000"]
+
