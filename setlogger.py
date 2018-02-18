@@ -4,6 +4,9 @@ import datetime
 import subprocess
 import os
 
+#Make Log File
+subprocess.call("mv *.log logs 2>/dev/null", shell = True)
+
 #Get Date for Filenames
 now = datetime.datetime.now()
 date = now.strftime("%Y-%m-%d")
