@@ -58,10 +58,6 @@ class openFEC:
 				finally:
 					pass
 
-	#TODO
-	#Expand Committeee Details
-	#Function
-
 
 
 	#Combine = Collapse/Remove Across Years
@@ -181,17 +177,17 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 
 companies = ["Goldman Sachs"]
 #companies = ["Boeing", "Microsoft", "All"]
-#years = ["2000"]
+#years = ["1996"]
 #companies = ["Walmart"]
 #years = ["2012"]
 #years = ["2016"]
 #years = ["2008"]
 
 
-#TODO JSON
-#dedupe multiple runs (need to remove json/dict column)
+
+#openFEC.dedupe(companies)
 #openFEC.dedupe(companies, "committee")
-## expand_committee_details(companies, )
+
 
 #test run 
 openFEC.getFEC(companies, years)
