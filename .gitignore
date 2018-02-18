@@ -1,4 +1,5 @@
 *.csv
+*.log
 credentials.*
 __pycache__/*
 __pycache__
@@ -9,3 +10,6 @@ __pycache__
 
 analysis/images/*
 analysis/images/*.png
+
+downloads/*
+logs/*
