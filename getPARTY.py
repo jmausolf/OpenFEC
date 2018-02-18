@@ -171,27 +171,27 @@ def find_schedule_b_results(committee_ids):
 
 #print(find_schedule_b_results("C00053553"))
 
-def search_party_id(committee_id, year=None):
+def search_party_id(committee_id, year=None, t1=1, t2=0.5):
     try:
         party_results = get_committee_details(committee_id)
-        time.sleep(1.5)
+        time.sleep(t1)
         #TODO Add new column if the results are from a PAC or Not
         if party_results[0] is None and len(party_results[1]) == 0:
             print("[*] conducting schedule b search...")
-            time.sleep(1)
+            time.sleep(t2)
             schedule_b_receipts = get_schedule_b_receipts(committee_id, year)
             party_id = find_schedule_b_results(schedule_b_receipts)
-            time.sleep(1)
+            time.sleep(t2)
 
         elif party_results[0] is None and len(party_results[1]) > 0:
             print("[*] candidate id exists but no party results")
             party_id = get_party_id(committee_id)
-            time.sleep(1)
+            time.sleep(t2)
 
         elif party_results[0] is not None:
             print("[*] party id found in committee details")
             party_id = party_results[0]
-            time.sleep(1)
+            time.sleep(t2)
 
         else:
             print("[*] pass, unknown results", party_results)
