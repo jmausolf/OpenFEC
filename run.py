@@ -1,8 +1,21 @@
+from setlogger import *
 from getFEC import *
 from getPARTY import *
 from cleanFEC import *
 from random import random
 import traceback
+import logging
+import sys
+
+#log = open("mytest.log", "a")
+#sys.stdout = log
+
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger()
+logger.addHandler(logging.FileHandler('test.log', 'a'))
+print = logger.info
 
 
 class openFEC:

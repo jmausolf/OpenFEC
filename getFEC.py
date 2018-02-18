@@ -1,3 +1,4 @@
+from setlogger import *
 from credentials import *
 import requests
 from requests.adapters import HTTPAdapter

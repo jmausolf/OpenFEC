@@ -1,3 +1,4 @@
+from setlogger import *
 from credentials import *
 from getFEC import *
 

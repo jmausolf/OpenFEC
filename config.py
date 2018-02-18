@@ -1,0 +1,1 @@
+logfile = "OpenFEC_test_log.log"
