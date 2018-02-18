@@ -179,16 +179,15 @@ class openFEC:
 
 
 #test run
-openFEC.start(companies, years)
-openFEC.getFEC(companies, years)
-openFEC.combine(companies)
-openFEC.getPARTY(companies)
+#openFEC.start(companies, years)
+#openFEC.getFEC(companies, years)
+#openFEC.combine(companies)
+#openFEC.getPARTY(companies)
 
 #TODO
 #MOVE ANALYSIS FILES TO NEW FOLDER, THEN CLEAN
-#test clean
 #openFEC.clean(companies)
-#openFEC.merge_master("ANALYSIS_cleaned")
+openFEC.merge_master("ANALYSIS_cleaned")
 
 #Merging Old Runs and New Partial Runs
 #companies = ["Boeing", "Microsoft", "All"]
