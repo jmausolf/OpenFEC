@@ -253,9 +253,20 @@ def map_dict_col(var, df, ren=None):
 
     else:
         df = pd.concat([df.drop([var], axis=1), s.apply(pd.Series)], axis=1)
-    
+
     return df
 
+def list_to_str(var, df):
+    s = df[var].apply(lambda x : str(x) if type(x) is list else x)
+    s.name = var
+    df = pd.concat([df.drop([var], axis=1), s], axis=1)
+    return df
+
+def list_vars_to_str(df, *args):
+    for arg in args:
+        df = list_to_str(arg, df)
+
+    return df
 
 
 
@@ -272,8 +283,8 @@ def dedupe_merged_csvs(company, column=None):
     print("[*] original combined size: {} results".format(combined_csv.shape[0]))
     
     #TODO Json to columns
-    combined_csv = map_dict_col(column, combined_csv, "cd_")
-
+    combined_csv = map_dict_col('committee', combined_csv, "cd_")
+    combined_csv = list_vars_to_str(combined_csv, 'cd_candidate_ids', 'cd_cycles')
 
 
     if column is not None:
@@ -292,9 +303,6 @@ def dedupe_merged_csvs(company, column=None):
 def collapse_csvs(company, schedule_type, year=None, name=""):
 
     schedule_type = str(schedule_type).replace(" ", "_")    
-    
-    #print(company, schedule_type, year)
-    #print(type(company), type(schedule_type), type(year))
     
     #all schedule files (all companies, all years)
     if company == None and year is None:
@@ -323,27 +331,22 @@ def collapse_csvs(company, schedule_type, year=None, name=""):
 
     assert len(filenames) > 0, "No matching file types, check filename input"
     print("[*] collapsing {} csv files...".format(len(filenames)))
-    combined_csv = pd.concat( [ pd.read_csv(f) for f in filenames ] )
-    print("[*] original combined size: {} results".format(combined_csv.shape[0]))
+    df = pd.concat( [ pd.read_csv(f) for f in filenames ] )
+    print("[*] original combined size: {} results".format(df.shape[0]))
 
-
-    print(combined_csv.shape)
-    #print(combined_csv)
     #TODO 
-    #Expand Committee Column Details
-    #Rename columns "cd_" to avoid duplicate cols
-    combined_csv = map_dict_col('committee', combined_csv, "cd_")
-    print(combined_csv.shape)
-    print(combined_csv)
+    #Expand Committee Column Details and Rename 'cd_'
+    df = map_dict_col('committee', df, "cd_")
+    df = list_vars_to_str(df, 'cd_candidate_ids', 'cd_cycles')
 
     #TODO get drop duplicates working again
-    #dedupe_csv = combined_csv.drop_duplicates()
-    #dedupe_csv.to_csv(outfile_name, index=False)
-    #print("[*] outfile size: {} results".format(dedupe_csv.shape[0]))
-    #print("[*] done")
-    #return [outfile_name, dedupe_csv.shape, filenames]
+    dedupe_csv = df.drop_duplicates()
+    dedupe_csv.to_csv(outfile_name, index=False)
+    print("[*] outfile size: {} results".format(dedupe_csv.shape[0]))
+    print("[*] done")
+    return [outfile_name, dedupe_csv.shape, filenames]
 
-collapse_csvs('Goldman Sachs', 'schedule a', None, "test")
+#collapse_csvs('Goldman Sachs', 'schedule a', None, "_test")
 
 
 def remove_files(collapse_signature):
