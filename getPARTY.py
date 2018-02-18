@@ -207,7 +207,7 @@ def search_party_id(committee_id, year=None):
 def getPARTY(company):
 
     company = str(company).replace(" ", "_")
-    filenames = glob('*{}*'.format(company))
+    filenames = glob('downloads/*{}*'.format(company))
     assert len(filenames) == 1, "Only one file expected, check files and perform merge first..."
     
     in_file = filenames[0]
@@ -235,7 +235,7 @@ def merge_contrib_pid(filenames, company=None):
 
     if company is not None:
         company = str(company).replace(" ", "_")
-        filenames = glob('{}__*'.format(company))
+        filenames = glob('downloads/{}__*'.format(company))
         assert len(filenames) == 2, "Two matching files required, check input"
     
     else:

@@ -1,27 +1,23 @@
+from config import *
 from setlogger import *
 from getFEC import *
 from getPARTY import *
 from cleanFEC import *
 from random import random
 import traceback
-import logging
-import sys
-
-#log = open("mytest.log", "a")
-#sys.stdout = log
-
-import logging
-
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-logger = logging.getLogger()
-logger.addHandler(logging.FileHandler('test.log', 'a'))
-print = logger.info
+import subprocess
 
 
 class openFEC:
-	def __init__(self, companies, years):
+	def __init__(companies, years):
 		self.companies = companies
 		self.years = years
+
+	def start(companies, years):
+		print("{}\n[*] Initializing openFEC...".format("--"*20))
+		print("[*] Total companies: {:<10}".format(len(companies)))
+		print("[*] Total years: {:^10}".format(len(years)))
+		subprocess.call("bash collect_files.sh", shell=True)	
 
 
 	#Run = Download, Collapse, Remove
@@ -78,7 +74,7 @@ class openFEC:
 		for company in companies:
 			try:
 				print("{}\n[*] Combining yearly data for {}".format("--"*20, company))
-				collapse_signature = collapse_csvs(company, "schedule a", None, name)
+				collapse_signature = collapse_csvs(company, "schedule a", None, name, False)
 				remove_files(collapse_signature)
 			except Exception as exc:
 				print(traceback.format_exc())
@@ -136,7 +132,7 @@ class openFEC:
 
 			try:
 				company = str(company).replace(" ", "_")
-				filenames = glob('*{}*'.format(company))
+				filenames = glob('downloads/*{}*'.format(company))
 				if len(filenames)==1:
 					retry(company)
 				else:
@@ -166,7 +162,7 @@ class openFEC:
 	def merge_master(filestem, rm=False):
 		"""openFEC.merge_master("schedule_a__merged_ANALYSIS_cleaned")"""
 		print("[*] combining all files of type *{}* ...".format(filestem))
-		collapse_signature = collapse_csvs(None, filestem, None, "_MASTER")
+		collapse_signature = collapse_csvs(None, filestem, None, "_MASTER", False)
 		if rm is True:
 			remove_files(collapse_signature)
 		else:
@@ -177,35 +173,16 @@ class openFEC:
 ## STEP 1: Define Companies
 ############################################################################
 
-#companies = ["Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS"]
-#companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
-years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
-
-#companies = ["Exxon Mobile", "Amazon", "Boeing"]
-#companies = ["Walmart"]
-#companies = ["General Electric"]
-#companies = ["Apple"]
-#companies = ["Exxon"]
-#companies = ["Microsoft"]
-
-companies = ["Goldman Sachs"]
-#companies = ["Boeing", "Microsoft", "All"]
-#years = ["1996"]
-#companies = ["Walmart"]
-#years = ["2012"]
-#years = ["2016"]
-#years = ["2008"]
-
-
 
 #openFEC.dedupe(companies)
 #openFEC.dedupe(companies, "committee")
 
 
-#test run 
+#test run
+openFEC.start(companies, years)
 openFEC.getFEC(companies, years)
-#openFEC.combine(companies)
-#openFEC.getPARTY(companies)
+openFEC.combine(companies)
+openFEC.getPARTY(companies)
 
 #TODO
 #MOVE ANALYSIS FILES TO NEW FOLDER, THEN CLEAN

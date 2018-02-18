@@ -1,16 +1,18 @@
-import datetime
-import subprocess
+#companies = ["Exxon", "Microsoft", "General Motors", "Citigroup", "Goldman Sachs", "Walmart", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Wells Fargo", "CVS"]
+#companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
+#years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 
-#Get Date for Filenames
-now = datetime.datetime.now()
-date = now.strftime("%Y-%m-%d")
+#companies = ["Exxon Mobile", "Amazon", "Boeing"]
+#companies = ["Walmart"]
+#companies = ["General Electric"]
+#companies = ["Apple"]
+#companies = ["Exxon"]
+#companies = ["Microsoft"]
 
-#Bash Commands
-#commit == git rev-parse HEAD
-#branch == git rev-parse --abbrev-ref HEAD
-commit = str(subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()).replace("b'", "").replace("'", "")[0:7]
-branch = str(subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).strip()).replace("b'", "").replace("'", "")
-ext = "log"
-
-#Export Logfilename
-logfilename = "OpenFEC_report_{}_{}_{}.{}".format(date, branch, commit, ext)
+companies = ["Goldman Sachs"]
+#companies = ["Boeing", "Microsoft", "All"]
+#years = ["1996"]
+#companies = ["Walmart"]
+#years = ["2012"]
+#years = ["2016"]
+years = ["2004"]

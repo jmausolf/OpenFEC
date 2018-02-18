@@ -111,7 +111,7 @@ def req_loop_url_schedule_a(start_url, last_indexes):
 ##############################################################
 
 
-def write_csv_json_dict(json_results, filename="jsondata.csv"):
+def write_csv_json_dict(json_results, filename="downloads/data.csv"):
     with open(filename, 'w') as csvfile:
         writer = csv.DictWriter(csvfile, json_results[0].keys())
         count = 0
@@ -142,7 +142,7 @@ def get_schedule_a_employer_year(employer, year):
     #Repeated Internal Function
     def write_json_to_csv():
         print("[*] getting FEC SCHEDULE A results for {} in {}...page {} of {}".format(employer, year, page, (pages)))
-        filename = "{}_{}_schedule_a_{}.csv".format(year, employer.replace(" ", "_"), page)
+        filename = "downloads/{}_{}_schedule_a_{}.csv".format(year, employer.replace(" ", "_"), page)
         write_csv_json_dict(data['results'], filename)
 
     #Looping
@@ -274,8 +274,8 @@ def list_vars_to_str(df, *args):
 def dedupe_merged_csvs(company, column=None):
     company = str(company).replace(" ", "_")
     file_type = "{}".format(company)
-    filenames = glob('*{}*'.format(file_type))
-    outfile_name = "{}__merged_deduped.csv".format(company)
+    filenames = glob('downloads/*{}*'.format(file_type))
+    outfile_name = "downloads/{}__merged_deduped.csv".format(company)
     
 
     assert len(filenames) > 0, "No matching file types, check filename input"
@@ -301,7 +301,7 @@ def dedupe_merged_csvs(company, column=None):
 
 #dedupe_merged_csvs('Goldman Sachs')
 
-def collapse_csvs(company, schedule_type, year=None, name=""):
+def collapse_csvs(company, schedule_type, year=None, name="", json=True):
 
     schedule_type = str(schedule_type).replace(" ", "_")    
     
@@ -309,8 +309,8 @@ def collapse_csvs(company, schedule_type, year=None, name=""):
     if company == None and year is None:
         print("A")
         file_type = "{}".format(schedule_type)
-        filenames = glob('*{}*'.format(file_type))
-        outfile_name = "{}__merged{}.csv".format(schedule_type, name)     
+        filenames = glob('downloads/*{}*'.format(file_type))
+        outfile_name = "downloads/{}__merged{}.csv".format(schedule_type, name)     
     
     #all schedule, for company X in all years
     elif company is not None and year is None:
@@ -318,16 +318,16 @@ def collapse_csvs(company, schedule_type, year=None, name=""):
         print("B")
         file_type = "{}__{}".format(company, schedule_type)
         print(file_type)
-        filenames = glob('*{}*'.format(file_type))
-        outfile_name = "{}__{}__merged{}.csv".format(company, schedule_type, name)
+        filenames = glob('downloads/*{}*'.format(file_type))
+        outfile_name = "downloads/{}__{}__merged{}.csv".format(company, schedule_type, name)
     
     #all schedule, for company X in year Y
     else:
         company = str(company).replace(" ", "_")
         print("C")
         file_type = "{}_{}_{}".format(year, company, schedule_type)
-        filenames = glob('*{}*'.format(file_type))
-        outfile_name = "{}__{}__{}_merged{}.csv".format(year, company, schedule_type, name)
+        filenames = glob('downloads/*{}*'.format(file_type))
+        outfile_name = "downloads/{}__{}__{}_merged{}.csv".format(year, company, schedule_type, name)
 
 
     assert len(filenames) > 0, "No matching file types, check filename input"
@@ -337,8 +337,11 @@ def collapse_csvs(company, schedule_type, year=None, name=""):
 
     #TODO 
     #Expand Committee Column Details and Rename 'cd_'
-    df = map_dict_col('committee', df, "cd_")
-    df = list_vars_to_str(df, 'cd_candidate_ids', 'cd_cycles')
+    if json is True:
+        df = map_dict_col('committee', df, "cd_")
+        df = list_vars_to_str(df, 'cd_candidate_ids', 'cd_cycles')
+    elif json is False:
+        pass
 
     #TODO get drop duplicates working again
     dedupe_csv = df.drop_duplicates()

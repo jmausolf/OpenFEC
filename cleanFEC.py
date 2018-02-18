@@ -9,7 +9,7 @@ def read_company_csv(company):
 	company = str(company).replace(" ", "_")
 	file_type = "{}".format(company)
 	print(file_type)
-	filename = glob('*{}*'.format(file_type))
+	filename = glob('downloads/*{}*'.format(file_type))
 	print(filename)
 	df = pd.read_csv(filename[0])
 	return df, filename[0]
