@@ -58,6 +58,8 @@ class openFEC:
 				finally:
 					pass
 
+
+
 	#Combine = Collapse/Remove Across Years
 	def combine(companies, name=""):
 		for company in companies:
@@ -173,20 +175,22 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #companies = ["Exxon"]
 #companies = ["Microsoft"]
 
-#companies = ["Goldman Sachs"]
+companies = ["Goldman Sachs"]
 #companies = ["Boeing", "Microsoft", "All"]
-#years = ["2000"]
+#years = ["1996"]
 #companies = ["Walmart"]
 #years = ["2012"]
 #years = ["2016"]
 #years = ["2008"]
 
 
-#dedupe multiple runs (need to remove json/dict column)
+
+#openFEC.dedupe(companies)
 #openFEC.dedupe(companies, "committee")
 
+
 #test run 
-#openFEC.getFEC(companies, years)
+openFEC.getFEC(companies, years)
 #openFEC.combine(companies)
 #openFEC.getPARTY(companies)
 
@@ -199,7 +203,7 @@ years = ["2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984"]
 #Merging Old Runs and New Partial Runs
 #companies = ["Boeing", "Microsoft", "All"]
 #openFEC.dedupe(companies, "committee")
-openFEC.merge_master("merged_deduped")
+#openFEC.merge_master("merged_deduped")
 
 
 

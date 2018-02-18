@@ -231,8 +231,44 @@ def get_schedule_a_employer_year(employer, year):
         pass
 
 ##############################################################
-## merge files and collapse
+## post download processing
 ##############################################################
+
+def ren_cols(df, string):
+    df.columns = ['{}{}'.format(string, x) for x in df.columns]
+    return(df)
+
+def map_dict_col(var, df, ren=None):
+    """
+    ## Maps a col containing dict or json to seperate columns
+    ## Expected variable cell: '{u'key': u'value', u'key': u'value'}
+    ## To rename the dict/json keys being mapped, specify a ren string
+    """
+    s = df[var].map(eval)
+
+    if ren is not None:
+        s = s.apply(pd.Series)
+        s = ren_cols(s, str(ren))
+        df = pd.concat([df.drop([var], axis=1), s], axis=1)
+
+    else:
+        df = pd.concat([df.drop([var], axis=1), s.apply(pd.Series)], axis=1)
+
+    return df
+
+def list_to_str(var, df):
+    s = df[var].apply(lambda x : str(x) if type(x) is list else x)
+    s.name = var
+    df = pd.concat([df.drop([var], axis=1), s], axis=1)
+    return df
+
+def list_vars_to_str(df, *args):
+    for arg in args:
+        df = list_to_str(arg, df)
+
+    return df
+
+
 
 def dedupe_merged_csvs(company, column=None):
     company = str(company).replace(" ", "_")
@@ -246,6 +282,11 @@ def dedupe_merged_csvs(company, column=None):
     combined_csv = pd.concat( [ pd.read_csv(f) for f in filenames ] )
     print("[*] original combined size: {} results".format(combined_csv.shape[0]))
     
+    #TODO Json to columns
+    combined_csv = map_dict_col('committee', combined_csv, "cd_")
+    combined_csv = list_vars_to_str(combined_csv, 'cd_candidate_ids', 'cd_cycles')
+
+
     if column is not None:
         df = combined_csv.drop(column, axis=1)
     else:
@@ -257,12 +298,11 @@ def dedupe_merged_csvs(company, column=None):
     print("[*] done")
     return [outfile_name, dedupe_csv.shape, filenames]
 
+#dedupe_merged_csvs('Goldman Sachs')
+
 def collapse_csvs(company, schedule_type, year=None, name=""):
 
     schedule_type = str(schedule_type).replace(" ", "_")    
-    
-    #print(company, schedule_type, year)
-    #print(type(company), type(schedule_type), type(year))
     
     #all schedule files (all companies, all years)
     if company == None and year is None:
@@ -279,6 +319,7 @@ def collapse_csvs(company, schedule_type, year=None, name=""):
         print(file_type)
         filenames = glob('*{}*'.format(file_type))
         outfile_name = "{}__{}__merged{}.csv".format(company, schedule_type, name)
+    
     #all schedule, for company X in year Y
     else:
         company = str(company).replace(" ", "_")
@@ -287,15 +328,25 @@ def collapse_csvs(company, schedule_type, year=None, name=""):
         filenames = glob('*{}*'.format(file_type))
         outfile_name = "{}__{}__{}_merged{}.csv".format(year, company, schedule_type, name)
 
+
     assert len(filenames) > 0, "No matching file types, check filename input"
     print("[*] collapsing {} csv files...".format(len(filenames)))
-    combined_csv = pd.concat( [ pd.read_csv(f) for f in filenames ] )
-    print("[*] original combined size: {} results".format(combined_csv.shape[0]))
-    dedupe_csv = combined_csv.drop_duplicates()
+    df = pd.concat( [ pd.read_csv(f) for f in filenames ] )
+    print("[*] original combined size: {} results".format(df.shape[0]))
+
+    #TODO 
+    #Expand Committee Column Details and Rename 'cd_'
+    df = map_dict_col('committee', df, "cd_")
+    df = list_vars_to_str(df, 'cd_candidate_ids', 'cd_cycles')
+
+    #TODO get drop duplicates working again
+    dedupe_csv = df.drop_duplicates()
     dedupe_csv.to_csv(outfile_name, index=False)
     print("[*] outfile size: {} results".format(dedupe_csv.shape[0]))
     print("[*] done")
     return [outfile_name, dedupe_csv.shape, filenames]
+
+#collapse_csvs('Goldman Sachs', 'schedule a', None, "_test")
 
 
 def remove_files(collapse_signature):
@@ -306,3 +357,4 @@ def remove_files(collapse_signature):
         [ os.remove(f) for f in collapse_signature[2]]
     else:
         return
+
