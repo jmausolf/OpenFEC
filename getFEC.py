@@ -80,7 +80,6 @@ def req_start_url_schedule_a(employer, year):
     url = "https://api.open.fec.gov/v1/schedules/schedule_a/"+\
         "?sort=contribution_receipt_date"+\
         "&per_page=100"+\
-        "&contributor_type=individual"+\
         "&is_individual=true"+\
         "&contributor_employer={}".format(firm)+\
         "&two_year_transaction_period={}".format(year)+\

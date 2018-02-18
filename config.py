@@ -5,11 +5,11 @@
 #companies = ["Exxon Mobile", "Amazon", "Boeing"]
 #companies = ["Walmart"]
 #companies = ["General Electric"]
-#companies = ["Apple"]
+companies = ["Apple"]
 #companies = ["Exxon"]
 #companies = ["Microsoft"]
 
-companies = ["Goldman Sachs"]
+#companies = ["Goldman Sachs"]
 #companies = ["Boeing", "Microsoft", "All"]
 #years = ["1996"]
 #companies = ["Walmart"]
