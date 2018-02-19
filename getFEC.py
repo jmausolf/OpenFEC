@@ -146,7 +146,7 @@ def get_url_tester(url):
 
 
 
-get_url_tester("https://api.open.fec.gov/v1/schedules/schedule_a/?sort=contribution_receipt_date&per_page=100&is_individual=true&contributor_employer=Boeing&two_year_transaction_period=2012&api_key=EXmU09BwqVQxNOwsahQmm1NDOoRjYxnmkRzBehTz&last_index=4041920121154950006&last_contribution_receipt_date=2011-10-19T00:00:00")
+#get_url_tester("https://api.open.fec.gov/v1/schedules/schedule_a/?sort=contribution_receipt_date&per_page=100&is_individual=true&contributor_employer=Boeing&two_year_transaction_period=2012&api_key=EXmU09BwqVQxNOwsahQmm1NDOoRjYxnmkRzBehTz&last_index=4041920121154950006&last_contribution_receipt_date=2011-10-19T00:00:00")
 
 
 ##############################################################
