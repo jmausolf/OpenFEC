@@ -17,7 +17,7 @@ from random import random
 ##############################################################
 
 def requests_retry_session(
-    retries=3,
+    retries=5,
     backoff_factor=0.3,
     status_forcelist=(500, 502, 504),
     session=None,
@@ -36,7 +36,7 @@ def requests_retry_session(
     return session
 
 def get_url(url):
-    data = requests_retry_session().get(url, timeout=5).json()
+    data = requests_retry_session().get(url, timeout=25).json()
     #data = requests.get(url).json()
     return(data)
 
@@ -121,6 +121,32 @@ def write_csv_json_dict(json_results, filename="downloads/data.csv"):
             else:
                 writer.writerow(row)
         csvfile.close()
+
+##############################################################
+## url tester
+##############################################################
+
+def get_url_tester(url):
+    print(url)
+    data = get_url(url)
+    get_count(data)
+    if still_results(data) <= 0:
+        warnings.warn('WARNING: no data found for requested year')
+        return
+
+    #Data Test
+    pages = get_pages(data)
+    results_count = still_results(data)
+    last_indexes = get_last_index_contrib(data)
+
+    print(data)
+    print(last_indexes)
+    print(results_count)
+
+
+
+
+get_url_tester("https://api.open.fec.gov/v1/schedules/schedule_a/?sort=contribution_receipt_date&per_page=100&is_individual=true&contributor_employer=Boeing&two_year_transaction_period=2012&api_key=EXmU09BwqVQxNOwsahQmm1NDOoRjYxnmkRzBehTz&last_index=4041920121154950006&last_contribution_receipt_date=2011-10-19T00:00:00")
 
 
 ##############################################################
