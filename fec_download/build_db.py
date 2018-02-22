@@ -92,7 +92,8 @@ def return_sql(action, **kwargs):
 #files = return_files("downloads/", "txt")
 
 #DEV: Specify Type of File
-files = return_files("downloads/", "txt", "cm")
+files = return_files("downloads/", "txt", "cn")
+#print(files)
 #table_names = list(set([v[1] for d in datasets for k, v in d.items()]))
 #print(table_names)
 
@@ -102,6 +103,6 @@ db = connect_db("openFEC.db")
 c = db.cursor()
 
 create_insert_table1(c, files)
-count_result(c, table_key["cm"])
+count_result(c, table_key["cn"])
 
 exit_db(db)

@@ -15,12 +15,7 @@ date = now.strftime("%Y-%m-%d")
 
 #Specify File Key (Source) and Value [download url]
 #table name == dictionary name
-individual_contributions = {
-	'indiv16' : ['indiv', 'individual_contributions', 'https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2016/indiv16.zip'],
-	'indiv14' : ['indiv', 'individual_contributions', 'https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2014/indiv14.zip'],
-	#'indiv12' : ['https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2012/indiv12.zip'],
-	#'indiv10' : ['https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2010/indiv10.zip']
-}
+
 
 #Data Type: Committee Master File
 committee_master = {
@@ -28,13 +23,33 @@ committee_master = {
 	'cm14' : ['cm', 'committee_master', 'https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2014/cm14.zip'],
 }
 
+#Data Type: Candidate Master File
+candidate_master = {
+	'cn16' : ['cn', 'candidate_master', 'https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2016/cn16.zip']
+}
+
+#Data Type: Candidate Committee Linkage File
+cand_cmte_link = {
+	'ccl16': ['ccl', 'cand_cmte_link', 'https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2016/ccl16.zip']
+}
+
+#Data Type: Individual Contributions
+individual_contributions = {
+	#'indiv16' : ['indiv', 'individual_contributions', 'https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2016/indiv16.zip'],
+	#'indiv14' : ['indiv', 'individual_contributions', 'https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2014/indiv14.zip'],
+	#'indiv12' : ['indiv', 'individual_contributions', 'https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2012/indiv12.zip'],
+	'indiv10' : ['indiv', 'individual_contributions', 'https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2010/indiv10.zip']
+}
+
 table_key = {
 	'cm' : 'committee_master',
+	'cn' : 'candidate_master',
+	'ccl' : 'cand_cmte_link',
 	'indiv' : 'individual_contributions'
 }
 
 #All Reports
-datasets = [individual_contributions, committee_master]
+datasets = [committee_master, candidate_master, cand_cmte_link, individual_contributions]
 
 
 
@@ -78,6 +93,8 @@ def download(data):
 	print("[*] unzipping downloaded files...")
 	unzip_rename('indiv', 'zip', ['itcont.txt'])
 	unzip_rename('cm', 'zip', ['cm.txt'])
+	unzip_rename('cn', 'zip', ['cn.txt'])
+	unzip_rename('ccl', 'zip', ['ccl.txt'])
 	subprocess.call("bash collect_files.sh", shell=True)
 
 #download(datasets)

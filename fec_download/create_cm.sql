@@ -16,6 +16,6 @@ CREATE TABLE committee_master (
 	org_cat TEXT,
 	connected_org_name TEXT,
 	cand_id TEXT
-	);
+);
 
 CREATE UNIQUE INDEX idx_committee_master ON committee_master (cm_id);

@@ -22,6 +22,6 @@ CREATE TABLE individual_contributions (
 	memo_code TEXT,
 	memo_text TEXT,
 	sub_id NUMERIC NOT NULL
-	);
+);
 
 CREATE UNIQUE INDEX idx_individual_contributions ON individual_contributions (sub_id);
