@@ -7,31 +7,26 @@ from glob import glob
 import re
 import zipfile
 import os
-#from setlogger import *
+from setlogger import *
+from config import *
 
 #Get Date for Filenames
 now = datetime.datetime.now()
 date = now.strftime("%Y-%m-%d")
 
-#Specify File Key (Source) and Value [download url]
-#table name == dictionary name
+
+#################################################
+## Functions to Define Download Files
+#################################################
 
 def get_download_url(year, type_key):
 	base_url = "https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads"
 	key = "{}{}".format(type_key, year[2:4])
 	file = "{}.zip".format(key)
-	#print(file)
 	url = "{}/{}/{}".format(base_url, year, file)
-	#print(url)
 
 	return [key, url]
 
-
-
-#x = get_download_url("2016", "cm")
-#y = get_download_url("2016", "ccl")
-
-#print(x)
 
 def make_download_table_dicts(years, type_key, table_key):
 	output = {}
@@ -40,35 +35,12 @@ def make_download_table_dicts(years, type_key, table_key):
 		key_url = get_download_url(year, type_key)
 		key = key_url[0]
 		url = key_url[1]
-		table = table_key[type_key]
+		table = table_key[type_key][0]
 
 		output[key] = [type_key, table, url]
 		
-	#print(output)
 	return output
 
-
-
-table_key = {
-	'cm' : 'committee_master',
-	'cn' : 'candidate_master',
-	'ccl' : 'cand_cmte_link',
-	'indiv' : 'individual_contributions'
-}
-
-
-#make_download_table_dicts(['2014', '2016'], "cm", table_key)
-
-#committee_master = make_download_table_dicts(['2014', '2016'], "cm", table_key)
-
-#print(committee_master)
-
-#years = ['2000', '2002', '2004', '2008', '2010', '2012', '2014', '2016']
-years = ['2012']
-
-#datasets = [(v = make_download_table_dicts(years, k, table_key)) for k, v in table_key.items()]
-
-#datasets = [print(v, k) for k, v in table_key.items()]
 
 def download_files(years, table_key):
 	datasets = []
@@ -78,11 +50,12 @@ def download_files(years, table_key):
 	return datasets
 
 
-
+#################################################
+## Functions to Download and Extract Files
+#################################################
 
 #Download and Rename Files
 def wget_download_rename(key, value):
-	#report_type = value[0]
 	tmp = wget.download(value[2])
 	print('\n')
 	time.sleep(5)
@@ -107,6 +80,11 @@ def unzip_rename(globstem, ext, req_subfiles):
 	sub = req_subfiles
 	[unzip(z, s, '{}_{}'.format(z.split(".")[0], s.lower()), True) for z in zip_files for s in sub ]
 
+
+def extract(type_key, table_key):
+	return table_key[type_key][1]
+
+
 def remove_files(filetype):
 	files = glob('*.{}'.format(filetype))
 	print("[*] removing {} files in 10 seconds, control-c to abort...".format(len(files)))
@@ -114,18 +92,27 @@ def remove_files(filetype):
 	[ os.remove(f) for f in files]
 
 
-def download(data):
+def download(data, tk):
+	"""
+	requires both requested data and table keys
+	:: data: 	a list of data dictionaries, keys, and download urls
+				created by the func, download_files(years, table_key)
+
+	:: tk: 		the table_key from config.py, used to specify the 
+				file to extract from the download zip file
+
+				both years and table_key are specified in config.py
+	"""
 	print("[*] downloading files...")
 	[wget_download_rename(k, v) for d in data for k, v in d.items()]
 	print("[*] unzipping downloaded files...")
-	unzip_rename('indiv', 'zip', ['itcont.txt'])
-	unzip_rename('cm', 'zip', ['cm.txt'])
-	unzip_rename('cn', 'zip', ['cn.txt'])
-	unzip_rename('ccl', 'zip', ['ccl.txt'])
+	[unzip_rename(k, 'zip', [extract(k, tk)]) for k, v in tk.items()]
 	subprocess.call("bash collect_files.sh", shell=True)
 
 
-#Datasets to Download
-datasets = download_files(years, table_key)
+#################################################
+## Running the Code
+#################################################
 
-download(datasets)
+#datasets = download_files(years, table_key)
+#download(datasets, table_key)
