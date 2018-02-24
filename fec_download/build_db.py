@@ -50,7 +50,7 @@ def create_insert_table(c, files):
 
 
 def count_result(c, table):
-	([print("[*] total: {} rows in {} table"
+	([print("[*] total: {:,} rows in {} table"
 		.format(r[0], table)) 
 		for r in c.execute("SELECT COUNT(*) FROM {};".format(table))])
 
