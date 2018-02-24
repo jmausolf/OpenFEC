@@ -3,10 +3,11 @@ import csv
 import re
 from glob import glob
 from download import table_key
+from setlogger import *
 import signal
 import threading
 import time
-import os
+
 
 
 
@@ -96,12 +97,9 @@ def return_sql(action, **kwargs):
 
 
 
-#first step
+
 db = None
 shutdown = False
-
-##conn == db
-##cursor == c
 
 def main():
 	global db
@@ -116,7 +114,6 @@ def main():
 	#DEV: Specify Type of File
 	#files = return_files("downloads/", "txt", "ccl")
 
-
 	#Run: Build Database
 	db = connect_db("openFEC.db")
 	c = db.cursor()
@@ -127,6 +124,7 @@ def main():
 
 	db = None
 	return
+
 
 
 
