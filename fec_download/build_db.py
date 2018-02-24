@@ -76,7 +76,7 @@ def return_key(file):
 	else:
 		file = filepath[0]
 
-	return re.split(r'[0-9]+', file)[0]
+	return file.split('_', 1)[0][:-2]
 
 
 def return_sql(action, **kwargs):
@@ -116,20 +116,19 @@ def main():
 	#DEV: Specify Type of File
 	#files = return_files("downloads/", "txt", "ccl")
 
-	try:
-		#Run: Build Database
-		db = connect_db("openFEC.db")
-		c = db.cursor()
 
-		create_insert_table(c, files)
-		count_results(c, table_key)
-		exit_db(db)
+	#Run: Build Database
+	db = connect_db("openFEC.db")
+	c = db.cursor()
 
-		db = None
-		return
+	create_insert_table(c, files)
+	count_results(c, table_key)
+	exit_db(db)
 
-	except KeyboardInterrupt:
-		exit_db(db)
+	db = None
+	return
+
+
 
 
 
@@ -138,7 +137,7 @@ def interrupt(signum, frame):
 	global db
 	global shutdown
 
-	print ("Interrupt requested")
+	print ("[*] interrupt requested, control-C a second time to confirm")
 
 	if db:
 		db.interrupt()

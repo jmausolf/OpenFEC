@@ -1,6 +1,6 @@
-DROP TABLE if exists individual_contributions;
+DROP TABLE if exists committee_contributions;
 
-CREATE TABLE individual_contributions (
+CREATE TABLE committee_contributions (
 	cmte_id TEXT NOT NULL,
 	amndt_ind TEXT,
 	rpt_tp TEXT,
@@ -17,6 +17,7 @@ CREATE TABLE individual_contributions (
 	transaction_dt TEXT,
 	transaction_amt TEXT,
 	other_id TEXT,
+	cand_id TEXT,
 	tran_id TEXT,
 	file_num NUMERIC,
 	memo_cd TEXT,
@@ -24,4 +25,5 @@ CREATE TABLE individual_contributions (
 	sub_id NUMERIC NOT NULL
 );
 
-CREATE UNIQUE INDEX idx_individual_contributions ON individual_contributions (sub_id);
+CREATE UNIQUE INDEX idx_committee_contributions ON committee_contributions (sub_id);
+
