@@ -27,7 +27,9 @@ def create_table(cursor, sql_script):
 def insert_file_into_table(cursor, sql_script, file, sep=','):
 	print("[*] inserting {} into table with {}".format(file, sql_script))
 	qry = open(sql_script, 'rU').read()
-	csvReader = csv.reader(open(file), delimiter=sep, quotechar='"')
+
+	fileObj = open(file, 'rU', encoding='latin-1')
+	csvReader = csv.reader(fileObj, delimiter=sep, quotechar='"')
 	for row in csvReader:
 		try:
 			cursor.execute(qry, row)
@@ -35,7 +37,7 @@ def insert_file_into_table(cursor, sql_script, file, sep=','):
 			pass
 
 
-def create_insert_table1(c, files):
+def create_insert_table(c, files):
 
 	keys = list(set([return_key(file) for file in files]))
 	for key in keys:
@@ -48,8 +50,13 @@ def create_insert_table1(c, files):
 
 
 def count_result(c, table):
-	[print(r) for r in c.execute("SELECT COUNT(*) FROM {};".format(table))]
+	([print("[*] total: {} rows in {} table"
+		.format(r[0], table)) 
+		for r in c.execute("SELECT COUNT(*) FROM {};".format(table))])
 
+
+def count_results(c, table_key):
+	[count_result(c, table_key[k][0]) for k, v in table_key.items()]
 
 
 #Helper Functions
@@ -91,18 +98,19 @@ def return_sql(action, **kwargs):
 #All Files
 #files = return_files("downloads/", "txt")
 
+#All Files in Config
+files = [file for k, v in table_key.items() for file in return_files("downloads/", "txt", k)]
+
+
 #DEV: Specify Type of File
-files = return_files("downloads/", "txt", "cn")
-#print(files)
-#table_names = list(set([v[1] for d in datasets for k, v in d.items()]))
-#print(table_names)
+#files = return_files("downloads/", "txt", "ccl")
 
 
 #Run: Build Database
 db = connect_db("openFEC.db")
 c = db.cursor()
 
-create_insert_table1(c, files)
-count_result(c, table_key["cn"])
-
+create_insert_table(c, files)
+count_results(c, table_key)
 exit_db(db)
+
