@@ -3,6 +3,10 @@ import csv
 import re
 from glob import glob
 from download import table_key
+import signal
+import threading
+import time
+import os
 
 
 
@@ -92,25 +96,60 @@ def return_sql(action, **kwargs):
 
 
 
+#first step
+db = None
+shutdown = False
+
+##conn == db
+##cursor == c
+
+def main():
+	global db
+
+	#All Files
+	#files = return_files("downloads/", "txt")
+
+	#All Files in Config
+	files = [file for k, v in table_key.items() for file in return_files("downloads/", "txt", k)]
+
+
+	#DEV: Specify Type of File
+	#files = return_files("downloads/", "txt", "ccl")
+
+	try:
+		#Run: Build Database
+		db = connect_db("openFEC.db")
+		c = db.cursor()
+
+		create_insert_table(c, files)
+		count_results(c, table_key)
+		exit_db(db)
+
+		db = None
+		return
+
+	except KeyboardInterrupt:
+		exit_db(db)
 
 
 
-#All Files
-#files = return_files("downloads/", "txt")
 
-#All Files in Config
-files = [file for k, v in table_key.items() for file in return_files("downloads/", "txt", k)]
+def interrupt(signum, frame):
+	global db
+	global shutdown
 
+	print ("Interrupt requested")
 
-#DEV: Specify Type of File
-#files = return_files("downloads/", "txt", "ccl")
+	if db:
+		db.interrupt()
+		db.close()
 
+if __name__ == "__main__":
+    signal.signal(signal.SIGINT, interrupt)
 
-#Run: Build Database
-db = connect_db("openFEC.db")
-c = db.cursor()
+    mainthread = threading.Thread(target=main)
+    mainthread.start()
 
-create_insert_table(c, files)
-count_results(c, table_key)
-exit_db(db)
+    while mainthread.isAlive():
+        time.sleep(0.2)
 
