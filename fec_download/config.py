@@ -40,7 +40,7 @@ table_key = {
 	'cm'     : ['committee_master', 'cm.txt'],
 	'cn'     : ['candidate_master', 'cn.txt'],
 	'ccl'    : ['cand_cmte_link', 'ccl.txt'],
-	#'oth'    : ['itemized_records', 'itoth.txt'],
+	'oth'    : ['itemized_records', 'itoth.txt'],
 	#'pas2'   : ['committee_contributions', 'itpas2.txt'],
 	'indiv'  : ['individual_contributions', 'itcont.txt'],
 	#'oppexp' : ['operating_expenditures', 'oppexp.txt']

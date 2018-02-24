@@ -18,15 +18,15 @@ def exit_db(db):
 	db.close()
 
 
-def create_table(cursor, sql_script):
-	print("[*] create table with {}".format(sql_script))
-	qry = open(sql_script, 'rU').read()
+def create_table(cursor, sql_script, path='sql/'):
+	print("[*] create table with {}{}".format(path, sql_script))
+	qry = open("{}{}".format(path, sql_script), 'rU').read()
 	cursor.executescript(qry)
 
 
-def insert_file_into_table(cursor, sql_script, file, sep=','):
-	print("[*] inserting {} into table with {}".format(file, sql_script))
-	qry = open(sql_script, 'rU').read()
+def insert_file_into_table(cursor, sql_script, file, sep=',', path='sql/'):
+	print("[*] inserting {} into table with {}{}".format(file, path, sql_script))
+	qry = open("{}{}".format(path, sql_script), 'rU').read()
 
 	fileObj = open(file, 'rU', encoding='latin-1')
 	csvReader = csv.reader(fileObj, delimiter=sep, quotechar='"')
