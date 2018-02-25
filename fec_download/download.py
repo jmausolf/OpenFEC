@@ -103,11 +103,15 @@ def download(data, tk):
 
 				both years and table_key are specified in config.py
 	"""
-	print("[*] downloading files...")
-	[wget_download_rename(k, v) for d in data for k, v in d.items()]
-	print("[*] unzipping downloaded files...")
-	[unzip_rename(k, 'zip', [extract(k, tk)]) for k, v in tk.items()]
-	subprocess.call("bash collect_files.sh", shell=True)
+	try:
+		print("[*] downloading files...")
+		[wget_download_rename(k, v) for d in data for k, v in d.items()]
+		print("[*] unzipping downloaded files...")
+		[unzip_rename(k, 'zip', [extract(k, tk)]) for k, v in tk.items()]
+		subprocess.call("bash collect_files.sh", shell=True)
+	except Exception as e: 
+		print(e)
+		pass
 
 
 #################################################

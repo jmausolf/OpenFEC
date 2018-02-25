@@ -2,7 +2,7 @@
 ## Years
 #################################################
 
-years = ['2000', '2002', '2004', '2008', '2010', '2012', '2014', '2016']
+years = ['1980', '1982', '1984', '1986', '1988', '1990', '1992', '1994', '1996', '1998', '2000', '2002', '2004', '2008', '2010', '2012', '2014', '2016']
 #years = ['2012', '2010']
 
 #################################################
@@ -38,12 +38,12 @@ table key is input by the researcher, requiring the following:
 #key : [table, extract file]
 table_key = {
 	'cm'     : ['committee_master', 'cm.txt'],
-	#'cn'     : ['candidate_master', 'cn.txt'],
-	#'ccl'    : ['cand_cmte_link', 'ccl.txt'],
-	#'oth'    : ['itemized_records', 'itoth.txt'],
-	#'pas2'   : ['committee_contributions', 'itpas2.txt'],
-	#'indiv'  : ['individual_contributions', 'itcont.txt'],
-	#'oppexp' : ['operating_expenditures', 'oppexp.txt']
+	'cn'     : ['candidate_master', 'cn.txt'],
+	'ccl'    : ['cand_cmte_link', 'ccl.txt'],
+	'oth'    : ['itemized_records', 'itoth.txt'],
+	'pas2'   : ['committee_contributions', 'itpas2.txt'],
+	'indiv'  : ['individual_contributions', 'itcont.txt'],
+	'oppexp' : ['operating_expenditures', 'oppexp.txt']
 }
 
 
