@@ -56,12 +56,16 @@ def download_files(years, table_key):
 
 #Download and Rename Files
 def wget_download_rename(key, value):
-	tmp = wget.download(value[2])
-	print('\n')
-	time.sleep(5)
-	ext = tmp.rsplit(".", 1)[1]
-	filename = "{}_fec_{}.{}".format(key, date, ext)
-	subprocess.call("mv {} {}".format(tmp, filename), shell=True)
+	try:
+		tmp = wget.download(value[2])
+		print('\n')
+		time.sleep(5)
+		ext = tmp.rsplit(".", 1)[1]
+		filename = "{}_fec_{}.{}".format(key, date, ext)
+		subprocess.call("mv {} {}".format(tmp, filename), shell=True)
+	except Exception as e:
+		filename = "{}_fec_{}".format(key, date)
+		print("[*] Error downloading requested file: {}, error code: {}...".format(filename, e))
 
 
 def unzip(zipfilename, subfilename="", rename="", delete=False):
