@@ -7,8 +7,18 @@ from setlogger import *
 import signal
 import threading
 import time
+import codecs
+import re
 
 
+
+#Data Cleaning Functions
+def sed_replace_null(file, script="clean_null.sh"):
+        code = open(script, 'w')
+        code.write('file={}\n'.format(file))
+        sed_line = open('sed_null.sh', 'rU').read()
+        code.write(sed_line)
+        code.close()
 
 
 #SQLite Database Functions
@@ -32,14 +42,36 @@ def create_table(cursor, sql_script, path='sql/'):
 def insert_file_into_table(cursor, sql_script, file, sep=',', path='sql/'):
 	print("[*] inserting {} into table with {}{}".format(file, path, sql_script))
 	qry = open("{}{}".format(path, sql_script), 'rU').read()
-
 	fileObj = open(file, 'rU', encoding='latin-1')
 	csvReader = csv.reader(fileObj, delimiter=sep, quotechar='"')
-	for row in csvReader:
+
+	try:
+		for row in csvReader:
+			try:
+				cursor.execute(qry, row)
+			except sqlite3.IntegrityError as e:
+				pass
+
+	except Exception as e:
+		print("[*] error while processing file: {}, error code: {}".format(file, e))
+		print("[*] sed replacing null bytes in file: {}".format(file))
+		sed_replace_null(file, "clean_null.sh")
+		subprocess.call("bash clean_null.sh", shell=True)
+
 		try:
-			cursor.execute(qry, row)
-		except sqlite3.IntegrityError as e:
-			pass
+			print("[*] inserting {} into table with {}{}".format(file, path, sql_script))
+			fileObj = open(file, 'rU', encoding='latin-1')
+			csvReader = csv.reader(fileObj, delimiter=sep, quotechar='"')
+			for row in csvReader:
+				try:
+					cursor.execute(qry, row)
+				except sqlite3.IntegrityError as e:
+					pass
+					print(e)	
+	
+		except Exception as e:
+			print("[*] error while processing file: {}, error code: {}".format(file, e))
+
 
 
 def create_insert_table(c, files):
