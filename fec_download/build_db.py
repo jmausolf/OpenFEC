@@ -1,14 +1,16 @@
 import sqlite3
 import csv
 import re
-from glob import glob
-from download import table_key
-from setlogger import *
 import signal
 import threading
 import time
 import codecs
-import re
+import argparse
+from glob import glob
+from config import *
+from setlogger import *
+from download import *
+
 
 
 
@@ -158,11 +160,6 @@ def main():
 	return
 
 
-
-
-
-
-
 def interrupt(signum, frame):
 	global db
 	global shutdown
@@ -173,12 +170,30 @@ def interrupt(signum, frame):
 		db.interrupt()
 		db.close()
 
+
+
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, interrupt)
 
-    mainthread = threading.Thread(target=main)
-    mainthread.start()
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-d", "--download", default=False, type=bool, help="download files")
+	parser.add_argument("-b", "--build", default=False, type=bool, help="clean files")
+	args = parser.parse_args()
 
-    while mainthread.isAlive():
-        time.sleep(0.2)
+	if not (args.download or args.build):
+		parser.error('No action requested, add --download True or --build True')
 
+	if args.download is True:
+		datasets = download_files(years, table_key)
+		download(datasets, table_key)
+	else:
+		pass
+
+	if args.build is True:
+		signal.signal(signal.SIGINT, interrupt)
+		mainthread = threading.Thread(target=main)
+		mainthread.start()
+
+		while mainthread.isAlive():
+			time.sleep(0.2)
+	else:
+		pass
