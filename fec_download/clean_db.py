@@ -78,7 +78,7 @@ def alt_indiv_test(df):
 	return df
 
 
-def get_alter_profile(input_table, output_table, db, alter_function):
+def get_alter_profile(input_table, output_table, db, alter_function, replace_null=False, replace_type=False, alt_types=[], **kwargs):
 
 	df = pd.read_sql_query("SELECT * FROM {} LIMIT 100;".format(input_table), con=db)
 	df = alter_function(df)
@@ -86,31 +86,34 @@ def get_alter_profile(input_table, output_table, db, alter_function):
 	cols = list(df)
 
 	#TODO get null, type vectors from db
-	nulls = gen_nulls(cols, "", [0])
-	types = gen_types(cols, replace=[4], alt_vector=["NUMERIC"])
+	nulls = gen_nulls(cols, "", replace=replace_null)
+	types = gen_types(cols, replace=replace_type, alt_vector=alt_types)
 
 	#print(cols)
 
 	#create_qry = make_sql_create_table(output_table, cols, types, nulls, index=True, unique=True, key="sub_id")
-	create_qry = make_sql_create_table(output_table, cols, types, nulls)
+	create_qry = make_sql_create_table(output_table, cols, types, nulls, **kwargs)
 	insert_qry = make_sql_insert_table(output_table, cols)
+
+	#exit_db(db)
 
 	return create_qry, insert_qry
 
-qrys = get_alter_profile("candidate_master", "test_cm", db, alt_cm_test)
+#qrys = get_alter_profile("candidate_master", "test_cm", db, alt_cm_test)
+#qrys = get_alter_profile("candidate_master", "test_cm", db, alt_cm_test, index=True, unique=True, key="cmte_id")
 #print(qrys[0])
-
+#print(qrys[1])
 
 #print(get_alter_profile("individual_contributions", db, alt_indiv_test))
 
 #TODO make work
-def alter_create_table(input_table, output_table, db, conn, alter_function, path='sql_clean/', limit=False, chunksize=10000):
+def alter_create_table(input_table, output_table, db, conn, alter_function, path='sql_clean/', limit=False, chunksize=10000, **kwargs):
 
 	#TODO
 	#code to create a SQL scripts based on output_table, and df manipulations, column order
 
 	#queries
-	qrys = get_alter_profile(input_table, output_table, db, alter_function)
+	qrys = get_alter_profile(input_table, output_table, db, alter_function, **kwargs)
 
 	if limit is False:
 		limit_statement = ''
@@ -138,7 +141,7 @@ def alter_create_table(input_table, output_table, db, conn, alter_function, path
 	    #print(db_order)
 	    #change column order to desired sql table
 	    #df = df[db_order]
-	    print(df.shape)
+	    #print(df.shape)
 
 	    #write chunk to csv
 	    file = "df_chunk.csv"
@@ -152,9 +155,10 @@ def alter_create_table(input_table, output_table, db, conn, alter_function, path
 	count_result(c, output_table)
 
 
-alter_create_table("candidate_master", "test_candidate", db, c, alter_function=alt_cm_test, limit=10000)
+alter_create_table("candidate_master", "test_candidate", db, c, alter_function=alt_cm_test, limit=False, chunksize=1000000)
+#alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test, limit=20000, chunksize=100000, index=True, unique=True, key="sub_id")
 
-
+#alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test)
 
 
 

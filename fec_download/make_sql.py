@@ -5,6 +5,7 @@
 #nulls = ["NOT NULL", "", "", "", "","", ""]
 
 
+
 def gen_types(columns, types="TEXT", replace=False, alt_vector=[]):
 	type_vector = ["{}".format(types) for c in columns]
 
@@ -136,7 +137,7 @@ def make_sql_create_table(table_name, columns, types, nulls, drop=True, index=Fa
 #create_sql = make_sql_create_table("test_table_index", cols, types, nulls, index=True, unique=True, key="sub_id")
 #print(create_sql)
 
-
+#TODO save sql scripts as .sql by default
 
 #insert table
 def make_sql_insert_table(table_name, columns):
