@@ -163,3 +163,31 @@ def make_sql_insert_table(table_name, columns):
 #insert_qry = make_sql_insert_table("insert_test", cols)
 #print(insert_qry)
 
+
+def select_schedule_a_by_company(company):
+
+	sql_query = """
+	DROP TABLE if exists tmp;
+
+	CREATE TABLE tmp AS
+	SELECT 
+		individual_contributions.cmte_id, 
+		cmte_pty_affiliation, 
+		name, 
+		employer, 
+		transaction_dt,
+		transaction_amt,
+		file_num,
+		cand_id,
+		sub_id 
+		FROM individual_contributions LEFT JOIN committee_master 
+		ON individual_contributions.cmte_id=committee_master.cmte_id
+		WHERE employer LIKE "%{}%"
+		GROUP BY sub_id;
+
+	""".format(company)
+
+	return sql_query
+
+
+
