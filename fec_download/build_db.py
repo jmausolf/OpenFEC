@@ -35,15 +35,27 @@ def exit_db(db):
 	db.close()
 
 
-def create_table(cursor, sql_script, path='sql/'):
-	print("[*] create table with {}{}".format(path, sql_script))
-	qry = open("{}{}".format(path, sql_script), 'rU').read()
+def create_table(cursor, sql_script, path='sql/', inject=False):
+
+	if inject is False:
+		print("[*] create table with {}{}".format(path, sql_script))
+		qry = open("{}{}".format(path, sql_script), 'rU').read()
+	elif inject is True:
+		print("[*] create table with sql injection: {}...".format(sql_script[0:30]))
+		qry = sql_script
+
 	cursor.executescript(qry)
 
 
-def insert_file_into_table(cursor, sql_script, file, sep=',', path='sql/'):
-	print("[*] inserting {} into table with {}{}".format(file, path, sql_script))
-	qry = open("{}{}".format(path, sql_script), 'rU').read()
+def insert_file_into_table(cursor, sql_script, file, sep=',', path='sql/', inject=False):
+
+	if inject is False:
+		print("[*] inserting {} into table with {}{}".format(file, path, sql_script))
+		qry = open("{}{}".format(path, sql_script), 'rU').read()
+	elif inject is True:
+		print("[*] inserting into table with sql injection: {}...".format(sql_script[0:21]))
+		qry = sql_script
+
 	fileObj = open(file, 'rU', encoding='latin-1')
 	csvReader = csv.reader(fileObj, delimiter=sep, quotechar='"')
 

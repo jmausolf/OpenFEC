@@ -1,13 +1,11 @@
 
 
-cols = ["cmte_id", "amndt_ind", "rpt_tp", "transaction_pgi", "image_num", "transaction_tp", "entity_tp"]
+#cols = ["cmte_id", "amndt_ind", "rpt_tp", "transaction_pgi", "image_num", "transaction_tp", "entity_tp"]
 #types = ["TEXT", "TEXT", "TEXT", "TEXT", "TEXT", "TEXT", "TEXT"]
 #nulls = ["NOT NULL", "", "", "", "","", ""]
 
 
 def gen_types(columns, types="TEXT", replace=False, alt_vector=[]):
-	#return ["{}".format(types) for c in columns]
-
 	type_vector = ["{}".format(types) for c in columns]
 
 	if replace is not False:
@@ -37,10 +35,8 @@ def gen_nulls(columns, nulls="", replace=False, alt="NOT NULL"):
 #types = gen_types(cols)
 #nulls = gen_nulls(cols)
 
-#nulls = gen_nulls(cols, "", [0, 3, 5])
-nulls = gen_nulls(cols, "", [0])
-
-types = gen_types(cols, replace=[4], alt_vector=["NUMERIC"])
+#nulls = gen_nulls(cols, "", [0])
+#types = gen_types(cols, replace=[4], alt_vector=["NUMERIC"])
 #types = gen_types(cols, "TEXT", [1, 4], ["BOOL", "NUMERIC"])
 #types = gen_types(cols, replace=[1, 4], alt_vector=["BOOL", "NUMERIC"])
 
@@ -49,9 +45,13 @@ types = gen_types(cols, replace=[4], alt_vector=["NUMERIC"])
 #TODO
 #functions to determine null vector and replace/alt vectors from original table
 
-def create_col_specs(columns='', types='', nulls=False):
+def create_col_specs(columns, types=False, nulls=False):
 
-	create_profile = [cols, types, nulls]
+	if types is False and nulls is False:
+		types = gen_types(columns)
+		nulls = gen_nulls(columns)
+
+	create_profile = [columns, types, nulls]
 	cp = create_profile
 	create_col_spec = ''
 	insert_col_spec = ''
@@ -75,10 +75,24 @@ def create_col_specs(columns='', types='', nulls=False):
 
 	return create_col_spec, insert_col_spec
 
+def create_value_questions(columns):
+	value_questions = ''
+	N = len(columns)
+	for n in range(0, N):
+
+		if n < N-1:
+			q = "    ?,\n"
+		elif n == N-1:
+			q = "    ?"
+		
+		value_questions = value_questions+q
+
+	return value_questions
+
 
 
 #create table
-def sql_script_create_table(table_name, columns, types, nulls, drop=True, index=False, **kwargs):
+def make_sql_create_table(table_name, columns, types, nulls, drop=True, index=False, **kwargs):
 
 	lb = '\n'
 
@@ -86,7 +100,7 @@ def sql_script_create_table(table_name, columns, types, nulls, drop=True, index=
 	drop_statement = "DROP TABLE if exists {};\n".format(table_name)
 
 	#Create Statement
-	column_spec = create_col_specs(cols, types, nulls)[0]
+	column_spec = create_col_specs(columns, types, nulls)[0]
 	create_start = "CREATE TABLE {} (".format(table_name)
 	create_cols = column_spec+lb
 	create_end = ");"+lb
@@ -105,10 +119,7 @@ def sql_script_create_table(table_name, columns, types, nulls, drop=True, index=
 			unique = ""
 
 		key = kwargs['key']
-
-		index_statement = "CREATE {0} INDEX {1} ON {2} ({3});".format(unique, index_name, table_name, key)
-
-
+		index_statement = "CREATE {0} INDEX {1} ON {2} ({3});".format(unique, index_name, table_name, key)+lb
 
 	else:
 		index_statement = ''
@@ -117,14 +128,37 @@ def sql_script_create_table(table_name, columns, types, nulls, drop=True, index=
 
 
 	script = "{1}{0}{2}{0}{3}".format(lb, drop_statement, create_statement, index_statement)
-	print(script)
-
+	return script
 
 
 #testing
-#sql_script_create_table("test_table2", cols, types, nulls)
-sql_script_create_table("test_table_index", cols, types, nulls, index=True, unique=True, key="sub_id")
+#make_sql_create_table("test_table2", cols, types, nulls)
+#create_sql = make_sql_create_table("test_table_index", cols, types, nulls, index=True, unique=True, key="sub_id")
+#print(create_sql)
 
 
 
+#insert table
+def make_sql_insert_table(table_name, columns):
+
+	lb = '\n'
+
+	#Insert Statement - Part 1
+	column_spec = create_col_specs(columns)[1]
+	insert_start = "INSERT INTO {} (".format(table_name)
+	insert_cols = column_spec+lb
+	insert_end = "    )"+lb
+	insert_statement_pt1 = (insert_start+insert_cols+insert_end)
+
+	#Insert Statement - Part 2, Values
+	value_start = "VALUES ("+lb
+	value_questions = create_value_questions(columns)+lb
+	value_end = ");"+lb
+	insert_statement_pt2 = (value_start+value_questions+value_end)
+
+	script = "{1}{2}{0}".format(lb, insert_statement_pt1, insert_statement_pt2)
+	return script
+
+#insert_qry = make_sql_insert_table("insert_test", cols)
+#print(insert_qry)
 
