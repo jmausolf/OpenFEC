@@ -36,36 +36,8 @@ db = sqlite3.connect("openFEC.db")
 #db = sqlite3.connect("openFEC.db", isolation_level=None)
 #db = sqlite3.connect("openFEC.db", isolation_level="DEFERRED")
 c = db.cursor()
-#new_table = "new_table_nolim1"
 
-#working snippet
-"""
-#create statement
-create_table(c, "create_test.sql", path='sql_clean/')
 
-#Load Data in Chunks
-df_generator = pd.read_sql_query("select * from individual_contributions;", con=db, chunksize = 100000)
-
-for df in df_generator:
-    #Functions to modify data, example
-    #df = ren("name", "renamed_name", df)
-    df = lower_var("name", df) #changes column order
-    db_order = ["cmte_id", "amndt_ind", "rpt_tp", "transaction_pgi", "image_num", "transaction_tp", \
-    	"entity_tp", "name", "city", "state", "zip_code", "employer", "occupation", "transaction_dt", \
-    	"transaction_amt", "other_id", "tran_id", "file_num", "memo_cd", "memo_text", "sub_id"]
-
-    #print(db_order)
-    #change column order to desired sql table
-    df = df[db_order]
-
-    #write chunk to csv
-    file = "df_chunk.csv"
-    df.to_csv(file, sep='|', header=None, index=False)
-
-    #insert chunk csv to db
-    insert_file_into_table(c, "insert_test.sql", file, '|', path='sql_clean/')
-    db.commit()
-"""
 
 #alter function should be a function that takes a df, does stuff, returns df
 
@@ -109,9 +81,6 @@ def get_alter_profile(input_table, output_table, db, alter_function, replace_nul
 #TODO make work
 def alter_create_table(input_table, output_table, db, conn, alter_function, path='sql_clean/', limit=False, chunksize=10000, **kwargs):
 
-	#TODO
-	#code to create a SQL scripts based on output_table, and df manipulations, column order
-
 	#queries
 	qrys = get_alter_profile(input_table, output_table, db, alter_function, **kwargs)
 
@@ -127,21 +96,9 @@ def alter_create_table(input_table, output_table, db, conn, alter_function, path
 	df_generator = pd.read_sql_query("SELECT * FROM {} {};".format(input_table, limit_statement), con=db, chunksize = chunksize)
 
 	for df in df_generator:
-	    #Functions to modify data, example
-	    #df = ren("name", "renamed_name", df)
-	    #df = lower_var("cand_name", df) #changes column order
+
+		#make changes per passed alter function
 	    df = alter_function(df)
-
-
-	    #print(cols)
-	    #db_order = ["cmte_id", "amndt_ind", "rpt_tp", "transaction_pgi", "image_num", "transaction_tp", \
-	    #	"entity_tp", "name", "city", "state", "zip_code", "employer", "occupation", "transaction_dt", \
-	    #	"transaction_amt", "other_id", "tran_id", "file_num", "memo_cd", "memo_text", "sub_id"]
-
-	    #print(db_order)
-	    #change column order to desired sql table
-	    #df = df[db_order]
-	    #print(df.shape)
 
 	    #write chunk to csv
 	    file = "df_chunk.csv"
@@ -155,6 +112,14 @@ def alter_create_table(input_table, output_table, db, conn, alter_function, path
 	count_result(c, output_table)
 
 
+#NB
+#function still has weird extra inserts if SQL script does not have a unique ID and total rows > chunk size
+#most tables without the unique id have a small enough row size that they can be modified in the first chunk
+#big tables should have the unique key (sub_id) specificed to avoid issues
+
+
+#since each modification will work from an alter_create_table function, the keys, types, nulls, 
+#can be passed after some experimentation with get_alter_profile
 alter_create_table("candidate_master", "test_candidate", db, c, alter_function=alt_cm_test, limit=False, chunksize=1000000)
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test, limit=20000, chunksize=100000, index=True, unique=True, key="sub_id")
 
