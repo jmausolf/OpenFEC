@@ -1,0 +1,34 @@
+INSERT INTO committee_master (
+	cmte_id,
+	cmte_nm,
+	tres_nm,
+	cmte_st1,
+	cmte_st2,
+	cmte_city,
+	cmte_st,
+	cmte_zip,
+	cmte_dsgn,
+	cmte_tp,
+	cmte_pty_affiliation,
+	cmte_filing_freq,
+	org_tp,
+	connected_org_nm,
+	cand_id
+	) 
+VALUES (
+	?,
+	?,
+	?,
+	?,
+	?,
+	?,
+	?,
+	?,
+	?,
+	?,
+	?,
+	?,
+	?,
+	?,
+	?
+);
