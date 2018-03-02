@@ -1,10 +1,53 @@
+
+
 cols = ["cmte_id", "amndt_ind", "rpt_tp", "transaction_pgi", "image_num", "transaction_tp", "entity_tp"]
-
-types = ["TEXT", "TEXT", "TEXT", "TEXT", "TEXT", "TEXT", "TEXT"]
-
-nulls = ["NOT NULL", "", "", "", "","", ""]
+#types = ["TEXT", "TEXT", "TEXT", "TEXT", "TEXT", "TEXT", "TEXT"]
+#nulls = ["NOT NULL", "", "", "", "","", ""]
 
 
+def gen_types(columns, types="TEXT", replace=False, alt_vector=[]):
+	#return ["{}".format(types) for c in columns]
+
+	type_vector = ["{}".format(types) for c in columns]
+
+	if replace is not False:
+		assert type(replace) is list, "ERROR: please pass a replace vector as a list"
+		assert type(alt_vector) is list, "ERROR: please pass an alternative type vector as a list"
+		assert len(replace) == len(alt_vector), "ERROR: replace vector and alt vector different lengths"
+
+		count = -1
+		for position in replace:
+			count+=1
+			type_vector[position] = alt_vector[count]
+
+	return type_vector
+
+def gen_nulls(columns, nulls="", replace=False, alt="NOT NULL"):
+	null_vector = ["{}".format(nulls) for c in columns]
+
+	if replace is not False:
+		assert type(replace) is list, "ERROR: please pass a replace vector as a list"
+		
+		for position in replace:
+			null_vector[position] = alt
+
+	return null_vector
+
+
+#types = gen_types(cols)
+#nulls = gen_nulls(cols)
+
+#nulls = gen_nulls(cols, "", [0, 3, 5])
+nulls = gen_nulls(cols, "", [0])
+
+types = gen_types(cols, replace=[4], alt_vector=["NUMERIC"])
+#types = gen_types(cols, "TEXT", [1, 4], ["BOOL", "NUMERIC"])
+#types = gen_types(cols, replace=[1, 4], alt_vector=["BOOL", "NUMERIC"])
+
+#nulls = gen_nulls(cols, "NOT NULL", "test")
+
+#TODO
+#functions to determine null vector and replace/alt vectors from original table
 
 def create_col_specs(columns='', types='', nulls=False):
 
@@ -17,7 +60,6 @@ def create_col_specs(columns='', types='', nulls=False):
 	for n in range(0, N):
 
 		if n < N-1:
-
 			create_col = "    {} {} {},".format(cp[0][n], cp[1][n], cp[2][n])
 			create_col = create_col.replace(" ,", ",")
 			insert_col = "    {},".format(cp[0][n])
@@ -78,9 +120,9 @@ def sql_script_create_table(table_name, columns, types, nulls, drop=True, index=
 	print(script)
 
 
-#testing
-sql_script_create_table("test_table2", cols, types, nulls)
 
+#testing
+#sql_script_create_table("test_table2", cols, types, nulls)
 sql_script_create_table("test_table_index", cols, types, nulls, index=True, unique=True, key="sub_id")
 
 
