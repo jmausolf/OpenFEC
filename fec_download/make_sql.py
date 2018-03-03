@@ -164,8 +164,9 @@ def make_sql_insert_table(table_name, columns):
 #print(insert_qry)
 
 
-def select_schedule_a_by_company(company):
+def select_schedule_a_by_company_org(company):
 
+	#TODO refine base query and joins
 	sql_query = """
 	DROP TABLE if exists tmp;
 
@@ -189,5 +190,75 @@ def select_schedule_a_by_company(company):
 
 	return sql_query
 
+def select_schedule_a_by_company(company):
+
+	#TODO refine base query and joins
+	sql_query = """
+		DROP TABLE if exists tmp;
+
+		CREATE TABLE tmp AS
+		SELECT 
+			--info about individual contributor
+			name AS contributor_name, 
+			employer AS contributor_employer,
+			occupation AS contributor_occupation,
+			city AS contributor_city,
+			state AS contributor_state,
+			zip_code AS contributor_zip_code,
+
+			--individual about cmte
+			individual_contributions.cmte_id AS cmte_id,
+			cmte_nm,
+			cmte_pty_affiliation,
+			committee_master.cmte_dsgn AS cmte_dsgn,
+			committee_master.cmte_tp AS cmte_type,
+			cmte_filing_freq,
+			org_tp AS cmte_org_tp,
+			connected_org_nm AS cmte_connected_org_nm,
+
+			--info about candidates
+			committee_master.cand_id AS cand_id,
+			cand_name,
+			cand_pty_affiliation,
+			cand_cmte_link.cand_election_yr AS cand_election_yr,
+			fec_election_yr AS cand_fec_election_yr,
+			cand_office,
+			cand_pcc,
+			linkage_id AS cand_cmte_linkage_id,
+			
+			--info about contribution
+			transaction_dt AS contributor_transaction_dt,
+			transaction_amt AS contributor_transaction_amt,
+			transaction_pgi AS contributor_transaction_pgi,
+			transaction_tp AS contributor_transaction_tp,
+			
+			
+			--other info about contribution
+			amndt_ind AS contributor_amndt_ind,
+			rpt_tp AS contributor_rpt_tp,
+			image_num AS contributor_image_num,
+			entity_tp AS contributor_entity_tp,
+			other_id AS contributor_other_id,
+			tran_id AS contributor_tran_id,
+			file_num AS contributor_file_num,
+			memo_cd AS contributor_memo_cd,
+			memo_text AS contributor_memo_text,
+			sub_id
+			
+			FROM individual_contributions LEFT JOIN committee_master
+			ON individual_contributions.cmte_id=committee_master.cmte_id
+			
+			--FROM committee_master LEFT JOIN cand_cmte_link
+			LEFT JOIN cand_cmte_link
+			ON committee_master.cand_id=cand_cmte_link.cand_id
+			LEFT JOIN candidate_master
+			ON cand_cmte_link.cand_id=candidate_master.cand_id
+
+			WHERE employer LIKE "%{}%"
+			GROUP BY sub_id;
+
+	""".format(company)
+
+	return sql_query
 
 
