@@ -58,8 +58,8 @@ def main():
 	c = db.cursor()
 
 	#Build Company Queries
-	companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
 	create_select_insert_company(c, companies, replace_if_exists=True)
+	#create_select_insert_company(c, companies)
 
 	#Count Result
 	count_result(c, "schedule_a")
