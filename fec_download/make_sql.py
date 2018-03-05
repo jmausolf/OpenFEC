@@ -254,7 +254,8 @@ def select_schedule_a_by_company(company):
 			LEFT JOIN candidate_master
 			ON cand_cmte_link.cand_id=candidate_master.cand_id
 
-			WHERE employer LIKE "%{}%"
+			WHERE 	(employer LIKE "%{0}%" OR
+					 occupation LIKE "%{0}%")
 			GROUP BY sub_id;
 
 	""".format(company)
