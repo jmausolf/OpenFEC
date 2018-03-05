@@ -6,6 +6,20 @@
 years = ['2004', '2008']
 
 #################################################
+## Companies
+#################################################
+
+companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
+
+def f500(csv):
+	import pandas as pd
+	df = pd.read_csv(csv)
+	return df["company"].tolist()
+
+companies = f500("fortune500-list.csv")[0:100]
+
+
+#################################################
 ## Table Key
 #################################################
 
