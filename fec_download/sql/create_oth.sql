@@ -24,5 +24,6 @@ CREATE TABLE itemized_records (
 	sub_id NUMERIC NOT NULL
 );
 
-CREATE UNIQUE INDEX idx_itemized_records ON itemized_records (sub_id);
+--CREATE UNIQUE INDEX idx_itemized_records ON itemized_records (sub_id);
+CREATE INDEX idx_itemized_records ON itemized_records (sub_id);
 

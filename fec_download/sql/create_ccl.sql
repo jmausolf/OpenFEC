@@ -10,5 +10,7 @@ CREATE TABLE cand_cmte_link (
 	linkage_id NUMERIC NOT NULL
 );
 
-CREATE UNIQUE INDEX idx_cand_cmte_link ON cand_cmte_link (linkage_id);
+--CREATE UNIQUE INDEX idx_cand_cmte_link ON cand_cmte_link (linkage_id);
+CREATE INDEX idx_cand_cmte_link ON cand_cmte_link (linkage_id);
+
 

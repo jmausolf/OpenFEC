@@ -24,4 +24,5 @@ CREATE TABLE individual_contributions (
 	sub_id NUMERIC NOT NULL
 );
 
-CREATE UNIQUE INDEX idx_individual_contributions ON individual_contributions (sub_id);
+--CREATE UNIQUE INDEX idx_individual_contributions ON individual_contributions (sub_id);
+CREATE INDEX idx_individual_contributions ON individual_contributions (sub_id);
