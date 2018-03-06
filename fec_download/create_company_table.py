@@ -2,11 +2,24 @@ import pandas as pd
 import sqlite3
 import signal
 import threading
+import time
 
 from config import *
 from setlogger import *
 from build_db import *
 from make_sql import *
+
+#Start Time
+start_time = time.time()
+
+def time_elapsed(start_time):
+	current_time = time.time()
+	time_elapsed = current_time-start_time
+	minutes, seconds = divmod(time_elapsed, 60)
+	hours, minutes = divmod(minutes, 60)
+
+	print("[*] time elapsed: {0:7} hours, {1:3} minutes, {2:3} seconds...current time: {3:10}"
+		.format(int(hours), int(minutes), int(seconds),  time.strftime('%l:%M%p %Z on %b %d, %Y')))
 
 
 
@@ -46,12 +59,14 @@ def create_select_insert_company(c, companies, replace_if_exists=False):
 
 
 
-
 db = None
 shutdown = False
+run = False
 
 def main():
 	global db
+	global run 
+	run = True
 
 	#Connect to Data
 	db = connect_db("openFEC.db")
@@ -65,8 +80,15 @@ def main():
 	count_result(c, "schedule_a")
 	exit_db(db)
 
+	#Final Time
+	time_elapsed(start_time)
+	print("[*] done")
+
 	db = None
+	run = False
 	return
+
+
 
 
 def interrupt(signum, frame):
@@ -96,6 +118,11 @@ if __name__ == "__main__":
 		mainthread.start()
 
 		while mainthread.isAlive():
-			time.sleep(0.2)
+			if run is True:
+				time_elapsed(start_time)
+				time.sleep(60)
+			else:
+				pass
+
 	else:
 		pass
