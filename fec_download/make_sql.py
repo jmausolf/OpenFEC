@@ -263,3 +263,22 @@ def select_schedule_a_by_company(company):
 	return sql_query
 
 
+def select_pty_by_cand_id(cand_id, year=False):
+
+	if year is False:
+		sql_query = """
+			SELECT cand_id, cand_name, cand_election_yr, cand_pty_affiliation 
+				FROM candidate_master
+				WHERE cand_id IS "{}";
+		""".format(cand_id)
+	else:
+		assert int(year) > 1976 and int(year) < 2040, "[*] Error: please pass a year between 1976 and 2040"
+		sql_query = """
+			SELECT cand_id, cand_name, cand_election_yr, cand_pty_affiliation 
+				FROM candidate_master
+				WHERE  (cand_id IS "{}" AND
+						cand_election_yr IS "{}");
+		""".format(cand_id, year)
+
+	return sql_query
+
