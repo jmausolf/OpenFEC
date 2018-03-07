@@ -18,6 +18,8 @@ def f500(csv):
 
 companies = f500("fortune500-list.csv")[0:100]
 
+companies = ["Goldman Sachs"]
+
 
 #################################################
 ## Table Key

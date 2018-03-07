@@ -70,7 +70,7 @@ def get_pty_by_cmte_id(db, cmte_id):
 	cmte_qry = select_pty_by_cmte_id(cmte_id)
 
 	df = pd.read_sql_query(cmte_qry, con=db, index_col=None)
-	#print(df)
+	print(df)
 
 	#Get unique pid's (in the event the candidate switches parties)
 	pids = df["cmte_pty_affiliation"].tolist()
@@ -78,6 +78,9 @@ def get_pty_by_cmte_id(db, cmte_id):
 	#if only two entries that are different, takes most recent
 	pid = list(Counter(pids).most_common(1))[0][0]
 	name = list(Counter(df["cmte_nm"].tolist()).most_common(1))[0][0]
+
+	cand_id = list(Counter(df["cand_id"].tolist()).most_common(1))[0][0]
+	print(cand_id)
 
 	if pid is None or pid is "":
 		pid = "MISSING"
@@ -87,10 +90,40 @@ def get_pty_by_cmte_id(db, cmte_id):
 	#not return code for unknown or missing or none
 
 	print("[*] found...committee {0:7} - {1:10} is {2}".format(cmte_id, name, pid))
-	return pid
+	return pid, cand_id
 
 
 get_pty_by_cmte_id(db, "C00001214")
+get_pty_by_cmte_id(db, "C00002592")
+
+
+get_pty_by_cand_id(db, "H6WA05023")
+
+
+
+def search_party_id(db, cmte_id, year=None):
+
+	cmte_results = get_pty_by_cmte_id(db, cmte_id)
+
+	cmte_pty = cmte_results[0]
+	cmte_cand = cmte_results[1]
+
+	print(cmte_pty)
+	print(cmte_cand)
+
+	#search pty affiliation in committee's table
+
+	#if no party or undesired party code AND cand id
+	#get party from cand id
+
+	#if no party or undesired code BUT no cand id
+	#search itemized contributions
+	#query those id's etc
+
+    #return party_id
+#print(search_party_id("C00053553"))
+
+search_party_id(db, "C00002592", year=None)
 
 """
 election_year = df["cand_election_yr"].unique().tolist()
