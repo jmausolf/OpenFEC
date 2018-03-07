@@ -65,6 +65,33 @@ get_pty_by_cand_id(db, "H6KY03140", "2004")
 
 
 
+def get_pty_by_cmte_id(db, cmte_id):
+
+	cmte_qry = select_pty_by_cmte_id(cmte_id)
+
+	df = pd.read_sql_query(cmte_qry, con=db, index_col=None)
+	#print(df)
+
+	#Get unique pid's (in the event the candidate switches parties)
+	pids = df["cmte_pty_affiliation"].tolist()
+
+	#if only two entries that are different, takes most recent
+	pid = list(Counter(pids).most_common(1))[0][0]
+	name = list(Counter(df["cmte_nm"].tolist()).most_common(1))[0][0]
+
+	if pid is None or pid is "":
+		pid = "MISSING"
+
+	#TODO more robust searching, such that if 
+	#pid is not dem/rep, keep searching
+	#not return code for unknown or missing or none
+
+	print("[*] found...committee {0:7} - {1:10} is {2}".format(cmte_id, name, pid))
+	return pid
+
+
+get_pty_by_cmte_id(db, "C00001214")
+
 """
 election_year = df["cand_election_yr"].unique().tolist()
 

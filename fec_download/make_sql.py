@@ -271,6 +271,7 @@ def select_pty_by_cand_id(cand_id, year=False):
 				FROM candidate_master
 				WHERE cand_id IS "{}";
 		""".format(cand_id)
+		
 	else:
 		assert int(year) > 1976 and int(year) < 2040, "[*] Error: please pass a year between 1976 and 2040"
 		sql_query = """
@@ -279,6 +280,17 @@ def select_pty_by_cand_id(cand_id, year=False):
 				WHERE  (cand_id IS "{}" AND
 						cand_election_yr IS "{}");
 		""".format(cand_id, year)
+
+	return sql_query
+
+
+def select_pty_by_cmte_id(cmte_id):
+
+	sql_query = """
+		SELECT cmte_id, cmte_nm, cmte_pty_affiliation, cand_id 
+			FROM committee_master
+			WHERE cmte_id IS "{}";
+	""".format(cmte_id)
 
 	return sql_query
 
