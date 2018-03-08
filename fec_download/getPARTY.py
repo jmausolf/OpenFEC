@@ -73,12 +73,25 @@ def get_pty_by_cmte_id(db, cmte_id):
 	df = pd.read_sql_query(cmte_qry, con=db, index_col=None)
 	#print(df)
 
+	print(df.shape)
+	if df.shape[0] == 0:
+		pid = "MISSING"
+		cand_id = ""
+		return pid, cand_id
+
 	#Get unique pid's (in the event the candidate switches parties)
 	pids = df["cmte_pty_affiliation"].tolist()
 
 	#if only two entries that are different, takes most recent
-	pid = list(Counter(pids).most_common(1))[0][0]
-	name = list(Counter(df["cmte_nm"].tolist()).most_common(1))[0][0]
+	try:
+		pid = list(Counter(pids).most_common(1))[0][0]
+		name = list(Counter(df["cmte_nm"].tolist()).most_common(1))[0][0]
+	except Exception as e:
+		print(e)
+		print(pids)
+		pid = ""
+		name = ""
+
 
 	cand_id = list(Counter(df["cand_id"].tolist()).most_common(1))[0][0]
 	#print(cand_id)
@@ -104,7 +117,7 @@ def get_other_ids_itemized_records(db, cmte_id, year=False):
 	df = pd.read_sql_query(item_qry, con=db, index_col=None)
 	#print(df)
 
-	print(item_qry)
+	#print(item_qry)
 
 	return df["other_id"].tolist()
 	#item_qry = select_cmte_ids_itemized_records(cmte_id)
@@ -159,15 +172,20 @@ def partisan_dummy(pid):
 		return 0
 	elif pid == "DEM":
 		return -1
+
+	#TOOD assign scores to other 
+	#types of parties
 	else:
 		return np.nan
 
 
 
 
+counter = 0
 
+def search_party_id(db, cmte_id, year=None, recursive=True):
 
-def search_party_id(db, cmte_id, year=None):
+	global counter
 
 	cmte_results = get_pty_by_cmte_id(db, cmte_id)
 
@@ -178,27 +196,40 @@ def search_party_id(db, cmte_id, year=None):
 	#print(pid_codes(cmte_pty))
 
 	if pid_codes(pid) is True:
-		print(pid)
+		#print(pid)
 		return pid
 
 	if pid_codes(pid) is False and len(str(cmte_cand)) == 9:
 		pid = get_pty_by_cand_id(db, cmte_cand)
 
 		if pid_codes(pid) is True:
-			print(pid)
+			#print(pid)
 			return pid
 		else: 
 			pass
 
 
 	if pid_codes(pid) is False and len(str(cmte_cand)) < 9:
-		print("itemized search")
-		#pid = get_parties_other_ids(db, cmte_id, year)
+
+		counter+=1
+
+		if recursive is True:
+			pass
+			#pid = get_parties_other_ids(db, cmte_id, year, recursive=True)
+		else:
+			pass
+			#pid = get_parties_other_ids(db, cmte_id, year)
+
+
+		pid = ""
+
+		print(counter)
 		return pid
 
 
 
-def get_parties_other_ids(db, cmte_id, year=False):
+
+def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=1):
 
 	other_ids = get_other_ids_itemized_records(db, cmte_id, year)
 	print(other_ids)
@@ -210,9 +241,21 @@ def get_parties_other_ids(db, cmte_id, year=False):
 	for oid in other_ids:
 		if id_type(oid) == 'cmte_id':
 			pid = search_party_id(db, oid, year)
-			pids.append(pid)
-			#cmte search
-			pass
+
+			#pids.append(pid)
+
+			#print(type(pid))
+
+			if isinstance(pid, list) is True:
+				pids.extend(pid)
+			else:
+				pids.append(pid)
+			#print(len(pid))
+			#if len(pid) == 1:
+			#	pids.append(pid)
+			#elif len(pid) > 1:
+			#	pids.extend(pid)
+
 		elif id_type(oid) == 'cand_id':
 			#cand search
 			pid = get_pty_by_cand_id(db, oid, year)
@@ -222,23 +265,43 @@ def get_parties_other_ids(db, cmte_id, year=False):
 	print(pids)
 
 	#overall most common
-	pid = list(Counter(pids).most_common(1))[0][0]
-
+	#pid = list(Counter(pids).most_common(1))[0][0]
+	#pid = pids
 	#TODO
-	binary_pid = [partisan_dummy(pid) for pid in pids]
-	#partisan_score = sum(binary_pid)/len(binary_pid)
-	partisan_score = round(np.nanmean(binary_pid), 4)
+	#binary_pid = [partisan_dummy(pid) for pid in pids]
+	#partisan_score = round(np.nanmean(binary_pid), 4)
 
-	print(binary_pid)
-	print(partisan_score)
+	#print(binary_pid)
+	#print(len(binary_pid))
+	#print(partisan_score)
 
 	#ratio score of partisanship
-	print(pid)
-	return pid
+	#print(pid)
+
+	if recursive is True:
+		return pids
+	else:
+		pid = list(Counter(pids).most_common(1))[0][0]
+
+		binary_pid = [partisan_dummy(pid) for pid in pids]
+		partisan_score = round(np.nanmean(binary_pid), 4)
+
+		print(binary_pid)
+		print(len(binary_pid))
+		print(partisan_score)
+
+
+		return pid
+
+
 
 get_parties_other_ids(db, "C00000042", 2007)
 get_parties_other_ids(db, "C00000042", 2008)
 
+#TODO need to program a depth, so the recursion does not go in circles infinately
+#e.g. below
+get_parties_other_ids(db, "C00046474")
+#get_parties_other_ids(db, "C00051979")
 	#search pty affiliation in committee's table
 
 	#if no party or undesired party code AND cand id
