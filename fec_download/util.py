@@ -1,3 +1,4 @@
+
 def time_elapsed(start_time):
 	current_time = time.time()
 	time_elapsed = current_time-start_time

@@ -93,20 +93,20 @@ def get_pty_by_cmte_id(db, cmte_id):
 	return pid, cand_id
 
 
-def get_cmte_ids_itemized_records(db, cmte_id, year=False):
+def get_other_ids_itemized_records(db, cmte_id, year=False):
 
 	if year is False:
-		item_qry = select_cmte_ids_itemized_records(cmte_id)
+		item_qry = select_other_ids_itemized_records(cmte_id)
 	else:
-		item_qry = select_cmte_ids_itemized_records(cmte_id, year)
+		item_qry = select_other_ids_itemized_records(cmte_id, year)
 
 	df = pd.read_sql_query(item_qry, con=db, index_col=None)
 	print(df)
 
-
+	return df["other_id"].tolist()
 	#item_qry = select_cmte_ids_itemized_records(cmte_id)
 
-	print(item_qry)
+	#print(item_qry)
 
 #get_pty_by_cmte_id(db, "C00001214")
 #get_pty_by_cmte_id(db, "C00002592")
@@ -114,9 +114,26 @@ def get_cmte_ids_itemized_records(db, cmte_id, year=False):
 
 #get_pty_by_cand_id(db, "H6WA05023")
 
-get_cmte_ids_itemized_records(db, "C00042069", 2008)
-get_cmte_ids_itemized_records(db, "C00002592")
-get_cmte_ids_itemized_records(db, "C00000042")
+#get_other_ids_itemized_records(db, "C00042069", 2008)
+#get_other_ids_itemized_records(db, "C00002592")
+#get_other_ids_itemized_records(db, "C00000042")
+
+
+
+def id_type(id):
+	assert len(str(id)) == 9, (
+		"[*] please input a valid committee or candidate id as a string")
+	
+	if str(id)[0] == "C":
+		return "cmte_id"
+	else:
+		return "cand_id"
+
+
+#ids = ["C00002592", "C00084954", "C00042069", "H0GA08032", "P80003338"]
+#for id in ids:
+#	print(id_type(id))
+
 
 def pid_codes(pid):
 
@@ -130,6 +147,23 @@ def pid_codes(pid):
 		return False
 	else:
 		return "CONTINUE"
+
+
+
+
+def get_parties_other_ids(cmte_id, year=False):
+
+	other_ids = get_other_ids_itemized_records(db, cmte_id)
+	print(other_ids)
+
+	id_types = [id_type(id) for id in other_ids]
+	print(id_types)
+
+
+get_parties_other_ids("C00000042")
+
+
+
 
 def search_party_id(db, cmte_id, year=None):
 
@@ -158,11 +192,6 @@ def search_party_id(db, cmte_id, year=None):
 		return ""
 
 
-		#print("-False-")
-
-	#print(cmte_pty)
-	#print(cmte_cand)
-
 	#search pty affiliation in committee's table
 
 	#if no party or undesired party code AND cand id
@@ -175,14 +204,15 @@ def search_party_id(db, cmte_id, year=None):
 	#query those id's etc
 
     #return party_id
-#print(search_party_id("C00053553"))
+
 
 
 cids = ["C00002592", "C00084954", "C00042069"]
 
 for cid in cids:
-	pid = search_party_id(db, cid, year=None)
-	print(pid)
+
+	#pid = search_party_id(db, cid, year=None)
+	#print(pid)
 	pass
 
 
@@ -191,19 +221,6 @@ for cid in cids:
 
 
 
-"""
-election_year = df["cand_election_yr"].unique().tolist()
-
-#Get unique pid's (in the event the candidate switches parties)
-pid = df["cand_pty_affiliation"].unique().tolist()
-
-if len(pid) > 1:
-	pass
-elif len(pid) ==1:
-	pass
-
-print(pid)
-"""
 
 """
 if __name__ == "__main__":

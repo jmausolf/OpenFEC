@@ -294,3 +294,31 @@ def select_pty_by_cmte_id(cmte_id):
 
 	return sql_query
 
+
+def select_other_ids_itemized_records(cmte_id, year=False):
+
+	if year is False:
+
+		sql_query = """
+		SELECT transaction_dt, transaction_amt, other_id, sub_id FROM itemized_records
+			WHERE ((NOT other_id LIKE "") AND
+				   (cmte_id IS "{}")
+				  );
+		""".format(cmte_id)
+
+	else:
+
+		sql_query = """
+		SELECT transaction_dt, transaction_amt, other_id, sub_id FROM itemized_records
+			WHERE ((NOT other_id LIKE "") AND
+				   (cmte_id IS "{}") AND 
+				   (transaction_dt LIKE "%{}")
+				   ); 
+		""".format(cmte_id, year)
+
+	return sql_query
+
+
+
+
+
