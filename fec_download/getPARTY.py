@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import sqlite3
 import signal
 import threading
@@ -101,7 +102,9 @@ def get_other_ids_itemized_records(db, cmte_id, year=False):
 		item_qry = select_other_ids_itemized_records(cmte_id, year)
 
 	df = pd.read_sql_query(item_qry, con=db, index_col=None)
-	print(df)
+	#print(df)
+
+	print(item_qry)
 
 	return df["other_id"].tolist()
 	#item_qry = select_cmte_ids_itemized_records(cmte_id)
@@ -149,18 +152,17 @@ def pid_codes(pid):
 		return "CONTINUE"
 
 
+def partisan_dummy(pid):
+	if pid == "REP":
+		return 1
+	elif pid == "IND":
+		return 0
+	elif pid == "DEM":
+		return -1
+	else:
+		return np.nan
 
 
-def get_parties_other_ids(cmte_id, year=False):
-
-	other_ids = get_other_ids_itemized_records(db, cmte_id)
-	print(other_ids)
-
-	id_types = [id_type(id) for id in other_ids]
-	print(id_types)
-
-
-get_parties_other_ids("C00000042")
 
 
 
@@ -176,12 +178,14 @@ def search_party_id(db, cmte_id, year=None):
 	#print(pid_codes(cmte_pty))
 
 	if pid_codes(pid) is True:
+		print(pid)
 		return pid
 
 	if pid_codes(pid) is False and len(str(cmte_cand)) == 9:
 		pid = get_pty_by_cand_id(db, cmte_cand)
 
 		if pid_codes(pid) is True:
+			print(pid)
 			return pid
 		else: 
 			pass
@@ -189,8 +193,51 @@ def search_party_id(db, cmte_id, year=None):
 
 	if pid_codes(pid) is False and len(str(cmte_cand)) < 9:
 		print("itemized search")
-		return ""
+		#pid = get_parties_other_ids(db, cmte_id, year)
+		return pid
 
+
+
+def get_parties_other_ids(db, cmte_id, year=False):
+
+	other_ids = get_other_ids_itemized_records(db, cmte_id, year)
+	print(other_ids)
+
+	#id_types = [id_type(oid) for oid in other_ids][0:10]
+	#print(id_types)
+	pids = []
+
+	for oid in other_ids:
+		if id_type(oid) == 'cmte_id':
+			pid = search_party_id(db, oid, year)
+			pids.append(pid)
+			#cmte search
+			pass
+		elif id_type(oid) == 'cand_id':
+			#cand search
+			pid = get_pty_by_cand_id(db, oid, year)
+			pids.append(pid)
+			pass
+
+	print(pids)
+
+	#overall most common
+	pid = list(Counter(pids).most_common(1))[0][0]
+
+	#TODO
+	binary_pid = [partisan_dummy(pid) for pid in pids]
+	#partisan_score = sum(binary_pid)/len(binary_pid)
+	partisan_score = round(np.nanmean(binary_pid), 4)
+
+	print(binary_pid)
+	print(partisan_score)
+
+	#ratio score of partisanship
+	print(pid)
+	return pid
+
+get_parties_other_ids(db, "C00000042", 2007)
+get_parties_other_ids(db, "C00000042", 2008)
 
 	#search pty affiliation in committee's table
 
