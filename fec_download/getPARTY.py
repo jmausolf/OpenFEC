@@ -388,7 +388,7 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 df = pd.read_csv("test_cmte.csv", sep="|")
 cols = ['cmte_id', 'cmte_nm', 'tres_nm', 'cmte_st1', 'cmte_st2', 'cmte_city', 'cmte_st', 'cmte_zip', 'cmte_dsgn', 'cmte_tp', 'cmte_pty_affiliation', 'cmte_filing_freq', 'org_tp', 'connected_org_nm', 'cand_id']
 df.columns = cols
-
+df = df.head(n=10)
 print(df)
 
 #TODO
@@ -397,8 +397,8 @@ print(df)
 
 
 
-#df['party_id'], df['partisan_score'] = np.vectorize(search_party_id)(df['cmte_id'], df['cycle'])
-
+df['party_id'], df['partisan_score'] = np.vectorize(search_party_id)(db, df['cmte_id'], 2008)
+print(df)
 
 """
 if __name__ == "__main__":
