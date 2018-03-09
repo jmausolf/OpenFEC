@@ -28,7 +28,7 @@ def get_pty_by_cand_id(db, cand_id, cycle=False):
 	else:
 		cand_qry = select_pty_by_cand_id(cand_id, cycle)
 
-	print(cand_qry)
+	#print(cand_qry)
 
 	df = pd.read_sql_query(cand_qry, con=db, index_col=None)
 
@@ -71,12 +71,13 @@ def get_pty_by_cand_id(db, cand_id, cycle=False):
 def get_pty_by_cmte_id(db, cmte_id):
 
 	cmte_qry = select_pty_by_cmte_id(cmte_id)
-	print(cmte_qry)
+	#print(cmte_qry)
 
 	df = pd.read_sql_query(cmte_qry, con=db, index_col=None)
 	#print(df)
 
-	print(df.shape)
+	#print(df.shape)
+
 	if df.shape[0] == 0:
 		pid = "MISSING"
 		cand_id = ""
@@ -120,7 +121,7 @@ def get_other_ids_itemized_records(db, cmte_id, cycle=False):
 	df = pd.read_sql_query(item_qry, con=db, index_col=None)
 	#print(df)
 
-	print(item_qry)
+	#print(item_qry)
 
 	return df["other_id"].tolist()
 	#item_qry = select_cmte_ids_itemized_records(cmte_id)
@@ -169,6 +170,14 @@ def pid_codes(pid):
 
 
 def partisan_dummy(pid):
+
+	#print(type(pid))
+
+	if isinstance(pid, tuple) is True:
+		pid = pid[0]
+	else:
+		pass
+
 	if pid == "REP":
 		return 1
 	elif pid == "IND":
@@ -182,6 +191,39 @@ def partisan_dummy(pid):
 		return np.nan
 
 
+def select_pids(pid_tuple):
+
+	#print(type(pid_tuple))
+
+	if isinstance(pid_tuple, tuple) is True:
+		pid = pid_tuple[0]
+	else:
+		pid = pid_tuple
+
+	return pid
+
+"""
+pids = ['DEM', 'REP', 'REP', ('DEM', -0.15738), 'DEM', 'DEM', 'REP']
+
+binary_pid = [partisan_dummy(pid) for pid in pids]
+partisan_score = float("{:0.5f}".format((np.nanmean(binary_pid))))
+
+
+print(pids)
+pids_clean = [select_pids(pid) for pid in pids]
+
+#for pid in pids:
+#	select_pids(pid)
+
+print(pids_clean)
+pid = list(Counter(pids_clean).most_common(1))[0][0]
+
+
+print(binary_pid)
+print(len(binary_pid))
+print(partisan_score)
+print(pid)
+"""
 
 
 counter = 0
@@ -242,6 +284,7 @@ def search_party_id(db, cmte_id, cycle=False, recursive=False, levels=False, ite
 
 			if counter > len(first_missing):
 				print("counter exceeds first missing")
+				#print()
 				return np.nan
 
 
@@ -259,13 +302,20 @@ def search_party_id(db, cmte_id, cycle=False, recursive=False, levels=False, ite
 			partisan_score = results[1]
 
 
+
+
 		return pid, partisan_score
+			
+
+
+
+		#return pid, partisan_score
 
 
 
 
 
-def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False):
+def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False, itemized=False):
 	#global counter
 	#counter+=1
 
@@ -319,15 +369,26 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 			pids.append(pid)
 			pass
 
-	print(pids)
+
 
 	if recursive is True:
 		return pids
 	else:
-		pid = list(Counter(pids).most_common(1))[0][0]
-
-		binary_pid = [partisan_dummy(pid) for pid in pids]
+		pids_clean = [select_pids(pid) for pid in pids]
+		binary_pid = [partisan_dummy(pid) for pid in pids_clean]
 		partisan_score = float("{:0.5f}".format((np.nanmean(binary_pid))))
+
+		pids_count = [pid for pid in pids_clean if str(pid) != 'nan']
+		print(pids_count)
+		#for pid in range(pids_clean.count('nan')):
+		#	print(pid)
+		#	pids_clean.remove('nan')
+
+		#cleanedList = [x for x in countries if str(x) != 'nan']
+
+		#print(pids_clean)
+		#print(pids_count)
+		pid = list(Counter(pids_count).most_common(1))[0][0]
 
 		print(binary_pid)
 		print(len(binary_pid))
@@ -335,7 +396,12 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 
 		#print(counter)
 		print(pid)
-		return pid, partisan_score
+		#pid = 'DEMMY'
+
+		if itemized is True:
+			return pid
+		else:
+			return pid, partisan_score
 
 
 
@@ -380,6 +446,11 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 #x = search_party_id(db, "C00046474", 2008)
 #x = search_party_id(db, "C00046474", 2004)
 
+#x = search_party_id(db, "C00000489", 2008, itemized=True)
+
+#TODO figure out why this is not working
+#x = search_party_id(db, "C00000638", 2008, itemized=True)
+
 #print(x)
 #print("Final counter = {}".format(counter))
 #print("Final first missing = {}".format(len(first_missing)))
@@ -397,8 +468,9 @@ print(df)
 
 
 
-df['party_id'], df['partisan_score'] = np.vectorize(search_party_id)(db, df['cmte_id'], 2008)
+df['party_id'], df['partisan_score'] = np.vectorize(search_party_id)(db, df['cmte_id'], 2008, itemized=True)
 print(df)
+
 
 """
 if __name__ == "__main__":
