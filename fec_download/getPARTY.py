@@ -182,8 +182,10 @@ def partisan_dummy(pid):
 
 
 counter = 0
+first_missing = []
+second_missing = []
 
-def search_party_id(db, cmte_id, year=None, recursive=True):
+def search_party_id(db, cmte_id, year=False, recursive=False, levels=False):
 
 	global counter
 
@@ -191,9 +193,6 @@ def search_party_id(db, cmte_id, year=None, recursive=True):
 
 	pid = cmte_results[0]
 	cmte_cand = cmte_results[1]
-	#cmte_cand = ""
-
-	#print(pid_codes(cmte_pty))
 
 	if pid_codes(pid) is True:
 		#print(pid)
@@ -211,25 +210,38 @@ def search_party_id(db, cmte_id, year=None, recursive=True):
 
 	if pid_codes(pid) is False and len(str(cmte_cand)) < 9:
 
-		counter+=1
+		if levels is True:
+			second_missing.append(cmte_id)
+			counter+=1
+
+			if counter > len(first_missing):
+				print("counter exceeds first missing")
+				return np.nan
+
+
+		else:
+			first_missing.append(cmte_id)
+
+		print("Current counter = {}".format(counter))
+		print("Current first missing = {}".format(len(first_missing)))
 
 		if recursive is True:
-			pass
-			#pid = get_parties_other_ids(db, cmte_id, year, recursive=True)
+			pid = get_parties_other_ids(db, cmte_id, year, recursive=True)
 		else:
-			pass
-			#pid = get_parties_other_ids(db, cmte_id, year)
+			results = get_parties_other_ids(db, cmte_id, year)
+			pid = results[0]
+			partisan_score = results[1]
 
 
-		pid = ""
-
-		print(counter)
 		return pid
 
 
 
 
-def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=1):
+
+def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=False):
+	#global counter
+	#counter+=1
 
 	other_ids = get_other_ids_itemized_records(db, cmte_id, year)
 	print(other_ids)
@@ -240,21 +252,18 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=1):
 
 	for oid in other_ids:
 		if id_type(oid) == 'cmte_id':
-			pid = search_party_id(db, oid, year)
+			if depth is False:
+				pid = search_party_id(db, oid, year, levels=True)
 
-			#pids.append(pid)
+				if isinstance(pid, list) is True:
+					pids.extend(pid)
+				else:
+					pids.append(pid)
 
-			#print(type(pid))
+			elif depth is True:
+				pid = search_party_id(db, oid, year, depth=True)
 
-			if isinstance(pid, list) is True:
-				pids.extend(pid)
-			else:
-				pids.append(pid)
-			#print(len(pid))
-			#if len(pid) == 1:
-			#	pids.append(pid)
-			#elif len(pid) > 1:
-			#	pids.extend(pid)
+
 
 		elif id_type(oid) == 'cand_id':
 			#cand search
@@ -263,20 +272,6 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=1):
 			pass
 
 	print(pids)
-
-	#overall most common
-	#pid = list(Counter(pids).most_common(1))[0][0]
-	#pid = pids
-	#TODO
-	#binary_pid = [partisan_dummy(pid) for pid in pids]
-	#partisan_score = round(np.nanmean(binary_pid), 4)
-
-	#print(binary_pid)
-	#print(len(binary_pid))
-	#print(partisan_score)
-
-	#ratio score of partisanship
-	#print(pid)
 
 	if recursive is True:
 		return pids
@@ -290,46 +285,35 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=1):
 		print(len(binary_pid))
 		print(partisan_score)
 
+		#print(counter)
+		print(pid)
+		return pid, partisan_score
 
-		return pid
 
 
+#get_parties_other_ids(db, "C00000042", 2007)
+#get_parties_other_ids(db, "C00000042", 2008)
 
-get_parties_other_ids(db, "C00000042", 2007)
-get_parties_other_ids(db, "C00000042", 2008)
+
 
 #TODO need to program a depth, so the recursion does not go in circles infinately
 #e.g. below
-get_parties_other_ids(db, "C00046474")
+#get_parties_other_ids(db, "C00046474")
 #get_parties_other_ids(db, "C00051979")
-	#search pty affiliation in committee's table
-
-	#if no party or undesired party code AND cand id
-	#get party from cand id
 
 
+#search_party_id(db, "C00000042", 2007)
+#search_party_id(db, "C00000042", 2008)
+#search_party_id(db, "C00046474", 2008)
 
-	#if no party or undesired code BUT no cand id
-	#search itemized contributions
-	#query those id's etc
+#strange err explore
+#search_party_id(db, "C00329862")
 
-    #return party_id
+search_party_id(db, "C00051979")
+#search_party_id(db, "C00046474")
 
-
-
-cids = ["C00002592", "C00084954", "C00042069"]
-
-for cid in cids:
-
-	#pid = search_party_id(db, cid, year=None)
-	#print(pid)
-	pass
-
-
-#qry = select_cmte_ids_itemized_records("C00002592", year=2008)
-#print(qry)
-
-
+print("Final counter = {}".format(counter))
+print("Final first missing = {}".format(len(first_missing)))
 
 
 """
