@@ -21,18 +21,20 @@ start_time = time.time()
 db = connect_db("openFEC.db")
 c = db.cursor()
 
-def get_pty_by_cand_id(db, cand_id, year=False):
+def get_pty_by_cand_id(db, cand_id, cycle=False):
 
-	if year is False:
+	if cycle is False:
 		cand_qry = select_pty_by_cand_id(cand_id)
 	else:
-		cand_qry = select_pty_by_cand_id(cand_id, year)
+		cand_qry = select_pty_by_cand_id(cand_id, cycle)
+
+	print(cand_qry)
 
 	df = pd.read_sql_query(cand_qry, con=db, index_col=None)
 
 	if df.shape[0] == 0:
-		#print("[*] no candidate information for requested election year: {}...".format(year))
-		#print("[*] searching candidate without election year...")
+		#print("[*] no candidate information for requested election cycle: {}...".format(cycle))
+		#print("[*] searching candidate without election cycle...")
 
 		cand_qry = select_pty_by_cand_id(cand_id)
 		df = pd.read_sql_query(cand_qry, con=db, index_col=None)
@@ -69,6 +71,7 @@ def get_pty_by_cand_id(db, cand_id, year=False):
 def get_pty_by_cmte_id(db, cmte_id):
 
 	cmte_qry = select_pty_by_cmte_id(cmte_id)
+	print(cmte_qry)
 
 	df = pd.read_sql_query(cmte_qry, con=db, index_col=None)
 	#print(df)
@@ -107,17 +110,17 @@ def get_pty_by_cmte_id(db, cmte_id):
 	return pid, cand_id
 
 
-def get_other_ids_itemized_records(db, cmte_id, year=False):
+def get_other_ids_itemized_records(db, cmte_id, cycle=False):
 
-	if year is False:
+	if cycle is False:
 		item_qry = select_other_ids_itemized_records(cmte_id)
 	else:
-		item_qry = select_other_ids_itemized_records(cmte_id, year)
+		item_qry = select_other_ids_itemized_records(cmte_id, cycle)
 
 	df = pd.read_sql_query(item_qry, con=db, index_col=None)
 	#print(df)
 
-	#print(item_qry)
+	print(item_qry)
 
 	return df["other_id"].tolist()
 	#item_qry = select_cmte_ids_itemized_records(cmte_id)
@@ -185,7 +188,7 @@ counter = 0
 first_missing = []
 second_missing = []
 
-def search_party_id(db, cmte_id, year=False, recursive=False, levels=False, itemized=False):
+def search_party_id(db, cmte_id, cycle=False, recursive=False, levels=False, itemized=False):
 
 	global counter
 
@@ -200,7 +203,7 @@ def search_party_id(db, cmte_id, year=False, recursive=False, levels=False, item
 	if pid_codes(pid) is True:
 		#print(pid)
 		if itemized is True:
-			results = get_parties_other_ids(db, cmte_id, year)
+			results = get_parties_other_ids(db, cmte_id, cycle)
 			pid = results[0]
 			partisan_score = results[1]
 			return pid, partisan_score
@@ -210,7 +213,7 @@ def search_party_id(db, cmte_id, year=False, recursive=False, levels=False, item
 
 	#search of candidate ids
 	if pid_codes(pid) is False and len(str(cmte_cand)) == 9:
-		pid = get_pty_by_cand_id(db, cmte_cand)
+		pid = get_pty_by_cand_id(db, cmte_cand, cycle)
 
 		if pid_codes(pid) is True:
 			#print(pid)
@@ -219,7 +222,7 @@ def search_party_id(db, cmte_id, year=False, recursive=False, levels=False, item
 			#return pid
 
 			if itemized is True:
-				results = get_parties_other_ids(db, cmte_id, year)
+				results = get_parties_other_ids(db, cmte_id, cycle)
 				pid = results[0]
 				partisan_score = results[1]
 				return pid, partisan_score
@@ -249,9 +252,9 @@ def search_party_id(db, cmte_id, year=False, recursive=False, levels=False, item
 		print("Current first missing = {}".format(len(first_missing)))
 
 		if recursive is True:
-			pid = get_parties_other_ids(db, cmte_id, year, recursive=True)
+			pid = get_parties_other_ids(db, cmte_id, cycle, recursive=True)
 		else:
-			results = get_parties_other_ids(db, cmte_id, year)
+			results = get_parties_other_ids(db, cmte_id, cycle)
 			pid = results[0]
 			partisan_score = results[1]
 
@@ -262,13 +265,13 @@ def search_party_id(db, cmte_id, year=False, recursive=False, levels=False, item
 
 
 
-def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=False):
+def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False):
 	#global counter
 	#counter+=1
 
-	other_ids = get_other_ids_itemized_records(db, cmte_id, year)
+	other_ids = get_other_ids_itemized_records(db, cmte_id, cycle)
 
-	#if requested year has no data, get data for all years
+	#if requested cycle has no data, get data for all cycles
 	if len(other_ids) == 0:
 		other_ids = get_other_ids_itemized_records(db, cmte_id)
 
@@ -293,7 +296,7 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=False)
 	for oid in other_ids:
 		if id_type(oid) == 'cmte_id':
 			if depth is False:
-				pid = search_party_id(db, oid, year, levels=True)
+				pid = search_party_id(db, oid, cycle, levels=True)
 
 				if isinstance(pid, list) is True:
 					pids.extend(pid)
@@ -301,7 +304,7 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=False)
 					pids.append(pid)
 
 			elif depth is True:
-				pid = search_party_id(db, oid, year, levels=False)
+				pid = search_party_id(db, oid, cycle, levels=False)
 
 				if isinstance(pid, list) is True:
 					pids.extend(pid)
@@ -312,7 +315,7 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=False)
 
 		elif id_type(oid) == 'cand_id':
 			#cand search
-			pid = get_pty_by_cand_id(db, oid, year)
+			pid = get_pty_by_cand_id(db, oid, cycle)
 			pids.append(pid)
 			pass
 
@@ -359,26 +362,42 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=False)
 
 #Obama for America
 #x = search_party_id(db, "C00431445", 2008)
-#x = search_party_id(db, "C00431445", 2008, itemized=True)
+#cx = search_party_id(db, "C00431445", 2008, itemized=True)
+#x = search_party_id(db, "C00431445", 2004, itemized=True)
 
 #Montana for Obama
 #x = search_party_id(db, "C00451773", 2008)
-x = search_party_id(db, "C00451773", 2008, itemized=True)
+#x = search_party_id(db, "C00451773", 2008, itemized=True)
 
 
 #IL Tool Works for Better Gov
-x = search_party_id(db, "C00000042", 2008)
+#x = search_party_id(db, "C00000042", 2004)
 
 #Nisource PAC
 #x = search_party_id(db, "C00051979")
 
 #Ford Motor Civic Action Fund
-x = search_party_id(db, "C00046474", 2008)
+#x = search_party_id(db, "C00046474", 2008)
 #x = search_party_id(db, "C00046474", 2004)
 
-print(x)
-print("Final counter = {}".format(counter))
-print("Final first missing = {}".format(len(first_missing)))
+#print(x)
+#print("Final counter = {}".format(counter))
+#print("Final first missing = {}".format(len(first_missing)))
+
+
+df = pd.read_csv("test_cmte.csv", sep="|")
+cols = ['cmte_id', 'cmte_nm', 'tres_nm', 'cmte_st1', 'cmte_st2', 'cmte_city', 'cmte_st', 'cmte_zip', 'cmte_dsgn', 'cmte_tp', 'cmte_pty_affiliation', 'cmte_filing_freq', 'org_tp', 'connected_org_nm', 'cand_id']
+df.columns = cols
+
+print(df)
+
+#TODO
+#need the "cycle" of candidate info to use in searching
+#so given a cycle, need to adjust my queries to be where dt like cycle or dt like cycle-1
+
+
+
+#df['party_id'], df['partisan_score'] = np.vectorize(search_party_id)(df['cmte_id'], df['cycle'])
 
 
 """

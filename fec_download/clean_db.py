@@ -45,6 +45,9 @@ def alt_cm_test(df):
 	df = lower_var("cand_name", df)
 	return df
 
+def alt_cmte_test(df):
+	return df
+
 def alt_indiv_test(df):
 	df = lower_var("name", df)
 	return df
@@ -56,6 +59,7 @@ def get_alter_profile(input_table, output_table, db, alter_function, replace_nul
 	df = alter_function(df)
 
 	cols = list(df)
+	print(cols)
 
 	#TODO get null, type vectors from db
 	nulls = gen_nulls(cols, "", replace=replace_null)
@@ -120,7 +124,8 @@ def alter_create_table(input_table, output_table, db, conn, alter_function, path
 
 #since each modification will work from an alter_create_table function, the keys, types, nulls, 
 #can be passed after some experimentation with get_alter_profile
-alter_create_table("candidate_master", "test_candidate", db, c, alter_function=alt_cm_test, limit=False, chunksize=1000000)
+#alter_create_table("candidate_master", "test_candidate", db, c, alter_function=alt_cm_test, limit=False, chunksize=1000000)
+alter_create_table("committee_master", "test_cmte", db, c, alter_function=alt_cmte_test, limit=False, chunksize=1000000)
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test, limit=20000, chunksize=100000, index=True, unique=True, key="sub_id")
 
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test)

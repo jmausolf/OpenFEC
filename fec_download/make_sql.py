@@ -263,9 +263,9 @@ def select_schedule_a_by_company(company):
 	return sql_query
 
 
-def select_pty_by_cand_id(cand_id, year=False):
+def select_pty_by_cand_id(cand_id, cycle=False):
 
-	if year is False:
+	if cycle is False:
 		sql_query = """
 			SELECT cand_id, cand_name, cand_election_yr, cand_pty_affiliation 
 				FROM candidate_master
@@ -273,13 +273,13 @@ def select_pty_by_cand_id(cand_id, year=False):
 		""".format(cand_id)
 		
 	else:
-		assert int(year) > 1976 and int(year) < 2040, "[*] Error: please pass a year between 1976 and 2040"
+		assert int(cycle) > 1976 and int(cycle) < 2040, "[*] Error: please pass a cycle between 1976 and 2040"
 		sql_query = """
 			SELECT cand_id, cand_name, cand_election_yr, cand_pty_affiliation 
 				FROM candidate_master
 				WHERE  (cand_id IS "{}" AND
 						cand_election_yr IS "{}");
-		""".format(cand_id, year)
+		""".format(cand_id, cycle)
 
 	return sql_query
 
@@ -295,9 +295,9 @@ def select_pty_by_cmte_id(cmte_id):
 	return sql_query
 
 
-def select_other_ids_itemized_records(cmte_id, year=False):
+def select_other_ids_itemized_records(cmte_id, cycle=False):
 
-	if year is False:
+	if cycle is False:
 
 		sql_query = """
 		SELECT transaction_dt, transaction_amt, other_id, sub_id FROM itemized_records
@@ -308,13 +308,16 @@ def select_other_ids_itemized_records(cmte_id, year=False):
 
 	else:
 
+		year1 = cycle
+		year2 = cycle-1
+
 		sql_query = """
 		SELECT transaction_dt, transaction_amt, other_id, sub_id FROM itemized_records
 			WHERE ((NOT other_id LIKE "") AND
 				   (cmte_id IS "{}") AND 
-				   (transaction_dt LIKE "%{}")
+				   (transaction_dt LIKE "%{}" OR transaction_dt LIKE "%{}")
 				   ); 
-		""".format(cmte_id, year)
+		""".format(cmte_id, year1, year2)
 
 	return sql_query
 
