@@ -185,7 +185,7 @@ counter = 0
 first_missing = []
 second_missing = []
 
-def search_party_id(db, cmte_id, year=False, recursive=False, levels=False):
+def search_party_id(db, cmte_id, year=False, recursive=False, levels=False, itemized=False):
 
 	global counter
 
@@ -194,20 +194,43 @@ def search_party_id(db, cmte_id, year=False, recursive=False, levels=False):
 	pid = cmte_results[0]
 	cmte_cand = cmte_results[1]
 
+	#TODO, new option to get partisan scores for options 1, 2
+
+	#direct cmte id
 	if pid_codes(pid) is True:
 		#print(pid)
-		return pid
+		if itemized is True:
+			results = get_parties_other_ids(db, cmte_id, year)
+			pid = results[0]
+			partisan_score = results[1]
+			return pid, partisan_score
 
+		else:
+			return pid
+
+	#search of candidate ids
 	if pid_codes(pid) is False and len(str(cmte_cand)) == 9:
 		pid = get_pty_by_cand_id(db, cmte_cand)
 
 		if pid_codes(pid) is True:
 			#print(pid)
-			return pid
+			#partisan_score = "?"
+			#return pid, partisan_score
+			#return pid
+
+			if itemized is True:
+				results = get_parties_other_ids(db, cmte_id, year)
+				pid = results[0]
+				partisan_score = results[1]
+				return pid, partisan_score
+
+			else:
+				return pid
+
 		else: 
 			pass
 
-
+	#itemized search of other ids
 	if pid_codes(pid) is False and len(str(cmte_cand)) < 9:
 
 		if levels is True:
@@ -233,7 +256,7 @@ def search_party_id(db, cmte_id, year=False, recursive=False, levels=False):
 			partisan_score = results[1]
 
 
-		return pid
+		return pid, partisan_score
 
 
 
@@ -244,6 +267,23 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=False)
 	#counter+=1
 
 	other_ids = get_other_ids_itemized_records(db, cmte_id, year)
+
+	#if requested year has no data, get data for all years
+	if len(other_ids) == 0:
+		other_ids = get_other_ids_itemized_records(db, cmte_id)
+
+		#if still no results:
+		print("still no results")
+		if len(other_ids) == 0:
+			#get score for pid
+			pid = search_party_id(db, cmte_id, levels=True)
+			partisan_score = float("{:0.5f}".format(partisan_dummy(pid)))
+			#partisan_score = round(float(partisan_dummy(pid)), 4)
+			#partisan_score = np.around(partisan_dummy(pid), 3)
+			return pid, partisan_score
+	else:
+		pass
+
 	print(other_ids)
 
 	#id_types = [id_type(oid) for oid in other_ids][0:10]
@@ -261,7 +301,12 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=False)
 					pids.append(pid)
 
 			elif depth is True:
-				pid = search_party_id(db, oid, year, depth=True)
+				pid = search_party_id(db, oid, year, levels=False)
+
+				if isinstance(pid, list) is True:
+					pids.extend(pid)
+				else:
+					pids.append(pid)
 
 
 
@@ -279,7 +324,7 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=False)
 		pid = list(Counter(pids).most_common(1))[0][0]
 
 		binary_pid = [partisan_dummy(pid) for pid in pids]
-		partisan_score = round(np.nanmean(binary_pid), 4)
+		partisan_score = float("{:0.5f}".format((np.nanmean(binary_pid))))
 
 		print(binary_pid)
 		print(len(binary_pid))
@@ -291,7 +336,7 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=False)
 
 
 
-#get_parties_other_ids(db, "C00000042", 2007)
+#x = get_parties_other_ids(db, "C00000042", 2007)
 #get_parties_other_ids(db, "C00000042", 2008)
 
 
@@ -306,12 +351,32 @@ def get_parties_other_ids(db, cmte_id, year=False, recursive=False, depth=False)
 #search_party_id(db, "C00000042", 2008)
 #search_party_id(db, "C00046474", 2008)
 
+#x = get_parties_other_ids(db, "C00451773", 2008)
+
 #strange err explore
-#search_party_id(db, "C00329862")
+#x = search_party_id(db, "C00329862")
+#x = get_parties_other_ids(db, "C00329862")
 
-search_party_id(db, "C00051979")
-#search_party_id(db, "C00046474")
+#Obama for America
+#x = search_party_id(db, "C00431445", 2008)
+#x = search_party_id(db, "C00431445", 2008, itemized=True)
 
+#Montana for Obama
+#x = search_party_id(db, "C00451773", 2008)
+x = search_party_id(db, "C00451773", 2008, itemized=True)
+
+
+#IL Tool Works for Better Gov
+x = search_party_id(db, "C00000042", 2008)
+
+#Nisource PAC
+#x = search_party_id(db, "C00051979")
+
+#Ford Motor Civic Action Fund
+x = search_party_id(db, "C00046474", 2008)
+#x = search_party_id(db, "C00046474", 2004)
+
+print(x)
 print("Final counter = {}".format(counter))
 print("Final first missing = {}".format(len(first_missing)))
 
