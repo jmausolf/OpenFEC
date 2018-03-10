@@ -143,7 +143,8 @@ def alter_create_table(input_table, output_table, db, conn, alter_function, path
 #create a unique id'd version of cmte_id's
 alter_create_table("committee_master", "committee_master_unique", db, c, alter_function=alt_cmte_unique, limit=False, chunksize=1000000)
 #alter_create_table("committee_master", "cmte_master_pids", db, c, alter_function=alt_cmte_pid, limit=False, chunksize=1000000)
-alter_create_table("committee_master_unique", "cmte_master_pids", db, c, alter_function=alt_cmte_pid, limit=5, chunksize=1000000)
+#alter_create_table("committee_master_unique", "cmte_master_pids", db, c, alter_function=alt_cmte_pid, limit=5, chunksize=1000000)
+alter_create_table("committee_master_unique", "committee_master_pids", db, c, alter_function=alt_cmte_pid, limit=False, chunksize=1000000)
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test, limit=20000, chunksize=100000, index=True, unique=True, key="sub_id")
 
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test)
