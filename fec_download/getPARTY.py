@@ -38,27 +38,34 @@ def get_pty_by_cand_id(db, cand_id, cycle=False, verbose=False):
 
 		cand_qry = select_pty_by_cand_id(cand_id)
 		df = pd.read_sql_query(cand_qry, con=db, index_col=None)
+
+		if df.shape[0] == 0:
+			pid = "MISSING"
+			return pid
+		else:
+			pass
+
 	else:
-		pass
+		#pass
 
-	#sort by date, so most recent are last
-	df['cand_election_yr'] = pd.to_numeric(df['cand_election_yr'], errors='coerce')
-	df.sort_values('cand_election_yr', inplace=True)
+		#sort by date, so most recent are last
+		df['cand_election_yr'] = pd.to_numeric(df['cand_election_yr'], errors='coerce')
+		df.sort_values('cand_election_yr', inplace=True)
 
-	#Get unique pid's (in the event the candidate switches parties)
-	pids = df["cand_pty_affiliation"].tolist()
+		#Get unique pid's (in the event the candidate switches parties)
+		pids = df["cand_pty_affiliation"].tolist()
 
-	#if only two entries that are different, takes most recent
-	pid = list(Counter(pids).most_common(1))[0][0]
-	name = list(Counter(df["cand_name"].tolist()).most_common(1))[0][0]
+		#if only two entries that are different, takes most recent
+		pid = list(Counter(pids).most_common(1))[0][0]
+		name = list(Counter(df["cand_name"].tolist()).most_common(1))[0][0]
 
-	if pid is None or pid is "":
-		pid = "MISSING"
+		if pid is None or pid is "":
+			pid = "MISSING"
 
-	if verbose is True:
-		print("[*] found...candidate {0:7} - {1:10} is {2}".format(cand_id, name, pid))
+		if verbose is True:
+			print("[*] found...candidate {0:7} - {1:10} is {2}".format(cand_id, name, pid))
 
-	return pid
+		return pid
 
 #get_pty_by_cand_id(db, "P80003338", "2008")
 #get_pty_by_cand_id(db, "H0GA08032", "2000")
@@ -509,6 +516,11 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 
 #print(x)
 
+
+#x = search_party_id(db, "C00009282", 2008, itemized=True, initial=True)
+#print(x)
+
+
 df = pd.read_csv("test_cmte.csv", sep="|")
 cols = ['cmte_id', 'cmte_nm', 'tres_nm', 'cmte_st1', 'cmte_st2', 'cmte_city', 'cmte_st', 'cmte_zip', 'cmte_dsgn', 'cmte_tp', 'cmte_pty_affiliation', 'cmte_filing_freq', 'org_tp', 'connected_org_nm', 'cand_id']
 df.columns = cols
@@ -521,7 +533,7 @@ df = df.head(n=150)
 #df = df.loc[df['cmte_id'] == "C00000638"]
 #print(df)
 
-#df = df.loc[df['cmte_id'] == "C00000059"]
+df = df.loc[df['cmte_id'] == "C00009282"]
 
 #df = df.loc[df['cmte_id'] == "C00000422"]
 
@@ -563,10 +575,7 @@ data = pd.DataFrame([])
 for cycle in cycles:
 
 	data = data.append(test(df, cycle))
-	#df_pid = test(df, cycle)
-	#write df to 
-	#df_cycle.append(df_cycle)
-	#print(df_cycle)
+	pass
 
 #data = pd.concat(data)
 print(data)
