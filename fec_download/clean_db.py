@@ -6,6 +6,7 @@ from setlogger import *
 #from download import *
 from build_db import *
 from make_sql import *
+from getPARTY import *
 
 
 def ren(invar, outvar, df):
@@ -37,7 +38,7 @@ db = sqlite3.connect("openFEC.db")
 #db = sqlite3.connect("openFEC.db", isolation_level="DEFERRED")
 c = db.cursor()
 
-
+cycles = [int(year) for year in years]
 
 #alter function should be a function that takes a df, does stuff, returns df
 
@@ -48,6 +49,13 @@ def alt_cm_test(df):
 def alt_cmte_test(df):
 	return df
 
+def alt_cmte_pid(df, cycles=cycles):
+	data = pd.DataFrame([])
+	for cycle in cycles:
+		data = data.append(get_party_ids_scores(df, cycle))
+	return data
+
+
 def alt_indiv_test(df):
 	df = lower_var("name", df)
 	return df
@@ -55,7 +63,7 @@ def alt_indiv_test(df):
 
 def get_alter_profile(input_table, output_table, db, alter_function, replace_null=False, replace_type=False, alt_types=[], **kwargs):
 
-	df = pd.read_sql_query("SELECT * FROM {} LIMIT 100;".format(input_table), con=db)
+	df = pd.read_sql_query("SELECT * FROM {} LIMIT 2;".format(input_table), con=db)
 	df = alter_function(df)
 
 	cols = list(df)
@@ -72,7 +80,7 @@ def get_alter_profile(input_table, output_table, db, alter_function, replace_nul
 	insert_qry = make_sql_insert_table(output_table, cols)
 
 	#exit_db(db)
-
+	#print(create_qry, insert_qry)
 	return create_qry, insert_qry
 
 #qrys = get_alter_profile("candidate_master", "test_cm", db, alt_cm_test)
@@ -125,7 +133,8 @@ def alter_create_table(input_table, output_table, db, conn, alter_function, path
 #since each modification will work from an alter_create_table function, the keys, types, nulls, 
 #can be passed after some experimentation with get_alter_profile
 #alter_create_table("candidate_master", "test_candidate", db, c, alter_function=alt_cm_test, limit=False, chunksize=1000000)
-alter_create_table("committee_master", "test_cmte", db, c, alter_function=alt_cmte_test, limit=False, chunksize=1000000)
+#alter_create_table("committee_master", "test_cmte", db, c, alter_function=alt_cmte_test, limit=False, chunksize=1000000)
+alter_create_table("committee_master", "test_cmte_pid", db, c, alter_function=alt_cmte_pid, limit=10, chunksize=1000000)
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test, limit=20000, chunksize=100000, index=True, unique=True, key="sub_id")
 
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test)

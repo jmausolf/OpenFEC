@@ -537,7 +537,7 @@ df = df.loc[df['cmte_id'] == "C00009282"]
 
 #df = df.loc[df['cmte_id'] == "C00000422"]
 
-def test(df, cycle=2008):
+def get_party_ids_scores(df, cycle=2008):
 
 	def pid(cid, cycle):
 		#time.sleep(2)
@@ -568,17 +568,20 @@ def test(df, cycle=2008):
 	return df
 
 
-cycles = [2004, 2008]
+cycles = [int(year) for year in years]
 
-data = pd.DataFrame([])
+def test(df, cycles):
 
-for cycle in cycles:
+	data = pd.DataFrame([])
 
-	data = data.append(test(df, cycle))
-	pass
+	for cycle in cycles:
+		data = data.append(get_party_ids_scores(df, cycle))
 
-#data = pd.concat(data)
-print(data)
+	return data
+
+
+#dft = test(df, cycles)
+#print(dft)
 
 
 #print("Final counter = {}".format(counter))
