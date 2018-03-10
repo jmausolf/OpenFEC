@@ -21,7 +21,7 @@ start_time = time.time()
 db = connect_db("openFEC.db")
 c = db.cursor()
 
-def get_pty_by_cand_id(db, cand_id, cycle=False):
+def get_pty_by_cand_id(db, cand_id, cycle=False, verbose=False):
 
 	if cycle is False:
 		cand_qry = select_pty_by_cand_id(cand_id)
@@ -55,7 +55,9 @@ def get_pty_by_cand_id(db, cand_id, cycle=False):
 	if pid is None or pid is "":
 		pid = "MISSING"
 
-	print("[*] found...candidate {0:7} - {1:10} is {2}".format(cand_id, name, pid))
+	if verbose is True:
+		print("[*] found...candidate {0:7} - {1:10} is {2}".format(cand_id, name, pid))
+
 	return pid
 
 #get_pty_by_cand_id(db, "P80003338", "2008")
@@ -68,7 +70,7 @@ def get_pty_by_cand_id(db, cand_id, cycle=False):
 
 
 
-def get_pty_by_cmte_id(db, cmte_id):
+def get_pty_by_cmte_id(db, cmte_id, verbose=False):
 
 	cmte_qry = select_pty_by_cmte_id(cmte_id)
 	#print(cmte_qry)
@@ -107,7 +109,9 @@ def get_pty_by_cmte_id(db, cmte_id):
 	#pid is not dem/rep, keep searching
 	#not return code for unknown or missing or none
 
-	print("[*] found...committee {0:7} - {1:10} is {2}".format(cmte_id, name, pid))
+	if verbose is True:
+		print("[*] found...committee {0:7} - {1:10} is {2}".format(cmte_id, name, pid))
+
 	return pid, cand_id
 
 
@@ -226,11 +230,14 @@ print(pid)
 """
 
 
-counter = 0
+#counter = 0
 first_missing = []
 second_missing = []
 
-def search_party_id(db, cmte_id, cycle=False, recursive=False, levels=False, itemized=False):
+def search_party_id(db, cmte_id, cycle=False, recursive=False, levels=False, itemized=False, initial=False):
+
+	if initial is True:
+		print("[*] searching for political party, committee id: {}...".format(cmte_id))
 
 	global counter
 
@@ -283,7 +290,7 @@ def search_party_id(db, cmte_id, cycle=False, recursive=False, levels=False, ite
 			counter+=1
 
 			if counter > len(first_missing):
-				print("counter exceeds first missing")
+				#print("counter exceeds first missing")
 				#print()
 				return np.nan
 
@@ -291,23 +298,24 @@ def search_party_id(db, cmte_id, cycle=False, recursive=False, levels=False, ite
 		else:
 			first_missing.append(cmte_id)
 
-		print("Current counter = {}".format(counter))
-		print("Current first missing = {}".format(len(first_missing)))
+		#print("Current counter = {}".format(counter))
+		#print("Current first missing = {}".format(len(first_missing)))
 
 		if recursive is True:
 			pid = get_parties_other_ids(db, cmte_id, cycle, recursive=True)
+			return pid
 		else:
 			results = get_parties_other_ids(db, cmte_id, cycle)
 			pid = results[0]
 			partisan_score = results[1]
 
-
-
-
-		return pid, partisan_score
+			#print(pid, partisan_score)
+			#counter = 0
+			return pid, partisan_score
 			
 
 
+		#counter needs reset after each one
 
 		#return pid, partisan_score
 
@@ -315,18 +323,21 @@ def search_party_id(db, cmte_id, cycle=False, recursive=False, levels=False, ite
 
 
 
-def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False, itemized=False):
+def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False, itemized=False, verbose=False):
 	#global counter
 	#counter+=1
 
 	other_ids = get_other_ids_itemized_records(db, cmte_id, cycle)
+
+	if verbose is True:
+		print(other_ids)
 
 	#if requested cycle has no data, get data for all cycles
 	if len(other_ids) == 0:
 		other_ids = get_other_ids_itemized_records(db, cmte_id)
 
 		#if still no results:
-		print("still no results")
+		#print("still no results")
 		if len(other_ids) == 0:
 			#get score for pid
 			pid = search_party_id(db, cmte_id, levels=True)
@@ -336,8 +347,6 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 			return pid, partisan_score
 	else:
 		pass
-
-	print(other_ids)
 
 	#id_types = [id_type(oid) for oid in other_ids][0:10]
 	#print(id_types)
@@ -374,28 +383,31 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 	if recursive is True:
 		return pids
 	else:
+		print(pids)
 		pids_clean = [select_pids(pid) for pid in pids]
-		binary_pid = [partisan_dummy(pid) for pid in pids_clean]
-		partisan_score = float("{:0.5f}".format((np.nanmean(binary_pid))))
-
 		pids_count = [pid for pid in pids_clean if str(pid) != 'nan']
-		print(pids_count)
+		#print(pids_count)
 		#for pid in range(pids_clean.count('nan')):
 		#	print(pid)
 		#	pids_clean.remove('nan')
 
 		#cleanedList = [x for x in countries if str(x) != 'nan']
 
-		#print(pids_clean)
-		#print(pids_count)
+		print(pids_clean)
+		print(pids_count)
 		pid = list(Counter(pids_count).most_common(1))[0][0]
+		print(pid)
 
-		print(binary_pid)
+		binary_pid = [partisan_dummy(pid) for pid in pids_count]
+		partisan_score = float("{:0.5f}".format((np.nanmean(binary_pid))))
+
+
+		#print(binary_pid)
 		print(len(binary_pid))
 		print(partisan_score)
 
 		#print(counter)
-		print(pid)
+		#print(pid)
 		#pid = 'DEMMY'
 
 		if itemized is True:
@@ -449,17 +461,68 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 #x = search_party_id(db, "C00000489", 2008, itemized=True)
 
 #TODO figure out why this is not working
-#x = search_party_id(db, "C00000638", 2008, itemized=True)
+#x = search_party_id(db, "C00000638", 2008, itemized=True, initial=True)
 
 #print(x)
-#print("Final counter = {}".format(counter))
-#print("Final first missing = {}".format(len(first_missing)))
-
 
 df = pd.read_csv("test_cmte.csv", sep="|")
 cols = ['cmte_id', 'cmte_nm', 'tres_nm', 'cmte_st1', 'cmte_st2', 'cmte_city', 'cmte_st', 'cmte_zip', 'cmte_dsgn', 'cmte_tp', 'cmte_pty_affiliation', 'cmte_filing_freq', 'org_tp', 'connected_org_nm', 'cand_id']
 df.columns = cols
-df = df.head(n=10)
+df = df.head(n=5)
+
+#df = df.loc[df['cmte_id'] == "C00000638"]
+#print(df)
+
+#df = df.loc[df['cmte_id'] == "C00000059"]
+
+#df = df.loc[df['cmte_id'] == "C00000422"]
+
+def test(df):
+
+	def pid(cid):
+		global counter 
+		counter = 0
+		first_missing = []
+		second_missing = []
+		return search_party_id(db, cid, 2008, itemized=True, initial=True)
+
+	#cid = []
+	#pid = []
+	#partisan_score = []
+	#committees = df['cmte_id']
+	#for cid in committees:
+	#	print(cid)
+	#	x = search_party_id(db, cid, 2008, itemized=True, initial=True)
+	#	return x
+
+	#df['a'] = df['cmte_id'].apply(lambda x: x + "_test")
+	#df['party_id'], df['partisan_score'] = df['cmte_id'].apply(lambda cid: search_party_id(db, cid, 2008, itemized=True, initial=True)).apply(pd.Series)
+	#df['pid'] = df['cmte_id'].apply(lambda cid: search_party_id(db, cid, 2008, itemized=True, initial=True))
+	#print(df)
+
+	#df[['party_id', 'partisan_score']] = df['pid'].apply(pd.Series)
+
+
+	#df[['party_id', 'partisan_score']] = df['cmte_id'].apply(lambda cid: search_party_id(db, cid, 2008, itemized=True, initial=True)).apply(pd.Series)
+
+	df[['party_id', 'partisan_score']] = df['cmte_id'].apply(lambda cid: pid(cid)).apply(pd.Series)
+	#np.vectorize(search_party_id)(db, df['cmte_id'], 2008, itemized=True, initial=True)
+	return df
+
+
+df = test(df)
+print(df)
+
+
+print("Final counter = {}".format(counter))
+print("Final first missing = {}".format(len(first_missing)))
+print("First missing = {}".format(first_missing))
+
+"""
+df = pd.read_csv("test_cmte.csv", sep="|")
+cols = ['cmte_id', 'cmte_nm', 'tres_nm', 'cmte_st1', 'cmte_st2', 'cmte_city', 'cmte_st', 'cmte_zip', 'cmte_dsgn', 'cmte_tp', 'cmte_pty_affiliation', 'cmte_filing_freq', 'org_tp', 'connected_org_nm', 'cand_id']
+df.columns = cols
+df = df.head(n=5)
 print(df)
 
 #TODO
@@ -468,9 +531,9 @@ print(df)
 
 
 
-df['party_id'], df['partisan_score'] = np.vectorize(search_party_id)(db, df['cmte_id'], 2008, itemized=True)
+df['party_id'], df['partisan_score'] = np.vectorize(search_party_id)(db, df['cmte_id'], 2008, itemized=True, initial=True)
 print(df)
-
+"""
 
 """
 if __name__ == "__main__":
