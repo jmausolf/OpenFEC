@@ -49,6 +49,12 @@ def alt_cm_test(df):
 def alt_cmte_test(df):
 	return df
 
+def alt_cmte_unique(df):
+	cols = cols = ['cmte_id', 'cmte_nm', 'cmte_pty_affiliation', 'cand_id']
+	df = df[cols]
+	df = df.drop_duplicates()
+	return df
+
 def alt_cmte_pid(df, cycles=cycles):
 	data = pd.DataFrame([])
 	for cycle in cycles:
@@ -133,8 +139,11 @@ def alter_create_table(input_table, output_table, db, conn, alter_function, path
 #since each modification will work from an alter_create_table function, the keys, types, nulls, 
 #can be passed after some experimentation with get_alter_profile
 #alter_create_table("candidate_master", "test_candidate", db, c, alter_function=alt_cm_test, limit=False, chunksize=1000000)
-#alter_create_table("committee_master", "test_cmte", db, c, alter_function=alt_cmte_test, limit=False, chunksize=1000000)
-alter_create_table("committee_master", "test_cmte_pid", db, c, alter_function=alt_cmte_pid, limit=10, chunksize=1000000)
+
+#create a unique id'd version of cmte_id's
+alter_create_table("committee_master", "committee_master_unique", db, c, alter_function=alt_cmte_unique, limit=False, chunksize=1000000)
+#alter_create_table("committee_master", "cmte_master_pids", db, c, alter_function=alt_cmte_pid, limit=False, chunksize=1000000)
+alter_create_table("committee_master_unique", "cmte_master_pids", db, c, alter_function=alt_cmte_pid, limit=5, chunksize=1000000)
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test, limit=20000, chunksize=100000, index=True, unique=True, key="sub_id")
 
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test)
