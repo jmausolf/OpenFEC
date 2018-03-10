@@ -42,14 +42,14 @@ cycles = [int(year) for year in years]
 
 #alter function should be a function that takes a df, does stuff, returns df
 
-def alt_cm_test(df):
+def alt_cm_test(df, cycles=False):
 	df = lower_var("cand_name", df)
 	return df
 
-def alt_cmte_test(df):
+def alt_cmte_test(df, cycles=False):
 	return df
 
-def alt_cmte_unique(df):
+def alt_cmte_unique(df, cycles=False):
 	cols = cols = ['cmte_id', 'cmte_nm', 'cmte_pty_affiliation', 'cand_id']
 	df = df[cols]
 	df = df.drop_duplicates()
@@ -62,15 +62,15 @@ def alt_cmte_pid(df, cycles=cycles):
 	return data
 
 
-def alt_indiv_test(df):
+def alt_indiv_test(df, cycles=False):
 	df = lower_var("name", df)
 	return df
 
 
-def get_alter_profile(input_table, output_table, db, alter_function, replace_null=False, replace_type=False, alt_types=[], **kwargs):
+def get_alter_profile(input_table, output_table, db, alter_function, cycles=[2008], replace_null=False, replace_type=False, alt_types=[], **kwargs):
 
 	df = pd.read_sql_query("SELECT * FROM {} LIMIT 2;".format(input_table), con=db)
-	df = alter_function(df)
+	df = alter_function(df, cycles)
 
 	cols = list(df)
 	print(cols)
