@@ -89,8 +89,12 @@ def extract(type_key, table_key):
 	return table_key[type_key][1]
 
 
-def remove_files(filetype):
-	files = glob('*.{}'.format(filetype))
+def remove_files(filetype, rmfiles=False):
+	if rmfiles is True:
+		files = filetype
+	else:
+		files = glob('*.{}'.format(filetype))
+	
 	print("[*] removing {} files in 10 seconds, control-c to abort...".format(len(files)))
 	time.sleep(10)
 	[ os.remove(f) for f in files]

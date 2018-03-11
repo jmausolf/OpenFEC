@@ -23,13 +23,6 @@ def choose_config(config_spec):
 		from config import years, cycles, companies, table_key
 		return [years, cycles, companies, table_key]
 
-	#print("{}\n{}\n{}\n{}".format(years, cycles, companies, table_key))
-	
-
-#years = config[0]
-#cycles = config[1]
-#companies = config[2]
-#table_key = config[3]
 
 #Data Cleaning Functions
 def sed_replace_null(file, script="clean_null.sh"):
@@ -164,18 +157,11 @@ def return_sql(action, **kwargs):
 db = None
 shutdown = False
 
-def main():
+def main(delete=True):
 	global db
-
-	#All Files
-	#files = return_files("downloads/", "txt")
 
 	#All Files in Config
 	files = [file for k, v in table_key.items() for file in return_files("downloads/", "txt", k)]
-
-
-	#DEV: Specify Type of File
-	#files = return_files("downloads/", "txt", "ccl")
 
 	#Run: Build Database
 	db = connect_db("openFEC.db")
@@ -184,6 +170,10 @@ def main():
 	create_insert_table(c, files)
 	count_results(c, table_key)
 	exit_db(db)
+
+	if delete is True:
+		download_files = glob('{}*.{}'.format("downloads/", "txt"))
+		remove_files(download_files, rmfiles=True)
 
 	db = None
 	return
@@ -209,13 +199,8 @@ if __name__ == "__main__":
 	parser.add_argument("-b", "--build", default=False, type=bool, help="build tables")
 	args = parser.parse_args()
 
-	#if not (args.config or args.download or args.build):
-#		parser.error('No action requested, add --config None or --download True or --build True')
-
-	#print(args)
-	#print(type(args.config))
-	#print(args.download)
-	#print(args.config)
+	if not (args.config or args.download or args.build):
+		parser.error('No action requested, add --config None or --download True or --build True')
 	
 	if args.config is True:
 		config = choose_config(True)
