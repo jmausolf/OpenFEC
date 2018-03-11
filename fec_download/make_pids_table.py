@@ -65,9 +65,9 @@ def write_config(config, script="config.py"):
         code.close()
 
 
-write_config(make_pid_config('2008'))
+#write_config(make_pid_config('2008'))
 
-
+"""
 def choose_config(config_spec):
 
 	if config_spec is False:
@@ -79,7 +79,7 @@ def choose_config(config_spec):
 		from config import years, cycles, companies, table_key
 		return [years, cycles, companies, table_key]
 
-
+"""
 
 #cfig = choose_config(True)
 #print(cfig)
@@ -105,12 +105,12 @@ for cycle in cycles:
 		subprocess.call("python3 build_db.py -c True -d True -b True", shell=True)
 		#build config
 		#download and build tables from config
-		alter_create_table("committee_master", "committee_master_pids", db, c, alter_function=alt_cmte_pid_cycle, limit=10, chunksize=1000000, cycles=cycle)
+		alter_create_table("committee_master", "committee_master_pids", db, c, alter_function=alt_cmte_pid_cycle, limit=False, chunksize=1000000, cycles=cycle)
 	else:
 		print("other cycle")
 		write_config(make_pid_config(str(cycle)))
 		subprocess.call("python3 build_db.py -c True -d True -b True", shell=True)
-		alter_create_table("committee_master", "committee_master_pids", db, c, alter_function=alt_cmte_pid_cycle, limit=10, chunksize=1000000, cycles=cycle, create=False)		
+		alter_create_table("committee_master", "committee_master_pids", db, c, alter_function=alt_cmte_pid_cycle, limit=False, chunksize=1000000, cycles=cycle, create=False)		
 
 
 #rename tables back
