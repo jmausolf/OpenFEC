@@ -12,7 +12,24 @@ from setlogger import *
 from download import *
 
 
+def choose_config(config_spec):
 
+	if config_spec is False:
+		print("master_config")
+		from master_config import years, cycles, companies, table_key
+		return [years, cycles, companies, table_key]
+	else:
+		print("other config")
+		from config import years, cycles, companies, table_key
+		return [years, cycles, companies, table_key]
+
+	#print("{}\n{}\n{}\n{}".format(years, cycles, companies, table_key))
+	
+
+#years = config[0]
+#cycles = config[1]
+#companies = config[2]
+#table_key = config[3]
 
 #Data Cleaning Functions
 def sed_replace_null(file, script="clean_null.sh"):
@@ -187,12 +204,27 @@ def interrupt(signum, frame):
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser()
+	parser.add_argument("-c", "--config", default=False, type=bool, help="config files")
 	parser.add_argument("-d", "--download", default=False, type=bool, help="download files")
-	parser.add_argument("-b", "--build", default=False, type=bool, help="clean files")
+	parser.add_argument("-b", "--build", default=False, type=bool, help="build tables")
 	args = parser.parse_args()
 
-	if not (args.download or args.build):
-		parser.error('No action requested, add --download True or --build True')
+	#if not (args.config or args.download or args.build):
+#		parser.error('No action requested, add --config None or --download True or --build True')
+
+	#print(args)
+	#print(type(args.config))
+	#print(args.download)
+	#print(args.config)
+	
+	if args.config is True:
+		config = choose_config(True)
+		print(config)
+	else:
+		config = choose_config(args.config)
+		print(config)
+
+
 
 	if args.download is True:
 		datasets = download_files(years, table_key)

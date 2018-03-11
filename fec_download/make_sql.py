@@ -322,6 +322,13 @@ def select_other_ids_itemized_records(cmte_id, cycle=False):
 	return sql_query
 
 
+def alter_table_rename(input_table, output_table):
+
+	sql_query = """
+		ALTER TABLE {} RENAME TO {};
+	""".format(input_table, output_table)
+
+	return sql_query
 
 
 

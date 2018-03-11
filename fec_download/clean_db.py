@@ -1,7 +1,7 @@
 import pandas as pd
 import sqlite3
 
-from config import *
+from master_config import *
 from setlogger import *
 #from download import *
 from build_db import *
@@ -40,8 +40,8 @@ db = sqlite3.connect("openFEC.db")
 c = db.cursor()
 
 #cycles = [int(year) for year in years]
-years = ['2000' , '2002', '2004', '2008']
-cycles = [int(year) for year in years]
+#years = ['2000' , '2002', '2004', '2008']
+#cycles = [int(year) for year in years]
 
 #alter function should be a function that takes a df, does stuff, returns df
 
