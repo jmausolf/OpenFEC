@@ -46,21 +46,27 @@ def get_pty_by_cand_id(db, cand_id, cycle=False, verbose=False):
 	else:
 
 		#sort by date, so most recent are last
-		df['cand_election_yr'] = pd.to_numeric(df['cand_election_yr'], errors='coerce')
+		df['cand_election_yr'] = pd.to_numeric(
+			df['cand_election_yr'], 
+			errors='coerce')
 		df.sort_values('cand_election_yr', inplace=True)
 
 		#Get unique pid's (in the event the candidate switches parties)
 		pids = df["cand_pty_affiliation"].tolist()
 
 		#if only two entries that are different, takes most recent
-		pid = list(Counter(pids).most_common(1))[0][0]
+		#pid = list(Counter(pids).most_common(1))[0][0]
+		pid = most_common_pid(pids)
 		name = list(Counter(df["cand_name"].tolist()).most_common(1))[0][0]
 
 		if pid is None or pid is "":
 			pid = "MISSING"
 
 		if verbose is True:
-			print("[*] found...candidate {0:7} - {1:10} is {2}".format(cand_id, name, pid))
+			print(
+				"[*] found...candidate {0:7} - {1:10} is {2}"
+				.format(cand_id, name, pid)
+				)
 
 		return pid
 
@@ -83,11 +89,11 @@ def get_pty_by_cmte_id(db, cmte_id, verbose=False):
 
 	#if only two entries that are different, takes most recent
 	try:
-		pid = list(Counter(pids).most_common(1))[0][0]
+		#pid = list(Counter(pids).most_common(1))[0][0]
+		pid = most_common_pid(pids)
 		name = list(Counter(df["cmte_nm"].tolist()).most_common(1))[0][0]
 	except Exception as e:
 		print(e)
-		print(pids)
 		pid = ""
 		name = ""
 
@@ -98,7 +104,10 @@ def get_pty_by_cmte_id(db, cmte_id, verbose=False):
 		pid = "MISSING"
 
 	if verbose is True:
-		print("[*] found...committee {0:7} - {1:10} is {2}".format(cmte_id, name, pid))
+		print(
+			"[*] found...committee {0:7} - {1:10} is {2}"
+			.format(cmte_id, name, pid)
+			)
 
 	return pid, cand_id
 
@@ -117,11 +126,14 @@ def get_other_ids_itemized_records(db, cmte_id, cycle=False):
 
 
 
-def id_type(id):
-	if len(str(id)) != 9:
-		warnings.warn("[*] committee or candidate id {} may be invalid, please check...".format(id))
+def id_type(_id):
+	if len(str(_id)) != 9:
+		warnings.warn(
+			"[*] committee or candidate id {} may be invalid..."
+			.format(_id)
+			)
 
-	if str(id)[0] == "C":
+	if str(_id)[0] == "C":
 		return "cmte_id"
 	else:
 		return "cand_id"
@@ -131,13 +143,37 @@ def id_type(id):
 def pid_codes(pid):
 	pid = str(pid).upper()
 
+	#Major Parties
 	if pid == "DEM" or pid == "REP":
 		return True
+
+	#Major Third Parties
 	elif pid == "CON" or pid == "LIB" or pid == "GRE":
 		return True
-	if pid is None:
+
+
+	#Other Parties:
+	others = ["ACE", "AKI", "AIC", "AIP", "AMP", "APF", "AE", "CIT", \
+		"CMD", "CMP", "COM", "CNC", "CRV", "CST", "COU", "DCG", "DNL", \
+		"D/C", "DFL", "DGR", "FED", "FLP", "FRE", "GWP", "GRT", "GR", \
+		"HRP", "IDP", "IAP", "ICD", "IGR", "IP", "IDE", "IGD", "JCN", \
+		"JUS", "LRU", "LBR", "LFT", "LBL", "LBU", "MTP", "NDP", "NLP", \
+		"NA", "NJC", "NPP", "NPA", "NOP", "OE", "PG", "PSL", "PAF", \
+		"PFP", "PFD", "POP", "PPY", "PCH", "PPD", "PRO", "NAP", "PRI", \
+		"RUP", "REF", "RES", "RTL", "SEP", "SLP", "SUS", "SOC", "SWP", \
+		"TX", "TWR", "TEA", "THD", "LAB", "USP", "UST", "UC", "UNI", \
+		"VET", "WTP", "W"]
+
+	if pid in others:
+		return True
+
+
+	#Unknown Categories
+	elif pid is None:
 		return False
 	elif pid == "MISSING":
+		return False
+	elif pid == "UNK_OTHER":
 		return False
 	elif pid == "NNE" or pid == "UNK":
 		return False
@@ -145,10 +181,12 @@ def pid_codes(pid):
 		return False
 	elif pid == "":
 		return False
+	elif pid == "NAN":
+		return False
 
-	#To retain other parties
+	#Errors
 	else:
-		return True
+		return "CONTINUE"
 
 
 def partisan_dummy(pid):
@@ -187,13 +225,47 @@ def select_pids(pid_tuple):
 	return pid
 
 
+def most_common_pid(pid_list):
 
-def search_party_id(db, cmte_id, cycle=False, recursive=False, levels=False, itemized=False, initial=False):
+	if len(pid_list) >= 2 and len(set(pid_list)) >= 2:
+
+		major_pids = list(Counter(pid_list).most_common(2))
+		first_pid = major_pids[0][0]
+		second_pid = major_pids[1][0]
+		first_count = major_pids[0][1]
+		second_count = major_pids[1][1]
+		mpid = sorted([first_pid, second_pid])
+
+		#if tied, concat pids, else return most common
+		if first_count == second_count:
+			pid = "{}_{}".format(mpid[0], mpid[1])
+		else:
+			pid = list(Counter(pid_list).most_common(1))[0][0]
+
+	else:
+		pid = list(Counter(pid_list).most_common(1))[0][0]
+
+	return pid
+
+
+
+def search_party_id(
+		db, 
+		cmte_id, 
+		cycle=False, 
+		recursive=False, 
+		levels=False, 
+		itemized=False, 
+		initial=False
+		):
 
 	np.random.seed(seed=524)
 
 	if initial is True:
-		print("[*] searching for political party, committee id: {} in cycle: {}...".format(cmte_id, str(cycle)))
+		print(
+			"[*] searching for party, committee id: {} in cycle: {}..."
+			.format(cmte_id, str(cycle))
+			)
 
 	global counter
 
@@ -232,7 +304,6 @@ def search_party_id(db, cmte_id, cycle=False, recursive=False, levels=False, ite
 
 	#itemized search of other ids
 	if pid_codes(pid) is False and len(str(cmte_cand)) < 9:
-
 		if levels is True:
 			counter+=1
 
@@ -254,7 +325,15 @@ def search_party_id(db, cmte_id, cycle=False, recursive=False, levels=False, ite
 
 
 
-def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False, itemized=False, verbose=False):
+def get_parties_other_ids(
+		db, 
+		cmte_id, 
+		cycle=False, 
+		recursive=False, 
+		depth=False, 
+		itemized=False, 
+		verbose=False
+		):
 
 	other_ids = get_other_ids_itemized_records(db, cmte_id, cycle)
 
@@ -312,10 +391,12 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 		return pids
 	else:
 		pids_clean = [select_pids(pid) for pid in pids]
-		pids_count = [pid for pid in pids_clean if str(pid) != 'nan']
+		pids_count = [str(pid).upper() for pid in pids_clean \
+			 if str(pid) != 'nan']
 
 		if len(pids_count) > 0:
-			pid = list(Counter(pids_count).most_common(1))[0][0]
+			pid = most_common_pid(pids_count)
+
 		else:
 			pid = "UNK_OTHER"
 
@@ -330,21 +411,12 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 
 
 #Local Testing
-#df = pd.read_csv("test_cmte.csv", sep="|")
-#cols = ['cmte_id', 'cmte_nm', 'tres_nm', 'cmte_st1', 'cmte_st2', 'cmte_city', 'cmte_st', 'cmte_zip', 'cmte_dsgn', 'cmte_tp', 'cmte_pty_affiliation', 'cmte_filing_freq', 'org_tp', 'connected_org_nm', 'cand_id']
-#df.columns = cols
-#df = df.head(n=25)
-#df = df.head(n=150)
-#df = df.loc[17:19]
-#df = df.loc[df['cmte_id'] == "C00000638"]
-#print(df)
-#df = df.loc[df['cmte_id'] == "C00009282"]
-#df = df.loc[df['cmte_id'] == "C00000422"]
 
 #id error
 #C00005173
 #C0009
 #C00538835
+#C00000547
 
 #global counter 
 #global first_missing
@@ -353,10 +425,11 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 #x = search_party_id(db, "C00005173", 2012, itemized=True, initial=True)
 #x = search_party_id(db, "C00509836", 2012, itemized=True, initial=True)
 #x = search_party_id(db, "C00505529", 2012, itemized=True, initial=True)
-#x = search_party_id(db, "C00538835", 2012, itemized=True, initial=True)
+#x = search_party_id(db, "C00000638", 2002, itemized=True, initial=True)
 
 #mean of empty slice: C00001347
-#errors are when all the ids are unknown or other and no party is associated with them in the id's
+#errors are when all the ids are unknown or 
+#other and no party is associated with them in the id's
 #x = search_party_id(db, "C00001347", 2012, itemized=True, initial=True)
 #print(x)
 
@@ -373,21 +446,12 @@ def get_party_ids_scores(df, cycle=2008):
 		first_missing = []
 		return search_party_id(db, cid, cycle, itemized=True, initial=True)
 
-	df[['party_id', 'partisan_score']] = df['cmte_id'].apply(lambda cid: pid(cid, cycle)).apply(pd.Series)
+	df[['party_id', 'partisan_score']] = df['cmte_id'].apply(
+		lambda cid: pid(cid, cycle)).apply(pd.Series)
 	df['cycle'] = cycle
 
 	return df
 
 
-#cycles = [int(year) for year in years]
 
-def test(df, cycles):
-	data = pd.DataFrame([])
-	for cycle in cycles:
-		data = data.append(get_party_ids_scores(df, cycle))
-	return data
-
-
-#dft = test(df, cycles)
-#print(dft)
 

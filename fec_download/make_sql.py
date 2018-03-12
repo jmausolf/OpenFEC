@@ -1,18 +1,15 @@
-
-
-#cols = ["cmte_id", "amndt_ind", "rpt_tp", "transaction_pgi", "image_num", "transaction_tp", "entity_tp"]
-#types = ["TEXT", "TEXT", "TEXT", "TEXT", "TEXT", "TEXT", "TEXT"]
-#nulls = ["NOT NULL", "", "", "", "","", ""]
-
-
+#Python Functions to Write SQL Functions
 
 def gen_types(columns, types="TEXT", replace=False, alt_vector=[]):
 	type_vector = ["{}".format(types) for c in columns]
 
 	if replace is not False:
-		assert type(replace) is list, "ERROR: please pass a replace vector as a list"
-		assert type(alt_vector) is list, "ERROR: please pass an alternative type vector as a list"
-		assert len(replace) == len(alt_vector), "ERROR: replace vector and alt vector different lengths"
+		assert type(replace) is list, (
+			"ERROR: please pass a replace vector as a list")
+		assert type(alt_vector) is list, (
+			"ERROR: please pass an alternative type vector as a list")
+		assert len(replace) == len(alt_vector), (
+			"ERROR: replace vector and alt vector different lengths")
 
 		count = -1
 		for position in replace:
@@ -21,11 +18,14 @@ def gen_types(columns, types="TEXT", replace=False, alt_vector=[]):
 
 	return type_vector
 
+
+
 def gen_nulls(columns, nulls="", replace=False, alt="NOT NULL"):
 	null_vector = ["{}".format(nulls) for c in columns]
 
 	if replace is not False:
-		assert type(replace) is list, "ERROR: please pass a replace vector as a list"
+		assert type(replace) is list, (
+			"ERROR: please pass a replace vector as a list")
 		
 		for position in replace:
 			null_vector[position] = alt
@@ -33,18 +33,6 @@ def gen_nulls(columns, nulls="", replace=False, alt="NOT NULL"):
 	return null_vector
 
 
-#types = gen_types(cols)
-#nulls = gen_nulls(cols)
-
-#nulls = gen_nulls(cols, "", [0])
-#types = gen_types(cols, replace=[4], alt_vector=["NUMERIC"])
-#types = gen_types(cols, "TEXT", [1, 4], ["BOOL", "NUMERIC"])
-#types = gen_types(cols, replace=[1, 4], alt_vector=["BOOL", "NUMERIC"])
-
-#nulls = gen_nulls(cols, "NOT NULL", "test")
-
-#TODO
-#functions to determine null vector and replace/alt vectors from original table
 
 def create_col_specs(columns, types=False, nulls=False):
 
@@ -76,6 +64,8 @@ def create_col_specs(columns, types=False, nulls=False):
 
 	return create_col_spec, insert_col_spec
 
+
+
 def create_value_questions(columns):
 	value_questions = ''
 	N = len(columns)
@@ -91,9 +81,16 @@ def create_value_questions(columns):
 	return value_questions
 
 
-
 #create table
-def make_sql_create_table(table_name, columns, types, nulls, drop=True, index=False, **kwargs):
+def make_sql_create_table(
+		table_name, 
+		columns, 
+		types, 
+		nulls, 
+		drop=True, 
+		index=False, 
+		**kwargs
+		):
 
 	lb = '\n'
 
@@ -111,7 +108,9 @@ def make_sql_create_table(table_name, columns, types, nulls, drop=True, index=Fa
 	#Key Statement
 	if index is True:
 
-		assert kwargs['unique'] and kwargs['key'], "ERROR: please provide two keyword arguments: indicate unique=True/False and key=<table_key>"
+		assert kwargs['unique'] and kwargs['key'], (
+			"ERROR: please provide two keyword arguments: \
+			indicate unique=True/False and key=<table_key>")
 
 		index_name = "idx_{}".format(table_name)
 		if kwargs['unique'] is True:
@@ -120,7 +119,12 @@ def make_sql_create_table(table_name, columns, types, nulls, drop=True, index=Fa
 			unique = ""
 
 		key = kwargs['key']
-		index_statement = "CREATE {0} INDEX {1} ON {2} ({3});".format(unique, index_name, table_name, key)+lb
+		index_statement = "CREATE {0} INDEX {1} ON {2} ({3});".format(
+			unique, 
+			index_name, 
+			table_name, 
+			key
+			)+lb
 
 	else:
 		index_statement = ''
@@ -128,16 +132,14 @@ def make_sql_create_table(table_name, columns, types, nulls, drop=True, index=Fa
 
 
 
-	script = "{1}{0}{2}{0}{3}".format(lb, drop_statement, create_statement, index_statement)
+	script = "{1}{0}{2}{0}{3}".format(
+		lb, 
+		drop_statement, 
+		create_statement, 
+		index_statement
+		)
 	return script
 
-
-#testing
-#make_sql_create_table("test_table2", cols, types, nulls)
-#create_sql = make_sql_create_table("test_table_index", cols, types, nulls, index=True, unique=True, key="sub_id")
-#print(create_sql)
-
-#TODO save sql scripts as .sql by default
 
 #insert table
 def make_sql_insert_table(table_name, columns):
@@ -160,8 +162,6 @@ def make_sql_insert_table(table_name, columns):
 	script = "{1}{2}{0}".format(lb, insert_statement_pt1, insert_statement_pt2)
 	return script
 
-#insert_qry = make_sql_insert_table("insert_test", cols)
-#print(insert_qry)
 
 
 def select_schedule_a_by_company_org(company):
@@ -189,6 +189,8 @@ def select_schedule_a_by_company_org(company):
 	""".format(company)
 
 	return sql_query
+
+
 
 def select_schedule_a_by_company(company):
 
@@ -263,6 +265,7 @@ def select_schedule_a_by_company(company):
 	return sql_query
 
 
+
 def select_pty_by_cand_id(cand_id, cycle=False):
 
 	if cycle is False:
@@ -273,7 +276,8 @@ def select_pty_by_cand_id(cand_id, cycle=False):
 		""".format(cand_id)
 		
 	else:
-		assert int(cycle) > 1976 and int(cycle) < 2040, "[*] Error: please pass a cycle between 1976 and 2040"
+		assert int(cycle) > 1976 and int(cycle) < 2040, (
+			"[*] Error: please pass a cycle between 1976 and 2040")
 		sql_query = """
 			SELECT cand_id, cand_name, cand_election_yr, cand_pty_affiliation 
 				FROM candidate_master
@@ -282,6 +286,7 @@ def select_pty_by_cand_id(cand_id, cycle=False):
 		""".format(cand_id, cycle)
 
 	return sql_query
+
 
 
 def select_pty_by_cmte_id(cmte_id):
@@ -295,12 +300,14 @@ def select_pty_by_cmte_id(cmte_id):
 	return sql_query
 
 
+
 def select_other_ids_itemized_records(cmte_id, cycle=False):
 
 	if cycle is False:
 
 		sql_query = """
-		SELECT transaction_dt, transaction_amt, other_id, sub_id FROM itemized_records
+		SELECT transaction_dt, transaction_amt, other_id, sub_id 
+			FROM itemized_records
 			WHERE ((NOT other_id LIKE "") AND
 				   (LENGTH(other_id) == 9) AND 
 				   (cmte_id IS "{}")
@@ -313,7 +320,8 @@ def select_other_ids_itemized_records(cmte_id, cycle=False):
 		year2 = cycle-1
 
 		sql_query = """
-		SELECT transaction_dt, transaction_amt, other_id, sub_id FROM itemized_records
+		SELECT transaction_dt, transaction_amt, other_id, sub_id 
+			FROM itemized_records
 			WHERE ((NOT other_id LIKE "") AND
 				   (LENGTH(other_id) == 9) AND 
 				   (cmte_id IS "{}") AND 
@@ -322,6 +330,7 @@ def select_other_ids_itemized_records(cmte_id, cycle=False):
 		""".format(cmte_id, year1, year2)
 
 	return sql_query
+
 
 
 def alter_table_rename(input_table, output_table):

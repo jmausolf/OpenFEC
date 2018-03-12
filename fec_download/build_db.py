@@ -15,11 +15,9 @@ from download import *
 def choose_config(config_spec):
 
 	if config_spec is False:
-		print("master_config")
 		from master_config import years, cycles, companies, table_key
 		return [years, cycles, companies, table_key]
 	else:
-		print("other config")
 		from config import years, cycles, companies, table_key
 		return [years, cycles, companies, table_key]
 

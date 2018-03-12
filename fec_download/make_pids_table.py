@@ -17,10 +17,14 @@ def rename(cursor, input_tables, output_prefix, reverse=False):
 
 		if reverse is False:
 			qry = alter_table_rename(input_table, output_table)
-			print("[*] rename table {} to {}".format(input_table, output_table))
+			print("[*] rename table {} to {}".
+				format(input_table, output_table)
+				)
 		elif reverse is True:
 			qry = alter_table_rename(output_table, input_table)
-			print("[*] rename table {} to {}".format(output_table, input_table))
+			print("[*] rename table {} to {}".
+				format(output_table, input_table)
+				)
 
 		try:
 			cursor.executescript(qry)
@@ -91,7 +95,7 @@ def make_pids_table(db, c, dest=False, lim=False, af=alt_cmte_pid_cycle):
 				limit=lim, chunksize=1000000, cycles=cycle, create=False)		
 
 
-make_pids_table(db, c, lim=10)
+make_pids_table(db, c, lim=15)
 
 
 
