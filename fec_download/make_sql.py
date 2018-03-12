@@ -302,6 +302,7 @@ def select_other_ids_itemized_records(cmte_id, cycle=False):
 		sql_query = """
 		SELECT transaction_dt, transaction_amt, other_id, sub_id FROM itemized_records
 			WHERE ((NOT other_id LIKE "") AND
+				   (LENGTH(other_id) == 9) AND 
 				   (cmte_id IS "{}")
 				  );
 		""".format(cmte_id)
@@ -314,6 +315,7 @@ def select_other_ids_itemized_records(cmte_id, cycle=False):
 		sql_query = """
 		SELECT transaction_dt, transaction_amt, other_id, sub_id FROM itemized_records
 			WHERE ((NOT other_id LIKE "") AND
+				   (LENGTH(other_id) == 9) AND 
 				   (cmte_id IS "{}") AND 
 				   (transaction_dt LIKE "%{}" OR transaction_dt LIKE "%{}")
 				   ); 

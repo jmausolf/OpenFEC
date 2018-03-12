@@ -4,6 +4,7 @@ import sqlite3
 import signal
 import threading
 import time
+import warnings
 
 from config import *
 from setlogger import *
@@ -117,9 +118,9 @@ def get_other_ids_itemized_records(db, cmte_id, cycle=False):
 
 
 def id_type(id):
-	assert len(str(id)) == 9, (
-		"[*] please input a valid committee or candidate id as a string")
-	
+	if len(str(id)) != 9:
+		warnings.warn("[*] committee or candidate id {} may be invalid, please check...".format(id))
+
 	if str(id)[0] == "C":
 		return "cmte_id"
 	else:
@@ -325,7 +326,20 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 #df = df.loc[df['cmte_id'] == "C00009282"]
 #df = df.loc[df['cmte_id'] == "C00000422"]
 
+#id error
+#C00005173
+#C0009
+#C00538835
 
+#global counter 
+#global first_missing
+#counter = 0
+#first_missing = []
+#x = search_party_id(db, "C00005173", 2012, itemized=True, initial=True)
+#x = search_party_id(db, "C00509836", 2012, itemized=True, initial=True)
+#x = search_party_id(db, "C00505529", 2012, itemized=True, initial=True)
+#x = search_party_id(db, "C00538835", 2012, itemized=True, initial=True)
+#print(x)
 
 
 def get_party_ids_scores(df, cycle=2008):
