@@ -133,18 +133,25 @@ def pid_codes(pid):
 
 	if pid == "DEM" or pid == "REP":
 		return True
+	elif pid == "CON" or pid == "LIB" or pid == "GRE":
+		return True
+	if pid is None:
+		return False
 	elif pid == "MISSING":
 		return False
 	elif pid == "NNE" or pid == "UNK":
 		return False
 	elif pid == "UN" or pid == "NON" or pid == "N" or pid == "OTH":
 		return False
+	elif pid == "":
+		return False
+
+	#To retain other parties
 	else:
-		return "CONTINUE"
+		return True
 
 
 def partisan_dummy(pid):
-
 	if isinstance(pid, tuple) is True:
 		pid = pid[0]
 		pid = str(pid).upper()
@@ -156,6 +163,14 @@ def partisan_dummy(pid):
 	elif pid == "IND":
 		return 0
 	elif pid == "DEM":
+		return -1
+
+	#major 3rd parties
+	elif pid == "CON":
+		return 1
+	elif pid == "LIB":
+		return 0
+	elif pid == "GRE":
 		return -1
 
 	else:
@@ -339,8 +354,15 @@ def get_parties_other_ids(db, cmte_id, cycle=False, recursive=False, depth=False
 #x = search_party_id(db, "C00509836", 2012, itemized=True, initial=True)
 #x = search_party_id(db, "C00505529", 2012, itemized=True, initial=True)
 #x = search_party_id(db, "C00538835", 2012, itemized=True, initial=True)
+
+#mean of empty slice: C00001347
+#errors are when all the ids are unknown or other and no party is associated with them in the id's
+#x = search_party_id(db, "C00001347", 2012, itemized=True, initial=True)
 #print(x)
 
+#test lib, green, const parties
+#x = search_party_id(db, "C00000992", 2012, itemized=True, initial=True)
+#print(x)
 
 def get_party_ids_scores(df, cycle=2008):
 

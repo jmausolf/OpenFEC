@@ -1,26 +1,14 @@
 import pandas as pd
 import sqlite3
-
 from setlogger import *
 from download import *
 from build_db import *
 from make_sql import *
 from getPARTY import *
 from clean_db import *
-
 from master_config import *
 
-#years = ['2000' , '2002', '2004', '2008']
-#cycles = [int(year) for year in years]
 
-
-#Connect to DB
-#db = connect_db("openFEC.db")
-#c = db.cursor()
-
-
-#from config import years, cycles, companies, table_key
-print(years)
 
 def rename(cursor, input_tables, output_prefix, reverse=False):
 
@@ -56,6 +44,8 @@ def make_pid_config(year):
 	config = [years, cycles, companies, table_key]
 	return config
 
+
+
 def write_config(config, script="config.py"):
         code = open(script, 'w')
         code.write('years = {}\n'.format(config[0]))
@@ -65,54 +55,43 @@ def write_config(config, script="config.py"):
         code.close()
 
 
-#write_config(make_pid_config('2008'))
 
-"""
-def choose_config(config_spec):
 
-	if config_spec is False:
-		print("master_config")
-		from master_config import years, cycles, companies, table_key
-		return [years, cycles, companies, table_key]
+def make_pids_table(db, c, dest=False, lim=False, af=alt_cmte_pid_cycle):
+	"""
+	:: db:		database
+	:: c:		database cursor
+	:: dest:	output table, default False writes to "committee_master_pids"
+	:: lim:		number of rows for each table, default=False, e.g. no limit
+	:: af:		alter function, default=alt_cmte_pid_cycle
+	"""
+
+	source = "committee_master"
+
+	if dest is not False:
+		assert isinstance(dest, str) is True, (
+			print("[*] please pass a valid table name as string"))
 	else:
-		print("other config")
-		from config import years, cycles, companies, table_key
-		return [years, cycles, companies, table_key]
+		dest =  "committee_master_pids"
 
-"""
+	build_cmd = "python3 build_db.py -c True -d True -b True"
 
-#cfig = choose_config(True)
-#print(cfig)
-
-#1. Rename Main Tables
-#tables = [v[0] for k, v in table_key.items()]
-#rename(c, tables, "all", reverse=True)
-#rename(c, tables, "all")
-
-
-
-
-
-#2. Loop
+	pid_counter = 0
+	for cycle in cycles:
+		pid_counter +=1
+		if pid_counter == 1:
+			write_config(make_pid_config(str(cycle)))
+			subprocess.call(build_cmd, shell=True)
+			alter_create_table(source, dest, db, c, alter_function=af, 
+				limit=lim, chunksize=1000000, cycles=cycle)
+		else:
+			write_config(make_pid_config(str(cycle)))
+			subprocess.call(build_cmd, shell=True)
+			alter_create_table(source, dest, db, c, alter_function=af, 
+				limit=lim, chunksize=1000000, cycles=cycle, create=False)		
 
 
-pid_counter = 0
-for cycle in cycles:
-	pid_counter +=1
-	if pid_counter == 1:
-		print("first cycle")
-		write_config(make_pid_config(str(cycle)))
-		subprocess.call("python3 build_db.py -c True -d True -b True", shell=True)
-		#build config
-		#download and build tables from config
-		alter_create_table("committee_master", "committee_master_pids", db, c, alter_function=alt_cmte_pid_cycle, limit=False, chunksize=1000000, cycles=cycle)
-	else:
-		print("other cycle")
-		write_config(make_pid_config(str(cycle)))
-		subprocess.call("python3 build_db.py -c True -d True -b True", shell=True)
-		alter_create_table("committee_master", "committee_master_pids", db, c, alter_function=alt_cmte_pid_cycle, limit=False, chunksize=1000000, cycles=cycle, create=False)		
+make_pids_table(db, c, lim=10)
 
 
-#rename tables back
-#rename(tables, "all", reverse=True)
 
