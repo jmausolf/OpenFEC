@@ -95,7 +95,7 @@ def make_pids_table(db, c, dest=False, lim=False, af=alt_cmte_pid_cycle):
 				limit=lim, chunksize=1000000, cycles=cycle, create=False)		
 
 
-make_pids_table(db, c, lim=15)
+make_pids_table(db, c)
 
 
 
