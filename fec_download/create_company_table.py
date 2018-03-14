@@ -66,7 +66,26 @@ def create_select_insert_company(
 
 	#TODO
 	#adjust indiv contrib to add cycle column
-	#adjust join query
+	#Alter cycles example
+	"""
+	alter_create_table(
+			"indiv_miss", "indiv_cycle", 
+			db, c, 
+			alter_function=alt_cycle, 
+			limit=False, 
+			chunksize=1000000, 
+			index=True, 
+			unique=True, 
+			key="sub_id",
+			replace_null=[0, 20],
+			alt_types=["NUMERIC", "NUMERIC"],
+			replace_type=[0, 20]
+			)
+	"""
+	#drop table if exists indiv
+	#rename table to indiv
+	#adjust join query (add cycle col)
+	#adjust create and insert qurs
 
 	#create dest table
 	if replace_if_exists is True:

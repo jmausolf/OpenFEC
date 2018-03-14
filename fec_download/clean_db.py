@@ -8,6 +8,10 @@ from make_sql import *
 from getPARTY import *
 
 
+#Connect to Data
+db = sqlite3.connect("openFEC.db")
+c = db.cursor()
+
 
 #Helper Functions
 def ren(invar, outvar, df):
@@ -20,10 +24,52 @@ def count_result(c, table):
         for r in c.execute("SELECT COUNT(*) FROM {};".format(table))])
 
 
-#Connect to Data
-db = sqlite3.connect("openFEC.db")
-c = db.cursor()
+#Make Cycle Functions
+def get_cycle(date, dformat="mdy"):
 
+	global get_cycle_counter
+	global recent_cycles
+
+	if get_cycle_counter < 20:
+		get_cycle_counter +=1
+	else:
+		recent_cycles = recent_cycles[:20]
+
+	assert dformat == "mdy", (
+		"[*] sorry, date format not currently supported")
+
+	if dformat == "mdy":
+		if len(str(date)) > 4:
+			dyear = date[-4:]
+			if int(dyear) % 2 == 0:
+				cycle = str(dyear)
+			else:
+				cycle = str(int(dyear)+1)
+
+			recent_cycles.append(cycle)
+
+		else:
+			try:
+				cycle = list(Counter(recent_cycles).most_common(1))[0][0]
+			except Exception as e:
+				print(e)
+				cycle = ''
+
+		return cycle
+
+
+def make_cycle(df, date_col, dformat="mdy"):
+	global recent_cycles
+	global get_cycle_counter
+
+	get_cycle_counter = 0
+	recent_cycles = []
+
+	date = str(date_col)
+	df[['cycle']] = df[date_col].apply(
+		lambda date: get_cycle(date)).apply(pd.Series)
+
+	return df
 
 
 #Alter Functions
@@ -58,8 +104,14 @@ def alt_indiv_test(df, cycles=False, cid=False):
 	df = lower_var("name", df)
 	return df
 
+
 def alt_cid(df, cycles=False, cid=False):
 	df['cid'] = cid
+	return df
+
+
+def alt_cycle(df, cycles=False, cid=False):
+	df = make_cycle(df, "transaction_dt")
 	return df
 
 
@@ -116,6 +168,23 @@ def alter_create_table(
 		chunksize=10000, **kwargs
 		):
 
+	"""
+	::kwargs, modifying alter SQL (default types are TEXT (all can be null))
+
+	::replace_null: 	a vector of intergers indicating the positions
+						for SQL columns that should be NOT NULL
+						e.g. replace_null=[0, 20]
+
+	::alt_types:		a vector of strings indicating the type of var
+						a column should be besides TEXT
+						e.g. alt_types=["NUMERIC", "NUMERIC"]
+
+	::replace_type:		a vector of integers indicating the position of
+						the alt types (often equals the replace null vector)
+						e.g. replace_type=[0, 20]
+
+	"""
+
 	#queries
 	qrys = get_alter_profile(
 			input_table, 
@@ -154,11 +223,9 @@ def alter_create_table(
 	    df.to_csv(file, sep='|', header=None, index=False)
 
 	    #insert chunk csv to db
-	    #print(qrys[1])
 	    insert_file_into_table(c, qrys[1], file, '|', inject=True)
 	    db.commit()
 
-	#import pdb; pdb.set_trace()
 	#Count if new table is created
 	count_result(c, output_table)
 
@@ -186,5 +253,20 @@ alter_create_table("tmp", "tmp_cid2", db, c,
 """
 
 
-
+#Alter cycles example
+"""
+alter_create_table(
+		"indiv_miss", "indiv_cycle", 
+		db, c, 
+		alter_function=alt_cycle, 
+		limit=False, 
+		chunksize=1000000, 
+		index=True, 
+		unique=True, 
+		key="sub_id",
+		replace_null=[0, 20],
+		alt_types=["NUMERIC", "NUMERIC"],
+		replace_type=[0, 20]
+		)
+"""
 

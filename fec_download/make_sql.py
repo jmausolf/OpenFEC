@@ -88,8 +88,7 @@ def make_sql_create_table(
 		types, 
 		nulls, 
 		drop=True, 
-		index=False, 
-		**kwargs
+		index=False, **kwargs
 		):
 
 	lb = '\n'
