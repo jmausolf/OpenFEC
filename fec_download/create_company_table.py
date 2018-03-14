@@ -4,10 +4,12 @@ import signal
 import threading
 import time
 
-from config import *
 from setlogger import *
 from build_db import *
 from make_sql import *
+from clean_db import *
+from master_config import *
+
 
 #Start Time
 start_time = time.time()
@@ -17,9 +19,16 @@ def time_elapsed(start_time):
 	time_elapsed = current_time-start_time
 	minutes, seconds = divmod(time_elapsed, 60)
 	hours, minutes = divmod(minutes, 60)
+	message1 = "[*] time elapsed:"
+	message2 = "...current time:"
 
-	print("[*] time elapsed: {0:7} hours, {1:3} minutes, {2:3} seconds...current time: {3:10}"
-		.format(int(hours), int(minutes), int(seconds),  time.strftime('%l:%M%p %Z on %b %d, %Y')))
+	print("{0} {1:7} hours, {2:3} minutes, {3:3} seconds{4} {5:10}"
+		.format(message1,
+				int(hours), 
+				int(minutes), 
+				int(seconds),
+				message2,
+				time.strftime('%l:%M%p %Z on %b %d, %Y')))
 
 
 
@@ -29,7 +38,8 @@ def run_sql_query(cursor, sql_script, path='sql/', inject=False):
 		print("[*] run queries with {}{}".format(path, sql_script))
 		qry = open("{}{}".format(path, sql_script), 'rU').read()
 	elif inject is True:
-		print("[*] run queries with sql injection: {}...".format(sql_script[0:30]))
+		print("[*] run queries with sql injection: {}..."
+			.format(sql_script[0:30]))
 		qry = sql_script
 
 	try:
@@ -38,55 +48,102 @@ def run_sql_query(cursor, sql_script, path='sql/', inject=False):
 		pass
 
 
-def create_select_insert_company(c, companies, replace_if_exists=False):
+def create_select_insert_company(
+			db,
+			c, 
+			companies, 
+			replace_if_exists=False,
+			committee_table=None,
+			pids=False
+			):
+
+	if pids is False and committee_table is None:
+		create_qry = "create_schedule_a.sql"
+		insert_qry = "insert_schedule_a.sql"
+	elif pids is True and committee_table is not None:
+		create_qry = "create_schedule_a_pids.sql"
+		insert_qry = "insert_schedule_a_pids.sql"
+
+	#TODO
+	#adjust indiv contrib to add cycle column
+	#adjust join query
 
 	#create dest table
 	if replace_if_exists is True:
-		run_sql_query(c, "create_schedule_a.sql", path='sql_clean/')
-	else:
-		#TODO test if table exists
+		run_sql_query(c, create_qry, path='sql_clean/')
 		pass
 
+
+	#cid_counter = 0
 	for company in companies:
+		global start_time
+		time_elapsed(start_time)
+		#cid_counter +=1
+		#if cid_counter == 1:
+		#print(create_qry)
+		#print(insert_qry)
 
 		#create temporary table from selection
-		company_qry = select_schedule_a_by_company(company)
-		print(company_qry)
+		company_qry = select_schedule_a_by_company(
+				company,
+				committee_table,
+				pids)
+		#print(company_qry)
+			
 		run_sql_query(c, company_qry, inject=True)
+		#db.commit()
+		print(company)
+
+		#alter to add cid to info before insert
+		alter_create_table("tmp", "tmp_cid", db, c, 
+						alter_function=alt_cid, 
+						cid=company, 
+						limit=False, 
+						chunksize=1000000)
+
 
 		#insert temporary table into destination
-		run_sql_query(c, "insert_schedule_a.sql", path='sql_clean/')
+		run_sql_query(c, insert_qry, path='sql_clean/')
 
 
-
-db = None
-shutdown = False
-run = False
+#create_select_insert_company(db, c, companies)
+run = True
 
 def main():
 	global db
+	global c
 	global run 
-	run = True
+
 
 	#Connect to Data
-	db = connect_db("openFEC.db")
-	c = db.cursor()
+	#db = connect_db("openFEC.db")
+	#c = db.cursor()
+	from clean_db import db, c
 
 	#Build Company Queries
-	create_select_insert_company(c, companies, replace_if_exists=True)
-	#create_select_insert_company(c, companies)
+	#create_select_insert_company(c, companies, replace_if_exists=True)
+	create_select_insert_company(
+			db,
+			c, 
+			companies,
+			replace_if_exists=True,
+			committee_table="committee_master_pids", 
+			pids=True
+		)
 
 	#Count Result
 	count_result(c, "schedule_a")
 	exit_db(db)
 
 	#Final Time
-	time_elapsed(start_time)
+	#time_elapsed(start_time)
 	print("[*] done")
 
 	db = None
+	c = None
 	run = False
 	return
+
 
 
 
@@ -102,10 +159,16 @@ def interrupt(signum, frame):
 		db.close()
 
 
+
+
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument("-b", "--build", default=False, type=bool, help="clean files")
+	parser.add_argument("-b", "--build", 
+			default=False, 
+			type=bool, 
+			help="clean files"
+			)
 	args = parser.parse_args()
 
 	if not (args.build):
@@ -113,16 +176,7 @@ if __name__ == "__main__":
 
 
 	if args.build is True:
-		signal.signal(signal.SIGINT, interrupt)
-		mainthread = threading.Thread(target=main)
-		mainthread.start()
-
-		while mainthread.isAlive():
-			if run is True:
-				time_elapsed(start_time)
-				time.sleep(60)
-			else:
-				pass
+		main()
 
 	else:
 		pass

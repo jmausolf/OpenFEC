@@ -47,7 +47,11 @@ CREATE TABLE schedule_a (
 			contributor_file_num NUMERIC,
 			contributor_memo_cd TEXT,
 			contributor_memo_text TEXT,
-			sub_id NUMERIC NOT NULL
+			sub_id NUMERIC NOT NULL,
+
+			--requested company
+			--added to tmp after its creation
+			cid TEXT
 			
 );
 

@@ -7,7 +7,7 @@ import time
 import codecs
 import argparse
 from glob import glob
-from config import *
+#from config import *
 from setlogger import *
 from download import *
 
@@ -200,10 +200,15 @@ if __name__ == "__main__":
 	if not (args.config or args.download or args.build):
 		parser.error('No action requested, add --config None or --download True or --build True')
 	
+	#to import config.py:: -c True
 	if args.config is True:
 		config = choose_config(True)
+		from config import *
 		print(config)
+	#to import master config:: do nothing
 	else:
+		print("else")
+		from master_config import *
 		config = choose_config(args.config)
 		print(config)
 

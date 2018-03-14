@@ -45,7 +45,12 @@ INSERT INTO schedule_a (
 			contributor_file_num,
 			contributor_memo_cd,
 			contributor_memo_text,
-			sub_id
+			sub_id,
+
+			--requested company
+			--added to tmp after its creation
+			cid
+			
 	)
 SELECT 
 	*

@@ -38,7 +38,7 @@ def rename(cursor, input_tables, output_prefix, reverse=False):
 def make_pid_config(year):
 	years = [year]
 	cycles = [int(year) for year in years]
-	companies = f500("data/fortune500-list.csv")[0:10]
+	companies = f500("data/fortune500-list.csv")[0:5]
 	table_key = {
 		'cm'     : ['committee_master', 'cm.txt'],
 		'cn'     : ['candidate_master', 'cn.txt'],

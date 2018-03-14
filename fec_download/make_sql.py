@@ -192,7 +192,25 @@ def select_schedule_a_by_company_org(company):
 
 
 
-def select_schedule_a_by_company(company):
+def select_schedule_a_by_company(company, committee_table=None, pids=False):
+
+	if committee_table is None or committee_table == "committee_master":
+		cmte_table = "committee_master"
+	else:
+		cmte_table = committee_table
+		
+
+	if pids is False:
+		pids_query = ""
+		pass
+	else:
+		pids_query = """
+
+			--info about cmte parties
+			party_id,
+			partisan_score,
+			{0}.cycle AS cmte_cycle,
+		""".format(cmte_table)
 
 	#TODO refine base query and joins
 	sql_query = """
@@ -208,18 +226,20 @@ def select_schedule_a_by_company(company):
 			state AS contributor_state,
 			zip_code AS contributor_zip_code,
 
-			--individual about cmte
+
+			--info about cmte
 			individual_contributions.cmte_id AS cmte_id,
 			cmte_nm,
 			cmte_pty_affiliation,
-			committee_master.cmte_dsgn AS cmte_dsgn,
-			committee_master.cmte_tp AS cmte_type,
+			{0}.cmte_dsgn AS cmte_dsgn,
+			{0}.cmte_tp AS cmte_type,
 			cmte_filing_freq,
 			org_tp AS cmte_org_tp,
 			connected_org_nm AS cmte_connected_org_nm,
+			{2}
 
 			--info about candidates
-			committee_master.cand_id AS cand_id,
+			{0}.cand_id AS cand_id,
 			cand_name,
 			cand_pty_affiliation,
 			cand_cmte_link.cand_election_yr AS cand_election_yr,
@@ -228,6 +248,7 @@ def select_schedule_a_by_company(company):
 			cand_pcc,
 			linkage_id AS cand_cmte_linkage_id,
 			
+
 			--info about contribution
 			transaction_dt AS contributor_transaction_dt,
 			transaction_amt AS contributor_transaction_amt,
@@ -247,20 +268,21 @@ def select_schedule_a_by_company(company):
 			memo_text AS contributor_memo_text,
 			sub_id
 			
-			FROM individual_contributions LEFT JOIN committee_master
-			ON individual_contributions.cmte_id=committee_master.cmte_id
-			
-			--FROM committee_master LEFT JOIN cand_cmte_link
+
+			--table joins
+			FROM individual_contributions LEFT JOIN {0}
+			ON individual_contributions.cmte_id={0}.cmte_id
 			LEFT JOIN cand_cmte_link
-			ON committee_master.cand_id=cand_cmte_link.cand_id
+			ON {0}.cand_id=cand_cmte_link.cand_id
 			LEFT JOIN candidate_master
 			ON cand_cmte_link.cand_id=candidate_master.cand_id
 
-			WHERE 	(employer LIKE "%{0}%" OR
-					 occupation LIKE "%{0}%")
+			--select company and group by sub_id
+			WHERE 	(employer LIKE "%{1}%" OR
+					 occupation LIKE "%{1}%")
 			GROUP BY sub_id;
 
-	""".format(company)
+	""".format(cmte_table, company, pids_query)
 
 	return sql_query
 
