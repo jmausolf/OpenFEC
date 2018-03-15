@@ -207,7 +207,6 @@ if __name__ == "__main__":
 		print(config)
 	#to import master config:: do nothing
 	else:
-		print("else")
 		from master_config import *
 		config = choose_config(args.config)
 		print(config)

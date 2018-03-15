@@ -224,15 +224,15 @@ def alter_create_table(
 		time_elapsed(start_time)
 
 		#make changes per passed alter function
-	    df = alter_function(df, cycles, cid)
+		df = alter_function(df, cycles, cid)
 
-	    #write chunk to csv
-	    file = "df_chunk.csv"
-	    df.to_csv(file, sep='|', header=None, index=False)
+		#write chunk to csv
+		file = "df_chunk.csv"
+		df.to_csv(file, sep='|', header=None, index=False)
 
-	    #insert chunk csv to db
-	    insert_file_into_table(c, qrys[1], file, '|', inject=True)
-	    db.commit()
+		#insert chunk csv to db
+		insert_file_into_table(c, qrys[1], file, '|', inject=True)
+		db.commit()
 
 	#Count if new table is created
 	count_result(c, output_table)
