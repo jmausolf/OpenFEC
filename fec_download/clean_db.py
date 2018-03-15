@@ -1,11 +1,12 @@
 import pandas as pd
 import sqlite3
 
-from master_config import *
+#from master_config import *
 from setlogger import *
 from build_db import *
 from make_sql import *
 from getPARTY import *
+from util import *
 
 
 #Connect to Data
@@ -185,6 +186,10 @@ def alter_create_table(
 
 	"""
 
+	#start time
+	global start_time
+	time_elapsed(start_time)
+
 	#queries
 	qrys = get_alter_profile(
 			input_table, 
@@ -214,6 +219,9 @@ def alter_create_table(
 		)
 
 	for df in df_generator:
+
+		#check time:
+		time_elapsed(start_time)
 
 		#make changes per passed alter function
 	    df = alter_function(df, cycles, cid)

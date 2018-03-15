@@ -8,44 +8,8 @@ from setlogger import *
 from build_db import *
 from make_sql import *
 from clean_db import *
+from util import *
 from master_config import *
-
-
-#Start Time
-start_time = time.time()
-
-def time_elapsed(start_time):
-	current_time = time.time()
-	time_elapsed = current_time-start_time
-	minutes, seconds = divmod(time_elapsed, 60)
-	hours, minutes = divmod(minutes, 60)
-	message1 = "[*] time elapsed:"
-	message2 = "...current time:"
-
-	print("{0} {1:7} hours, {2:3} minutes, {3:3} seconds{4} {5:10}"
-		.format(message1,
-				int(hours), 
-				int(minutes), 
-				int(seconds),
-				message2,
-				time.strftime('%l:%M%p %Z on %b %d, %Y')))
-
-
-
-def run_sql_query(cursor, sql_script, path='sql/', inject=False):
- 
-	if inject is False:
-		print("[*] run queries with {}{}".format(path, sql_script))
-		qry = open("{}{}".format(path, sql_script), 'rU').read()
-	elif inject is True:
-		print("[*] run queries with sql injection: {}..."
-			.format(sql_script[0:30]))
-		qry = sql_script
-
-	try:
-		cursor.executescript(qry)
-	except sqlite3.IntegrityError as e:
-		pass
 
 
 def create_select_insert_company(
@@ -67,21 +31,6 @@ def create_select_insert_company(
 	#TODO
 	#adjust indiv contrib to add cycle column
 	#Alter cycles example
-	"""
-	alter_create_table(
-			"indiv_miss", "indiv_cycle", 
-			db, c, 
-			alter_function=alt_cycle, 
-			limit=False, 
-			chunksize=1000000, 
-			index=True, 
-			unique=True, 
-			key="sub_id",
-			replace_null=[0, 20],
-			alt_types=["NUMERIC", "NUMERIC"],
-			replace_type=[0, 20]
-			)
-	"""
 	#drop table if exists indiv
 	#rename table to indiv
 	#adjust join query (add cycle col)
@@ -97,10 +46,6 @@ def create_select_insert_company(
 	for company in companies:
 		global start_time
 		time_elapsed(start_time)
-		#cid_counter +=1
-		#if cid_counter == 1:
-		#print(create_qry)
-		#print(insert_qry)
 
 		#create temporary table from selection
 		company_qry = select_schedule_a_by_company(
@@ -139,8 +84,8 @@ def main():
 	#c = db.cursor()
 	from clean_db import db, c
 
+
 	#Build Company Queries
-	#create_select_insert_company(c, companies, replace_if_exists=True)
 	create_select_insert_company(
 			db,
 			c, 
@@ -149,6 +94,8 @@ def main():
 			committee_table="committee_master_pids", 
 			pids=True
 		)
+
+
 
 	#Count Result
 	count_result(c, "schedule_a")
