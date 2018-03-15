@@ -7,11 +7,19 @@ import time
 import codecs
 import argparse
 from glob import glob
-from config import *
+#from config import *
 from setlogger import *
 from download import *
 
 
+def choose_config(config_spec):
+
+	if config_spec is False:
+		from master_config import years, cycles, companies, table_key
+		return [years, cycles, companies, table_key]
+	else:
+		from config import years, cycles, companies, table_key
+		return [years, cycles, companies, table_key]
 
 
 #Data Cleaning Functions
@@ -147,18 +155,11 @@ def return_sql(action, **kwargs):
 db = None
 shutdown = False
 
-def main():
+def main(delete=True):
 	global db
-
-	#All Files
-	#files = return_files("downloads/", "txt")
 
 	#All Files in Config
 	files = [file for k, v in table_key.items() for file in return_files("downloads/", "txt", k)]
-
-
-	#DEV: Specify Type of File
-	#files = return_files("downloads/", "txt", "ccl")
 
 	#Run: Build Database
 	db = connect_db("openFEC.db")
@@ -167,6 +168,10 @@ def main():
 	create_insert_table(c, files)
 	count_results(c, table_key)
 	exit_db(db)
+
+	if delete is True:
+		download_files = glob('{}*.{}'.format("downloads/", "txt"))
+		remove_files(download_files, rmfiles=True)
 
 	db = None
 	return
@@ -187,12 +192,26 @@ def interrupt(signum, frame):
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser()
+	parser.add_argument("-c", "--config", default=False, type=bool, help="config files")
 	parser.add_argument("-d", "--download", default=False, type=bool, help="download files")
-	parser.add_argument("-b", "--build", default=False, type=bool, help="clean files")
+	parser.add_argument("-b", "--build", default=False, type=bool, help="build tables")
 	args = parser.parse_args()
 
-	if not (args.download or args.build):
-		parser.error('No action requested, add --download True or --build True')
+	if not (args.config or args.download or args.build):
+		parser.error('No action requested, add --config None or --download True or --build True')
+	
+	#to import config.py:: -c True
+	if args.config is True:
+		config = choose_config(True)
+		from config import *
+		print(config)
+	#to import master config:: do nothing
+	else:
+		from master_config import *
+		config = choose_config(args.config)
+		print(config)
+
+
 
 	if args.download is True:
 		datasets = download_files(years, table_key)

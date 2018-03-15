@@ -1,26 +1,20 @@
 import pandas as pd
 import sqlite3
 
-from config import *
+#from master_config import *
 from setlogger import *
-#from download import *
 from build_db import *
 from make_sql import *
+from getPARTY import *
+from util import *
 
 
-def ren(invar, outvar, df):
-    df.rename(columns={invar:outvar}, inplace=True)
-    return(df)
-
-def lower_var(var, df):
-    s = df[var].str.lower()
-    df = df.drop(var, axis=1)
-    df = pd.concat([df, s], axis=1)
-    return(df)
+#Connect to Data
+db = sqlite3.connect("openFEC.db")
+c = db.cursor()
 
 
-
-#Helper Functions Used in Example
+#Helper Functions
 def ren(invar, outvar, df):
     df.rename(columns={invar:outvar}, inplace=True)
     return(df)
@@ -31,115 +25,256 @@ def count_result(c, table):
         for r in c.execute("SELECT COUNT(*) FROM {};".format(table))])
 
 
-#Connect to Data
-db = sqlite3.connect("openFEC.db")
-#db = sqlite3.connect("openFEC.db", isolation_level=None)
-#db = sqlite3.connect("openFEC.db", isolation_level="DEFERRED")
-c = db.cursor()
+#Make Cycle Functions
+def get_cycle(date, dformat="mdy"):
+
+	global get_cycle_counter
+	global recent_cycles
+
+	if get_cycle_counter < 20:
+		get_cycle_counter +=1
+	else:
+		recent_cycles = recent_cycles[:20]
+
+	assert dformat == "mdy", (
+		"[*] sorry, date format not currently supported")
+
+	if dformat == "mdy":
+		if len(str(date)) > 4:
+			dyear = date[-4:]
+			if int(dyear) % 2 == 0:
+				cycle = str(dyear)
+			else:
+				cycle = str(int(dyear)+1)
+
+			recent_cycles.append(cycle)
+
+		else:
+			try:
+				cycle = list(Counter(recent_cycles).most_common(1))[0][0]
+			except Exception as e:
+				print(e)
+				cycle = ''
+
+		return cycle
 
 
+def make_cycle(df, date_col, dformat="mdy"):
+	global recent_cycles
+	global get_cycle_counter
 
-#alter function should be a function that takes a df, does stuff, returns df
+	get_cycle_counter = 0
+	recent_cycles = []
 
-def alt_cm_test(df):
+	date = str(date_col)
+	df[['cycle']] = df[date_col].apply(
+		lambda date: get_cycle(date)).apply(pd.Series)
+
+	return df
+
+
+#Alter Functions
+def alt_cm_test(df, cycles=False, cid=False):
 	df = lower_var("cand_name", df)
 	return df
 
-def alt_indiv_test(df):
+
+def alt_cmte_test(df, cycles=False, cid=False):
+	return df
+
+
+def alt_cmte_unique(df, cycles=False, cid=False):
+	cols = cols = ['cmte_id', 'cmte_nm', 'cmte_pty_affiliation', 'cand_id']
+	df = df[cols]
+	df = df.drop_duplicates()
+	return df
+
+
+def alt_cmte_pid(df, cycles=cycles, cid=False):
+	data = pd.DataFrame([])
+	for cycle in cycles:
+		data = data.append(get_party_ids_scores(df, cycle))
+	return data
+
+
+def alt_cmte_pid_cycle(df, cycles, cid=False):
+	return get_party_ids_scores(df, cycles)
+
+
+def alt_indiv_test(df, cycles=False, cid=False):
 	df = lower_var("name", df)
 	return df
 
 
-def get_alter_profile(input_table, output_table, db, alter_function, replace_null=False, replace_type=False, alt_types=[], **kwargs):
+def alt_cid(df, cycles=False, cid=False):
+	df['cid'] = cid
+	return df
 
-	df = pd.read_sql_query("SELECT * FROM {} LIMIT 100;".format(input_table), con=db)
-	df = alter_function(df)
+
+def alt_cycle(df, cycles=False, cid=False):
+	df = make_cycle(df, "transaction_dt")
+	return df
+
+
+
+def get_alter_profile(
+		input_table, 
+		output_table, 
+		db, 
+		alter_function, 
+		cycles=False,
+		cid=False,
+		replace_null=False, 
+		replace_type=False, 
+		alt_types=[], **kwargs
+		):
+
+	df = pd.read_sql_query(
+			"""
+			SELECT * FROM {} LIMIT 1;
+			""".format(input_table), con=db)
+
+	df = alter_function(df, cycles)
 
 	cols = list(df)
+	print(cols)
 
 	#TODO get null, type vectors from db
 	nulls = gen_nulls(cols, "", replace=replace_null)
 	types = gen_types(cols, replace=replace_type, alt_vector=alt_types)
 
-	#print(cols)
-
-	#create_qry = make_sql_create_table(output_table, cols, types, nulls, index=True, unique=True, key="sub_id")
-	create_qry = make_sql_create_table(output_table, cols, types, nulls, **kwargs)
+	create_qry = make_sql_create_table(
+			output_table, 
+			cols, 
+			types, 
+			nulls, **kwargs
+			)
 	insert_qry = make_sql_insert_table(output_table, cols)
-
-	#exit_db(db)
 
 	return create_qry, insert_qry
 
-#qrys = get_alter_profile("candidate_master", "test_cm", db, alt_cm_test)
-#qrys = get_alter_profile("candidate_master", "test_cm", db, alt_cm_test, index=True, unique=True, key="cmte_id")
-#print(qrys[0])
-#print(qrys[1])
 
-#print(get_alter_profile("individual_contributions", db, alt_indiv_test))
 
-#TODO make work
-def alter_create_table(input_table, output_table, db, conn, alter_function, path='sql_clean/', limit=False, chunksize=10000, **kwargs):
+def alter_create_table(
+		input_table, 
+		output_table, 
+		db, 
+		conn, 
+		alter_function, 
+		path='sql_clean/', 
+		cycles=False,
+		cid=False,
+		create=True, 
+		limit=False, 
+		chunksize=10000, **kwargs
+		):
+
+	"""
+	::kwargs, modifying alter SQL (default types are TEXT (all can be null))
+
+	::replace_null: 	a vector of intergers indicating the positions
+						for SQL columns that should be NOT NULL
+						e.g. replace_null=[0, 20]
+
+	::alt_types:		a vector of strings indicating the type of var
+						a column should be besides TEXT
+						e.g. alt_types=["NUMERIC", "NUMERIC"]
+
+	::replace_type:		a vector of integers indicating the position of
+						the alt types (often equals the replace null vector)
+						e.g. replace_type=[0, 20]
+
+	"""
+
+	#start time
+	global start_time
+	time_elapsed(start_time)
 
 	#queries
-	qrys = get_alter_profile(input_table, output_table, db, alter_function, **kwargs)
+	qrys = get_alter_profile(
+			input_table, 
+			output_table, 
+			db, 
+			alter_function,
+			cycles,
+			cid, **kwargs
+			)
 
 	if limit is False:
 		limit_statement = ''
 	else: 
 		limit_statement = "LIMIT {}".format(limit)
 
-	#create statement
-	create_table(conn, qrys[0], inject=True)
+	if create is True:
+		create_table(conn, qrys[0], inject=True)
+	else:
+		pass
 
 	#Load Data in Chunks
-	df_generator = pd.read_sql_query("SELECT * FROM {} {};".format(input_table, limit_statement), con=db, chunksize = chunksize)
+	df_generator = pd.read_sql_query(
+			"""
+			SELECT * FROM {} {};
+			""".format(input_table, limit_statement), 
+			con=db, chunksize = chunksize
+		)
 
 	for df in df_generator:
 
+		#check time:
+		time_elapsed(start_time)
+
 		#make changes per passed alter function
-	    df = alter_function(df)
+		df = alter_function(df, cycles, cid)
 
-	    #write chunk to csv
-	    file = "df_chunk.csv"
-	    df.to_csv(file, sep='|', header=None, index=False)
+		#write chunk to csv
+		file = "df_chunk.csv"
+		df.to_csv(file, sep='|', header=None, index=False)
 
-	    #insert chunk csv to db
-	    insert_file_into_table(c, qrys[1], file, '|', inject=True)
-	    db.commit()
+		#insert chunk csv to db
+		insert_file_into_table(c, qrys[1], file, '|', inject=True)
+		db.commit()
 
 	#Count if new table is created
 	count_result(c, output_table)
 
 
-#NB
-#function still has weird extra inserts if SQL script does not have a unique ID and total rows > chunk size
-#most tables without the unique id have a small enough row size that they can be modified in the first chunk
-#big tables should have the unique key (sub_id) specificed to avoid issues
-
-
-#since each modification will work from an alter_create_table function, the keys, types, nulls, 
-#can be passed after some experimentation with get_alter_profile
-alter_create_table("candidate_master", "test_candidate", db, c, alter_function=alt_cm_test, limit=False, chunksize=1000000)
+#Examples
+#create a unique id'd version of cmte_id's
+#alter_create_table("committee_master", "committee_master_unique", db, c, alter_function=alt_cmte_unique, limit=False, chunksize=1000000)
+#alter_create_table("committee_master", "cmte_master_pids", db, c, alter_function=alt_cmte_pid, limit=False, chunksize=1000000)
+#alter_create_table("committee_master_unique", "cmte_master_pids", db, c, alter_function=alt_cmte_pid, limit=5, chunksize=1000000)
+#alter_create_table("committee_master_unique", "committee_master_pids", db, c, alter_function=alt_cmte_pid, limit=False, chunksize=1000000)
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test, limit=20000, chunksize=100000, index=True, unique=True, key="sub_id")
-
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test)
+#alter_create_table("committee_master", "committee_master_unique", db, c, alter_function=alt_cmte_unique, limit=False, chunksize=1000000)
+#alter_create_table("committee_master_unique", "committee_master_pids", db, c, alter_function=alt_cmte_pid, limit=False, chunksize=1000000)
 
 
+#alter_create_table("tmp", "tmp2", db, c, alter_function=alt_cid, limit=False, chunksize=1000000)
+
+"""
+alter_create_table("tmp", "tmp_cid2", db, c, 
+				alter_function=alt_cid, 
+				cid="Goldman Sachs", 
+				limit=False, 
+				chunksize=1000000)
+"""
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#Alter cycles example
+"""
+alter_create_table(
+		"indiv_miss", "indiv_cycle", 
+		db, c, 
+		alter_function=alt_cycle, 
+		limit=False, 
+		chunksize=1000000, 
+		index=True, 
+		unique=True, 
+		key="sub_id",
+		replace_null=[0, 20],
+		alt_types=["NUMERIC", "NUMERIC"],
+		replace_type=[0, 20]
+		)
+"""
 
