@@ -1,2 +1,2 @@
-sed -i '' 's/\x0/ /g' $file
-
+sed -i.bak 's/\x0/ /g' $file
+rm downloads/*.bak
