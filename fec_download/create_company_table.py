@@ -52,8 +52,9 @@ def create_select_insert_company(
 				company,
 				committee_table,
 				pids)
-		#print(company_qry)
-			
+		print(company_qry)
+		
+		
 		run_sql_query(c, company_qry, inject=True)
 		#db.commit()
 		print(company)
@@ -68,7 +69,7 @@ def create_select_insert_company(
 
 		#insert temporary table into destination
 		run_sql_query(c, insert_qry, path='sql_clean/')
-
+		
 
 #create_select_insert_company(db, c, companies)
 run = True

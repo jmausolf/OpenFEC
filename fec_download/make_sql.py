@@ -201,6 +201,7 @@ def select_schedule_a_by_company(company, committee_table=None, pids=False):
 
 	if pids is False:
 		pids_query = ""
+		cycle_join = ""
 		pass
 	else:
 		pids_query = """
@@ -210,6 +211,10 @@ def select_schedule_a_by_company(company, committee_table=None, pids=False):
 			partisan_score,
 			{0}.cycle AS cmte_cycle,
 		""".format(cmte_table)
+
+		cycle_join = """
+			AND individual_contributions.cycle={0}.cycle
+			""".format(cmte_table)
 
 	#TODO refine base query and joins
 	sql_query = """
@@ -224,6 +229,7 @@ def select_schedule_a_by_company(company, committee_table=None, pids=False):
 			city AS contributor_city,
 			state AS contributor_state,
 			zip_code AS contributor_zip_code,
+			individual_contributions.cycle AS contributor_cycle,
 
 
 			--info about cmte
@@ -270,7 +276,7 @@ def select_schedule_a_by_company(company, committee_table=None, pids=False):
 
 			--table joins
 			FROM individual_contributions LEFT JOIN {0}
-			ON individual_contributions.cmte_id={0}.cmte_id
+			ON individual_contributions.cmte_id={0}.cmte_id {3}
 			LEFT JOIN cand_cmte_link
 			ON {0}.cand_id=cand_cmte_link.cand_id
 			LEFT JOIN candidate_master
@@ -281,7 +287,7 @@ def select_schedule_a_by_company(company, committee_table=None, pids=False):
 					 occupation LIKE "%{1}%")
 			GROUP BY sub_id;
 
-	""".format(cmte_table, company, pids_query)
+	""".format(cmte_table, company, pids_query, cycle_join)
 
 	return sql_query
 
