@@ -420,10 +420,11 @@ def get_parties_other_ids(
 #C00538835
 #C00000547
 
-#global counter 
-#global first_missing
-#counter = 0
-#first_missing = []
+"""
+global counter 
+global first_missing
+counter = 0
+first_missing = []
 #x = search_party_id(db, "C00068353", 2008, itemized=True, initial=True)
 #x = search_party_id(db, "C00509836", 2008, itemized=True, initial=True)
 #x = search_party_id(db, "C00505529", 2012, itemized=True, initial=True)
@@ -431,7 +432,7 @@ def get_parties_other_ids(
 #x = search_party_id(db, "C00446518", 2008, itemized=True, initial=True)
 #print(x)
 
-"""
+
 print("Starting test1")
 test1 = ["C00068353", "C00257642", "C00279273", "C00279315", "C00280206", "C00305110", "C00309419", "C00358895", "C00397216", "C00446518"]
 for test in test1:
@@ -456,8 +457,8 @@ for test in test3:
 	x = search_party_id(db, test, 2008, itemized=True, initial=True)
 	print(x)
 
-
 """
+
 
 
 

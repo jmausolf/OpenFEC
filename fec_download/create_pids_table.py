@@ -78,24 +78,26 @@ def make_pids_table(db, c, dest=False, lim=False, af=alt_cmte_pid_cycle):
 	else:
 		dest =  "committee_master_pids"
 
-	build_cmd = "python3 build_db.py -c True -d True -b True"
+	#build_cmd = "python3 build_db.py -c True -d True -b True"
 
 	pid_counter = 0
 	for cycle in cycles:
 		pid_counter +=1
 		if pid_counter == 1:
 			write_config(make_pid_config(str(cycle)))
-			subprocess.call(build_cmd, shell=True)
+			#subprocess.call(build_cmd, shell=True)
+			download_build("config")
 			alter_create_table(source, dest, db, c, alter_function=af, 
 				limit=lim, chunksize=1000000, cycles=cycle)
 		else:
 			write_config(make_pid_config(str(cycle)))
-			subprocess.call(build_cmd, shell=True)
+			#subprocess.call(build_cmd, shell=True)
+			download_build("config")
 			alter_create_table(source, dest, db, c, alter_function=af, 
 				limit=lim, chunksize=1000000, cycles=cycle, create=False)		
 
 
-make_pids_table(db, c)
+#make_pids_table(db, c, lim=10)
 
 
 
