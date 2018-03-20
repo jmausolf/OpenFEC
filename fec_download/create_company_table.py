@@ -72,18 +72,18 @@ def create_select_insert_company(
 		
 
 #create_select_insert_company(db, c, companies)
-run = True
+#run = True
 
-def main():
-	global db
-	global c
-	global run 
+def create_company_table(db, c):
+	#global db
+	#global c
+	#global run 
 
 
 	#Connect to Data
 	#db = connect_db("openFEC.db")
 	#c = db.cursor()
-	from clean_db import db, c
+	#from clean_db import db, c
 
 
 	#Build Company Queries
@@ -106,44 +106,19 @@ def main():
 	#time_elapsed(start_time)
 	print("[*] done")
 
-	db = None
-	c = None
-	run = False
-	return
+	#db = None
+	#c = None
+	#run = False
+	#return
 
 
 
 
-
-def interrupt(signum, frame):
-	global db
-	global shutdown
-
-	print ("[*] interrupt requested, control-C a second time to confirm")
-
-	if db:
-		db.interrupt()
-		db.close()
 
 
 
 
 if __name__ == "__main__":
 
-	parser = argparse.ArgumentParser()
-	parser.add_argument("-b", "--build", 
-			default=False, 
-			type=bool, 
-			help="clean files"
-			)
-	args = parser.parse_args()
+	create_company_table()
 
-	if not (args.build):
-		parser.error('No action requested, add --build True')
-
-
-	if args.build is True:
-		main()
-
-	else:
-		pass

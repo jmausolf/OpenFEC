@@ -5,7 +5,8 @@
 years = ['1980', '1982', '1984', '1986', '1988', '1990', '1992', '1994', '1996', '1998', '2000', '2002', '2004', '2008', '2010', '2012', '2014', '2016']
 #years = ['2004', '2008']
 #years = ['1994']
-years = ['1980']
+#years = ['1984']
+years = ['1980', '1982']
 
 #years = ['2000' , '2002', '2004', '2008']
 cycles = [int(year) for year in years]
@@ -24,7 +25,7 @@ def f500(csv):
 
 companies = f500("data/fortune500-list.csv")[0:100]
 
-#companies = ["Goldman Sachs"]
+companies = ["Ford"]
 #companies = ["Amazon", "Goldman Sachs"]
 
 

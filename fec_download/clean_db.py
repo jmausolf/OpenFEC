@@ -1,7 +1,8 @@
 import pandas as pd
 import sqlite3
 
-#from master_config import *
+from master_config import *
+#from config import *
 from setlogger import *
 from build_db import *
 from make_sql import *

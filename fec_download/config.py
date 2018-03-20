@@ -1,4 +1,4 @@
-years = ['1980']
-cycles = [1980]
+years = ['1982']
+cycles = [1982]
 companies = ['Walmart', 'Berkshire Hathaway', 'Apple', 'Exxon Mobil', 'McKesson']
-table_key = {'cn': ['candidate_master', 'cn.txt'], 'cm': ['committee_master', 'cm.txt'], 'oth': ['itemized_records', 'itoth.txt']}
+table_key = {'cm': ['committee_master', 'cm.txt'], 'cn': ['candidate_master', 'cn.txt'], 'oth': ['itemized_records', 'itoth.txt']}

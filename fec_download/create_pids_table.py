@@ -1,5 +1,6 @@
 import pandas as pd
 import sqlite3
+import time
 from setlogger import *
 from download import *
 from build_db import *
@@ -85,14 +86,20 @@ def make_pids_table(db, c, dest=False, lim=False, af=alt_cmte_pid_cycle):
 		pid_counter +=1
 		if pid_counter == 1:
 			write_config(make_pid_config(str(cycle)))
+			#subprocess.call("cat config.py", shell=True)
+			config = make_pid_config(str(cycle))
 			#subprocess.call(build_cmd, shell=True)
-			download_build("config")
+			#time.sleep(1)
+			download_build("config", config)
 			alter_create_table(source, dest, db, c, alter_function=af, 
 				limit=lim, chunksize=1000000, cycles=cycle)
 		else:
 			write_config(make_pid_config(str(cycle)))
-			#subprocess.call(build_cmd, shell=True)
-			download_build("config")
+			#time.sleep(5)
+			config = make_pid_config(str(cycle))
+			#subprocess.call(cat config.py, shell=True)
+			#subprocess.call("cat config.py", shell=True)
+			download_build("config", config)
 			alter_create_table(source, dest, db, c, alter_function=af, 
 				limit=lim, chunksize=1000000, cycles=cycle, create=False)		
 

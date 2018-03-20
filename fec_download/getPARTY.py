@@ -6,7 +6,7 @@ import threading
 import time
 import warnings
 
-from config import *
+#from config import *
 from setlogger import *
 from build_db import *
 from make_sql import *

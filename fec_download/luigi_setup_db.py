@@ -2,22 +2,33 @@
 #PYTHONPATH='.' luigi --module luigi_setup_db CreatePidsTable --local-scheduler --date-interval 2018-03-19
 #PYTHONPATH='.' luigi --module luigi_setup_db BuildDB --local-scheduler --date-interval 2018-03-19
 #PYTHONPATH='.' luigi --module luigi_setup_db CreateIndivCycle --local-scheduler --date-interval 2018-03-19
+#PYTHONPATH='.' luigi --module luigi_setup_db CreateCompanyTable --local-scheduler --date-interval 2018-03-19
 
 import luigi
 from luigi.util import inherits, requires
 import subprocess
-
+import hashlib
 
 #import python code
+from util import *
 from create_pids_table import *
 from create_indiv_cycle import *
+from create_company_table import *
 #from build_db import *
 
 
+#class CheckConfig(luigi.Task):
+#	cfg = luigi.Parameter()
+
+
 #Step 1
+#@requires(CheckConfig(cfg=check_config("master_config.py")))
 class CreatePidsTable(luigi.Task):
 
+
 	date_interval = luigi.DateIntervalParameter()
+	cfg = check_config("master_config.py")
+	#print(cfg)
 
 	def output(self):
 		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
@@ -34,6 +45,7 @@ class CreatePidsTable(luigi.Task):
 @requires(CreatePidsTable)
 class BuildDB(luigi.Task):
 	date_interval = luigi.DateIntervalParameter()
+	cfg = check_config("master_config.py")
 
 	def output(self):
 		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
@@ -50,6 +62,7 @@ class BuildDB(luigi.Task):
 @requires(BuildDB)
 class CreateIndivCycle(luigi.Task):
 	date_interval = luigi.DateIntervalParameter()
+	cfg = check_config("master_config.py")
 
 	def output(self):
 		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
@@ -63,6 +76,20 @@ class CreateIndivCycle(luigi.Task):
 
 #Step 4: join indiv_contrib aka create_company table
 #requires step3
+@requires(CreateIndivCycle)
+class CreateCompanyTable(luigi.Task):
+	date_interval = luigi.DateIntervalParameter()
+	cfg = check_config("master_config.py")
+
+	def output(self):
+		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
+
+	def run(self):
+		#add_cycle_indiv(db, c, "individual_contributions")
+		create_company_table(db, c)
+
+		with self.output().open('w') as out_file:
+			 out_file.write("Done with task: {}".format(self))
 
 #Step 5: qc filtering
 

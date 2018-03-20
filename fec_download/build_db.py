@@ -188,14 +188,20 @@ def interrupt(signum, frame):
 		db.close()
 
 
-def download_build(select_config):
+def download_build(select_config, config=False):
 	
 	if select_config == "master_config":
 		from master_config import years, cycles, companies, table_key
 
 
 	if select_config == "config":
-		from config import years, cycles, companies, table_key
+		years = config[0]
+		cycles = config[1]
+		companies = config[2]
+		table_key = config[3]
+		#from config import years, cycles, companies, table_key
+
+
 	
 	config_profile = [years, cycles, companies, table_key]
 	print(config_profile)
