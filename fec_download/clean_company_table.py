@@ -20,5 +20,3 @@ def clean_company_table(db, c):
 	run_sql_query(c, insert_qry, path='sql_clean/')
 
 
-
-clean_company_table(db, c)
