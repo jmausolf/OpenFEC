@@ -75,6 +75,19 @@ def make_cycle(df, date_col, dformat="mdy"):
 	return df
 
 
+def add_cid(df, companies):
+	df['cid'] = ''
+	for cid in companies:
+
+		df['cid'] = np.where(df['contributor_employer'].str.contains(
+								str(cid), case=False, na=False), cid, df['cid'])
+		df['cid'] = np.where(df['contributor_occupation'].str.contains(
+								str(cid), case=False, na=False), cid, df['cid'])
+
+	return df
+
+
+
 #Alter Functions
 def alt_cm_test(df, cycles=False, cid=False):
 	df = lower_var("cand_name", df)
@@ -110,6 +123,10 @@ def alt_indiv_test(df, cycles=False, cid=False):
 
 def alt_cid(df, cycles=False, cid=False):
 	df['cid'] = cid
+	return df
+
+def alt_cid_companies(df, cycles=False, cid=False):
+	df = add_cid(df, companies)
 	return df
 
 
@@ -256,6 +273,13 @@ def alter_create_table(
 #alter_create_table("committee_master_unique", "committee_master_pids", db, c, alter_function=alt_cmte_pid, limit=False, chunksize=1000000)
 
 #alter_create_table("schedule_a", "sa_test", db, c, alter_function=alt_clean_cids, limit=False, chunksize=1000000)
+
+
+#alter_create_table("schedule_a", "test", db, c, alter_function=alt_cmte_test, limit=False, chunksize=1000000)
+
+
+#alter_create_table("test_cid", "sa_cid_test", db, c, alter_function=alt_cid_companies, limit=False, chunksize=1000000)
+
 
 #alter_create_table("tmp", "tmp2", db, c, alter_function=alt_cid, limit=False, chunksize=1000000)
 

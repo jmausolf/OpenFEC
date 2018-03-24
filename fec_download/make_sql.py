@@ -190,8 +190,39 @@ def select_schedule_a_by_company_org(company):
 	return sql_query
 
 
+def where_employer_occupation(companies):
 
-def select_schedule_a_by_company(company, committee_table=None, pids=False):
+	lb = '\n'
+
+
+
+	company_qry = ""
+	counter = 0
+	for company in companies:
+		counter +=1
+		loop_qry = 	"""	(employer LIKE "%{0}%" OR
+					 	occupation LIKE "%{0}%")
+					""".format(company)
+
+		if len(companies) == 1:
+			company_qry = loop_qry
+		else:
+			if counter < len(companies):
+				company_qry += loop_qry + " OR "
+			else:
+				company_qry += loop_qry
+
+
+	sql_query = """WHERE ({})	
+	""".format(company_qry)
+
+	return sql_query
+
+
+
+
+
+def select_schedule_a_by_company(companies, committee_table=None, pids=False):
 
 	if committee_table is None or committee_table == "committee_master":
 		cmte_table = "committee_master"
@@ -215,6 +246,9 @@ def select_schedule_a_by_company(company, committee_table=None, pids=False):
 		cycle_join = """
 			AND individual_contributions.cycle={0}.cycle
 			""".format(cmte_table)
+
+	where_query = where_employer_occupation(companies)
+
 
 	#TODO refine base query and joins
 	sql_query = """
@@ -283,13 +317,13 @@ def select_schedule_a_by_company(company, committee_table=None, pids=False):
 			ON cand_cmte_link.cand_id=candidate_master.cand_id
 
 			--select company and group by sub_id
-			WHERE 	(employer LIKE "%{1}%" OR
-					 occupation LIKE "%{1}%")
+			{1}
 			GROUP BY sub_id;
 
-	""".format(cmte_table, company, pids_query, cycle_join)
+	""".format(cmte_table, where_query, pids_query, cycle_join)
 
 	return sql_query
+
 
 
 
