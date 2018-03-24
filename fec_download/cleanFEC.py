@@ -26,6 +26,7 @@ from glob import glob
 #from company_name_ids import *
 from collections import Counter
 
+
 """
 #test df
 df = pd.read_csv("df_chunk.csv", sep="|")
@@ -77,6 +78,7 @@ def clean_employer_occupation_col(df, col):
 					)
 
 	return df
+
 
 
 def filter_company_ids(df, company=False, dev=False):
@@ -154,7 +156,6 @@ def filter_company_ids(df, company=False, dev=False):
 		pass
 
 
-	
 
 
 #turn company_name_ids into csv

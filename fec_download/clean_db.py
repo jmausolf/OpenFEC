@@ -7,6 +7,7 @@ from setlogger import *
 from build_db import *
 from make_sql import *
 from getPARTY import *
+from cleanFEC import *
 from util import *
 
 
@@ -114,6 +115,10 @@ def alt_cid(df, cycles=False, cid=False):
 
 def alt_cycle(df, cycles=False, cid=False):
 	df = make_cycle(df, "transaction_dt")
+	return df
+
+def alt_clean_cids(df, cycles=False, cid=False):
+	df = filter_company_ids(df)
 	return df
 
 
@@ -250,6 +255,7 @@ def alter_create_table(
 #alter_create_table("committee_master", "committee_master_unique", db, c, alter_function=alt_cmte_unique, limit=False, chunksize=1000000)
 #alter_create_table("committee_master_unique", "committee_master_pids", db, c, alter_function=alt_cmte_pid, limit=False, chunksize=1000000)
 
+#alter_create_table("schedule_a", "sa_test", db, c, alter_function=alt_clean_cids, limit=False, chunksize=1000000)
 
 #alter_create_table("tmp", "tmp2", db, c, alter_function=alt_cid, limit=False, chunksize=1000000)
 

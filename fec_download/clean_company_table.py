@@ -1,0 +1,24 @@
+from util import *
+from clean_db import *
+
+
+def clean_company_table(db, c):
+
+	create_qry = "create_schedule_a_company_qc.sql"
+	insert_qry = "insert_schedule_a_company_qc.sql"
+
+	run_sql_query(c, create_qry, path='sql_clean/')
+
+
+	alter_create_table("schedule_a", "sa_tmp", db, c, 
+						alter_function=alt_clean_cids, 
+						limit=False, 
+						chunksize=1000000)
+
+
+	#insert temporary table into destination
+	run_sql_query(c, insert_qry, path='sql_clean/')
+
+
+
+clean_company_table(db, c)
