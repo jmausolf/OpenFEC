@@ -77,11 +77,12 @@ def make_cycle(df, date_col, dformat="mdy"):
 
 def add_cid(df, companies):
 	df['cid'] = ''
-	for cid in companies:
-
-		df['cid'] = np.where(df['contributor_employer'].str.contains(
-								str(cid), case=False, na=False), cid, df['cid'])
+	#sort companies,
+	#start with shortest
+	for cid in sorted(companies, key=len):
 		df['cid'] = np.where(df['contributor_occupation'].str.contains(
+								str(cid), case=False, na=False), cid, df['cid'])
+		df['cid'] = np.where(df['contributor_employer'].str.contains(
 								str(cid), case=False, na=False), cid, df['cid'])
 
 	return df
@@ -138,6 +139,9 @@ def alt_clean_cids(df, cycles=False, cid=False):
 	df = filter_company_ids(df)
 	return df
 
+def alt_dev_cids(df, cycles=False, cid=False):
+	df = filter_company_ids(df, dev=True)
+	return df
 
 
 def get_alter_profile(
@@ -148,14 +152,15 @@ def get_alter_profile(
 		cycles=False,
 		cid=False,
 		replace_null=False, 
-		replace_type=False, 
+		replace_type=False,
+		alt_lim = 1, 
 		alt_types=[], **kwargs
 		):
 
 	df = pd.read_sql_query(
 			"""
-			SELECT * FROM {} LIMIT 1;
-			""".format(input_table), con=db)
+			SELECT * FROM {} LIMIT {};
+			""".format(input_table, alt_lim), con=db)
 
 	df = alter_function(df, cycles)
 

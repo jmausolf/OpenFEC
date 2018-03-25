@@ -88,7 +88,6 @@ def filter_company_ids(df, company=False, dev=False):
 
 	df = clean_employer_occupation_col(df, "contributor_employer")
 	df = clean_employer_occupation_col(df, "contributor_occupation")
-	#print(df.head(5))
 
 	#unique values
 	if dev is True:
@@ -108,6 +107,7 @@ def filter_company_ids(df, company=False, dev=False):
 
 			data_emp = [[cid]+list(x) for x in emp.most_common()]
 			data_occ = [[cid]+list(x) for x in occ.most_common()]
+			#print(data_occ)
 
 			company_name_ids_emp.extend(data_emp)
 			company_name_ids_occ.extend(data_occ)
@@ -118,11 +118,16 @@ def filter_company_ids(df, company=False, dev=False):
 		df_emp.to_csv("cid_emp_to_clean.csv", index=False)
 
 		df_occ = pd.DataFrame(company_name_ids_occ)
-		cols = ['cid', 'contributor_occupation_clean', 'occ_count']
-		df_occ.columns = cols
-		df_occ.to_csv("cid_occ_to_clean.csv", index=False)
 
-		pass
+		if df_occ.shape[0] == 0:
+			pass
+		else:
+			cols = ['cid', 'contributor_occupation_clean', 'occ_count']
+			df_occ.columns = cols
+			df_occ.to_csv("cid_occ_to_clean.csv", index=False)
+			pass
+
+		return df_emp
 
 
 	elif dev is False:
