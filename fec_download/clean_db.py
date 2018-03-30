@@ -132,6 +132,7 @@ def alt_cid(df, cycles=False, cid=False):
 
 def alt_cid_companies(df, cycles=False, cid=False):
 	df = add_cid(df, companies)
+	#todo df = update_cid_key(df, key)
 	return df
 
 
