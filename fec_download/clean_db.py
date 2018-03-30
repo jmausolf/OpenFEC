@@ -75,15 +75,19 @@ def make_cycle(df, date_col, dformat="mdy"):
 	return df
 
 
-def add_cid(df, companies):
+
+def add_cid(dfc, companies):
+	df = dfc.copy()
 	df['cid'] = ''
-	#sort companies,
-	#start with shortest
+
 	for cid in sorted(companies, key=len):
-		df['cid'] = np.where(df['contributor_occupation'].str.contains(
-								str(cid), case=False, na=False), cid, df['cid'])
-		df['cid'] = np.where(df['contributor_employer'].str.contains(
-								str(cid), case=False, na=False), cid, df['cid'])
+		df['cid'] = np.where(df['contributor_employer'].isnull(), 
+						#if employer missing, search occupation
+						np.where(df['contributor_occupation'].str.contains(
+								str(cid), case=False, na=False), cid, df['cid']),
+						#else search employer
+						np.where(df['contributor_employer'].str.contains(
+								str(cid), case=False, na=False), cid, df['cid']))
 
 	return df
 
