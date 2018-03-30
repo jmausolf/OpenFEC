@@ -6,7 +6,8 @@ years = ['1980', '1982', '1984', '1986', '1988', '1990', '1992', '1994', '1996',
 #years = ['2004', '2008']
 #years = ['1994']
 #years = ['1984']
-years = ['1980', '1982']
+#years = ['1980', '1982']
+years = ['2000', '2004']
 
 #years = ['2000' , '2002', '2004', '2008']
 cycles = [int(year) for year in years]
@@ -16,17 +17,22 @@ cycles = [int(year) for year in years]
 ## Companies
 #################################################
 
+#from data.companies import companies, company_key
+from data.companies import *
+
+N = 100
+cmaster = "data/fortune1000-list_alias_master.csv"
+companies = concat_alias(cmaster, limit=N)
+company_key = key_aliases(cmaster, limit=N)
 #companies = ["Walmart", "Exxon Mobile", "Marathon Oil", "Apple", "Berkshire Hathaway", "Amazon", "Boeing", "Alphabet", "Home Depot", "Ford Motor", "Kroger", "Chevron", "Morgan Chase", "Wells Fargo"]
 
-def f500(csv):
-	import pandas as pd
-	df = pd.read_csv(csv)
-	return df["company"].tolist()
 
-companies = f500("data/fortune500-list.csv")[0:100]
-
-companies = ["Ford"]
+#companies = ["Ford"]
 #companies = ["Amazon", "Goldman Sachs"]
+
+#companies = companies
+print(companies)
+print(company_key)
 
 
 #################################################
