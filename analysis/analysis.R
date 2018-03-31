@@ -7,6 +7,19 @@ library(forcats)
 library(stringr)
 library(lubridate)
 library(scales)
+library(DBI)
+
+
+
+###THIS
+con <- dbConnect(RSQLite::SQLite(), "../fec_download/openFEC.db")
+fec <- dbGetQuery(con, "SELECT * FROM schedule_a_cleaned")  %>% 
+        mutate(sub_id = as.character(sub_id))
+
+
+
+
+
 
 source("assemble_plots.R")
 
@@ -14,10 +27,12 @@ source("assemble_plots.R")
 #fec <- read_csv("Exxon_Mobile__merged_deduped_ANALYSIS_cleaned.csv")
 #fec <- read_csv("Goldman_Sachs__schedule_a__merged_ANALYSIS_cleaned.csv")
 #fec <- read_csv("ANALYSIS_cleaned__merged_MASTER.csv")
-fec <- read_csv("ANALYSIS_cleaned_deduped__merged_MASTER.csv")
+#fec <- read_csv("ANALYSIS_cleaned_deduped__merged_MASTER.csv")
 #fec <- read_csv("ANALYSIS_cleaned__merged_MASTER_v2.csv")
 # fec <- read_csv("Boeing__schedule_a__merged_ANALYSIS.csv")
 # fec <- read_csv("Boeing__merged_deduped_ANALYSIS_cleaned.csv")
+
+
 
 ##Make directory
 system('mkdir -p images')
@@ -33,23 +48,27 @@ wout <- function(plt_type, cid){
 
 #All Contributions, All CID
 dfm <- fec %>% 
-  filter(cid!="Berkshire Hathaway") %>% 
-  filter(cid!="Home Depot") %>% 
+  #filter(cid!="Berkshire Hathaway") %>% 
+  #filter(cid!="Home Depot") %>% 
+  # mutate(pid = fct_collapse(party_id,
+  #                           "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
   mutate(pid = fct_collapse(party_id,
-                            "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
+                             "NA-ERROR-UNKNOWN" = c("UNK_OTHER", "UNK", "GRE_UNK_OTHER")),
          pid5 = fct_lump(party_id, n=4),
          pid4 = fct_lump(party_id, n=3)) %>% 
   mutate(pid3 = if_else(pid4!="Other", pid4, NULL, missing = NULL)) %>% 
-  mutate(pid2 = if_else(pid3!="UNKNOWN", pid3, NULL, missing = NULL)) %>% 
-  mutate(cid = factor(cid, 
-                      levels = c("Amazon", "Apple", "Microsoft",
-                                 "Boeing", "Ford Motor", "General Motors",
-                                 "Chevron", "Exxon", "Marathon Oil",
-                                 "Citigroup", "Goldman Sachs", "Wells Fargo",
-                                 "CVS", "Kroger", "Walmart"
-                      ))) %>% 
+  mutate(pid2 = if_else(pid3!="UNK_OTHER", pid3, NULL, missing = NULL)) %>% 
+  # mutate(cid = factor(cid, 
+  #                     levels = c("Amazon", "Apple", "Microsoft",
+  #                                "Boeing", "Ford Motor", "General Motors",
+  #                                "Chevron", "Exxon", "Marathon Oil",
+  #                                "Citigroup", "Goldman Sachs", "Wells Fargo",
+  #                                "CVS", "Kroger", "Walmart"
+  #                     ))) %>% 
   mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
-  mutate(lncval = log(contribution_receipt_amount+1)) 
+  mutate(cycle = as.numeric(cmte_cycle))
+  # %>% 
+  # mutate(lncval = log(as.numeric(contributor_transaction_amt)+1)) 
 
 
 ##Clean Occupations
@@ -109,18 +128,21 @@ dfocc3 <- dfocc %>%
          cycle >= 2004) %>% 
   mutate(occ3 = fct_collapse(occlevels,
                              "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
-                             "OTHERS" = c("ENGINEER", "Other")))
+                             "OTHERS" = c("ENGINEER", "Other"))) %>% 
+  mutate(cycle = as.numeric(cycle))
 
 
 ##GRAPH
 #PARTISAN LEANING OCCLEVELS
 #ALL COMPANIES
 outfile <- wout("plt_partisan_occ", "by_all_companies")
-lims <- c(as.POSIXct(as.Date("2001/01/02")), NA)
+#lims <- c(as.POSIXct(as.Date("2001/01/02")), NA)
+lims <- c(as.POSIXct(as.Date("2003/01/02")), NA)
 p1 <- ggplot(dfocc3) +
   geom_bar(aes(make_datetime(cycle), fill = pid2), alpha=0.95, position = "fill") +
   facet_grid(cid~occ3) +
-  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  #scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  scale_x_datetime(date_labels = "%Y") +
   scale_fill_manual(values=c("#2129B0", "#BF1200")) +
   xlab("Contribution Cycle") +
   ylab("Partisanship of Individual Contributions") +
@@ -139,7 +161,7 @@ lims <- c(as.POSIXct(as.Date("2001/01/02")), NA)
 ggplot(dfocc3) +
   geom_bar(aes(make_datetime(cycle), fill = pid2), alpha=0.95, position = "fill") +
   facet_grid(.~occ3) +
-  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  #scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
   scale_fill_manual(values=c("#2129B0", "#BF1200")) +
   xlab("Contribution Cycle") +
   ylab("Partisanship of Individual Contributions") +
