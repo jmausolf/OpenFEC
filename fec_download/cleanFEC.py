@@ -22,6 +22,7 @@
 from setlogger import *
 import pandas as pd
 import csv
+import re
 from glob import glob
 #from company_name_ids import *
 from collections import Counter
@@ -58,7 +59,7 @@ def clean_employer_occupation_col(df, col):
 	col_clean = "{}_clean".format(col)
 
 	stop_words = ['and', 'the', 'company', 'companies', 'corporation', 
-				  'group', 'international']
+				  'international']
 	stop_abb = 	['inc', 'co', 'comp', 'corp', 'pcs', 'pc', 'llp', 
 				 'llc', 'lp', 'int']
 	spaces = [' ', '   ', '    ', '  ']
@@ -171,11 +172,11 @@ print(df.shape)
 print(df.head())
 
 
-x = df.loc[(df['cid'] == "GE") & df['contributor_employer_clean'].str.match("ge ")]
+x = df.loc[(df['cid'] == "Amazon.com")]
 print(x)
-
-#for alias in companies, run clean_dev...
 """
+#for alias in companies, run clean_dev...
+
 
 def clean_dev_contrib_csv(csv):
 
@@ -191,22 +192,54 @@ def clean_dev_contrib_csv(csv):
 	df['dir'] = ''
 	df['man'] = ''
 
-	companies = ['GE']
+	#drop rows with missing cid
+	df.cid.fillna('', inplace=True)
+	df = df[df.cid != '']
+	print(df.shape)
+
+	punct = r'[]\\?!\"\'#$%&(){}+*/:;,._`|~\\[<=>@\\^-]'
+
+	companies = ['Amazon.com']
+	companies = sorted(df['cid'].fillna('').unique().tolist())[7:15]
+	#companies = sorted(c)
+	print(companies)
+	
 	for cid in companies:
-		match_crit = "{} ".format(cid.lower())
+		match_crit2 = "{} ".format(cid.lower())
+		#match_crit3 = "{}".format(re.sub(punct, '', cid).lower())
+		match_crit4 = "{}".format(re.sub(punct, '', cid).lower())
+		#print(match_crit3)
 		#match_crit = "general electric"
 
 		#company criteria
 		#exact match only
 		criteria1 = (
 					(df['cid'] == cid) &
-					(df[key] == cid.lower())
+					(	(df[key] == cid.lower()) |
+						(df[key] == re.sub(punct, '', cid).lower())	
+					) 
 					)
 
 		#exact match space something else
 		criteria2 = (
 					(df['cid'] == cid) &
-					(df[key].str.match(match_crit))
+					(df[key].str.match(match_crit2))
+					)
+
+		#exact match for cid less punct with space
+		criteria3 = (
+					(df['cid'] == cid) &
+					(
+						#(df[key].str.match(match_crit3)) 
+						(df[key].str.match(cid.lower()+'com')) |
+						(df[key].str.match(cid.lower()+'inc'))
+					)
+					)
+
+		#exact match for cid less punct no space
+		criteria4 = (
+					(df['cid'] == cid) &
+					(df[key].str.match(match_crit4))
 					)
 
 
@@ -218,6 +251,12 @@ def clean_dev_contrib_csv(csv):
 		#print(subdf.head(10))
 		df.loc[criteria1, 'cid_val'] = True
 		df.loc[criteria2, 'cid_val'] = True
+		df.loc[criteria3, 'cid_val'] = True
+
+		if re.search(punct, cid) is not None:
+			#print("punct found")
+			df.loc[criteria4, 'cid_val'] = True
+	
 
 		#exec criteria
 		exec_crit = (
@@ -282,15 +321,23 @@ def clean_dev_contrib_csv(csv):
 		#if subdf['contributor_employer_clean'].str.match("ge "):
 		#	subdf['cid_val'] = True
 
-	x = df.loc[(df['cid_val'] == True)]
-	print(x)
+		x = df.loc[(df['cid_val'] == True)]
+		print(x)
 
-	y = df.loc[(df['man'] == True)]
-	print(y)	
+		y = df.loc[(df['exec'] == True)]
+		print(y)	
 	#y = df.loc[df['cid'] == cid]
 	#print(y)
 	#print(df.shape)
 	#print(df.head())
+	
+
+	#exploring nan values
+	#print(df.head())
+	#x = df.loc[(df['cid'] == '')]
+	#y = sorted(x[key].fillna('').unique().tolist())
+	#print(y)
+
 
 clean_dev_contrib_csv("test")
 
@@ -299,7 +346,42 @@ clean_dev_contrib_csv("test")
 #df.to_csv("company_name_ids.csv")
 #print(df.head)
 
+#tests = "Amazon.com"
+#punct = r'[]\\?!\"\'#$%&(){}+*/:;,._`|~\\[<=>@\\^-]'
+#x = re.search(punct, tests)
+#print(x.span())
 
+"""
+tests = "Amazon.com"
+x = tests.replace('[^\x00-\x7F]+', '')
+print(x)
+
+def test_col(test):
+	#col_clean = "{}_clean".format(col)
+
+	stop_words = ['and', 'the', 'company', 'companies', 'corporation', 
+				  'international']
+	stop_abb = 	['inc', 'co', 'comp', 'corp', 'pcs', 'pc', 'llp', 
+				 'llc', 'lp', 'int']
+	spaces = [' ', '   ', '    ', '  ']
+
+	pat1 = r'\b(?:{})\b'.format('|'.join(stop_words))
+	pat2 = r'\b(?:{})\b'.format('|'.join(stop_abb))
+	pat3 = r'\b(?:{})\b'.format('|'.join(spaces))
+
+	output = (test.lower()
+						.replace(pat1, '')
+						.replace('[^\w\s]','')
+						.replace('[^\x00-\x7F]+', ' ')
+						.replace(pat2, '')
+						.replace(pat3, ' ')
+						.strip()
+					)
+
+	print(output)
+
+"""
+#test_col(tests)
 #df = pd.read_csv("df_chunk.csv", sep="|")
 #filter_company_ids(df, "Apple")
 
