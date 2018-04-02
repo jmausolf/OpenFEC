@@ -71,7 +71,7 @@ def clean_employer_occupation_col(df, col):
 						.str.lower()
 						.str.replace(pat1, '')
 						.str.replace('[^\w\s]','')
-						.str.replace('[^\x00-\x7F]+', '')
+						.str.replace('[^\x00-\x7F]+', ' ')
 						.str.replace(pat2, '')
 						.str.replace(pat3, ' ')
 						.str.strip()
@@ -162,6 +162,137 @@ def filter_company_ids(df, company=False, dev=False):
 
 
 
+#test df
+"""
+df = pd.read_csv("sa_dev_example.csv", sep="|")
+cols = ['cid', 'contributor_employer_clean', 'emp_count']
+df.columns = cols
+print(df.shape)
+print(df.head())
+
+
+x = df.loc[(df['cid'] == "GE") & df['contributor_employer_clean'].str.match("ge ")]
+print(x)
+
+#for alias in companies, run clean_dev...
+"""
+
+def clean_dev_contrib_csv(csv):
+
+	df = pd.read_csv("sa_dev_example.csv", sep="|")
+	cols = ['cid', 'contributor_employer_clean', 'emp_count']
+	df.columns = cols
+
+	key = 'contributor_employer_clean'
+
+	#make new cols
+	df['cid_val'] = ''
+	df['exec'] = ''
+	df['dir'] = ''
+	df['man'] = ''
+
+	companies = ['GE']
+	for cid in companies:
+		match_crit = "{} ".format(cid.lower())
+		#match_crit = "general electric"
+
+		#company criteria
+		#exact match only
+		criteria1 = (
+					(df['cid'] == cid) &
+					(df[key] == cid.lower())
+					)
+
+		#exact match space something else
+		criteria2 = (
+					(df['cid'] == cid) &
+					(df[key].str.match(match_crit))
+					)
+
+
+		#m_crit = (df[key].str.match("ge ")
+
+		#criteria = [c_crit & m_crit]
+		#subdf = df.loc[(df['cid'] == cid)]
+		#print(subdf.shape)
+		#print(subdf.head(10))
+		df.loc[criteria1, 'cid_val'] = True
+		df.loc[criteria2, 'cid_val'] = True
+
+		#exec criteria
+		exec_crit = (
+					(df['cid_val'] == True) &
+					(
+						(df['cid'] == cid) &
+						(	
+							(df[key].str.contains('president')) |
+							(df[key].str.contains('ceo')) |
+							(df[key].str.contains('vp')) |
+							(	(df[key].str.contains('vice')) &
+								(df[key].str.contains(r'^(?:(?!service).)*$'))
+							) |
+							(df[key].str.contains('chair')) |
+							(df[key].str.contains('chief')) |
+							(df[key].str.contains('exec')) |
+							(df[key].str.contains('cfo')) |
+							(df[key].str.contains('coo')) |
+							(df[key].str.contains('board')) 
+						)	
+					)
+					)
+
+		df.loc[exec_crit, 'exec'] = True
+
+
+		#director criteria
+		dir_crit = (
+					(df['cid_val'] == True) &
+					(
+						(df['cid'] == cid) &
+						(	
+							(df[key].str.contains('director')) |
+							(df[key].str.contains('head')) 
+						)	
+					) & (df['exec'] != True) 
+					)
+
+		df.loc[dir_crit, 'dir'] = True
+
+
+		#manager criteria
+		man_crit = (
+					(df['cid_val'] == True) &
+					(
+						(df['cid'] == cid) &
+						(	
+							(df[key].str.contains('manager')) |
+							(df[key].str.contains('managing')) 
+						)
+
+					) &
+					(
+						(df['exec'] != True) &
+						(df['dir'] != True)
+					)
+					)
+
+		df.loc[man_crit, 'man'] = True
+
+
+		#if subdf['contributor_employer_clean'].str.match("ge "):
+		#	subdf['cid_val'] = True
+
+	x = df.loc[(df['cid_val'] == True)]
+	print(x)
+
+	y = df.loc[(df['man'] == True)]
+	print(y)	
+	#y = df.loc[df['cid'] == cid]
+	#print(y)
+	#print(df.shape)
+	#print(df.head())
+
+clean_dev_contrib_csv("test")
 
 #turn company_name_ids into csv
 #df = pd.DataFrame.from_dict(company_name_ids, orient='index').transpose()
