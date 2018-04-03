@@ -3,6 +3,8 @@
 #PYTHONPATH='.' luigi --module luigi_setup_db BuildDB --local-scheduler --date-interval 2018-03-19
 #PYTHONPATH='.' luigi --module luigi_setup_db CreateIndivCycle --local-scheduler --date-interval 2018-03-19
 #PYTHONPATH='.' luigi --module luigi_setup_db CreateCompanyTable --local-scheduler --date-interval 2018-03-19
+#PYTHONPATH='.' luigi --module luigi_setup_db GenDevEmpOcc --local-scheduler --date-interval 2018-03-19
+#PYTHONPATH='.' luigi --module luigi_setup_db CleanDevEmpOcc --local-scheduler --date-interval 2018-03-19
 #PYTHONPATH='.' luigi --module luigi_setup_db CleanCompanyTable --local-scheduler --date-interval 2018-03-19
 
 import luigi
