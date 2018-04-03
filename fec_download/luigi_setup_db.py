@@ -95,14 +95,7 @@ class CreateCompanyTable(luigi.Task):
 			 out_file.write("Done with task: {}".format(self))
 
 
-#Step 4.25-4.5: Dev Clean SA, Write to File QC Cleaned File Then Step 5
-#won't actually involve db, just csv manipulations
-#clean_company_table(db, c, dev=True)
-#clean_dev_contrib_csv --> outfile == infile for step5
-#step5
-
 #Step 5: Gen Dev Clean CSV's
-#Step 5: qc filtering
 @requires(CreateCompanyTable)
 class GenDevEmpOcc(luigi.Task):
 	date_interval = luigi.DateIntervalParameter()
