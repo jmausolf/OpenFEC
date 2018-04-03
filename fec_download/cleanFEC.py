@@ -21,16 +21,29 @@
 
 from setlogger import *
 import pandas as pd
+import numpy as np
 import csv
 import re
 from glob import glob
 #from company_name_ids import *
 from collections import Counter
+#from master_config import companies
 
+
+
+#test df
+#df = pd.read_csv("df_chunk.csv", sep="|")
+#df = pd.read_csv("misscid_201804021651.csv", sep="|")
+#df = pd.read_csv("misstest.csv", sep="|")
+#df = pd.read_csv("misscid_201804021725.csv", sep="|")
+
+
+#df = pd.read_csv("add_cid_test_2.csv", sep=",")
+#df = df.loc[(df["cid"] != "GE") & (df["cid"] != "ATT")]
+#print(df.shape)
+#df.to_csv("sm_add_cid_test_2.csv", index=False)
 
 """
-#test df
-df = pd.read_csv("df_chunk.csv", sep="|")
 cols = ['contributor_name', 'contributor_employer', 'contributor_occupation', 
 		'contributor_city', 'contributor_state', 'contributor_zip_code', 
 		'contributor_cycle', 'cmte_id', 'cmte_nm', 'cmte_pty_affiliation', 
@@ -47,13 +60,100 @@ cols = ['contributor_name', 'contributor_employer', 'contributor_occupation',
 		'contributor_memo_text', 'sub_id', 'cid']
 
 df.columns = cols
-print(df.shape)
+"""
+#print(df.shape)
+#print(df.head())
 #print(df.head(5))
 #df = df.loc[df['cid'] == "Apple"]
 #print(df.head(5))
-"""
 
 
+def add_cid_test(dfc, companies, method):
+	df = dfc.copy()
+	df = df.drop(['cid'], axis=1)
+	df['cid'] = ''
+	#df['emp_na'] = ''
+	#df['occ_na'] = ''
+
+	outfile = "add_cid_test_{}.csv".format(str(method))
+
+	if method==1:
+		print("method1")
+		for cid in sorted(companies, key=len):
+			df['cid'] = np.where(df['contributor_employer'].isnull(), 
+							#if employer missing, search occupation
+							np.where(df['contributor_occupation'].str.contains(
+									str(cid), case=False, na=False), cid, df['cid']),
+							#else search employer
+							np.where(df['contributor_employer'].str.contains(
+									str(cid), case=False, na=False), cid, df['cid']))
+
+	
+	if method==2:
+		print("method2")
+		for cid in sorted(companies, key=len):
+
+			emp = 'contributor_employer'
+			occ = 'contributor_occupation'
+
+			#fill na's in employer/occupation
+			df[emp].fillna('', inplace=True)
+			df[occ].fillna('', inplace=True)
+
+			#(emp missing OR emp does not contain cid) & occ contains cid
+			crit_emp_na = 	(
+								(
+									(df[emp] == '') |
+									~(df[emp].str.contains(cid, case=False))
+								) &
+								(df[occ].str.contains(cid, case=False))
+							)
+
+
+			#(occ missing OR occ does not contain cid) & emp contains cid
+			crit_occ_na = 	(
+								(
+									(df[occ] == '') |
+									~(df[occ].str.contains(cid, case=False))
+								) &
+								(df[emp].str.contains(cid, case=False))
+							)
+
+			
+
+			#both contain
+			crit_both = 	(
+								(df[occ].str.contains(cid, case=False)) &
+								(df[emp].str.contains(cid, case=False))
+							)			
+
+
+			#both missing or not contain
+			#do nothing implicitly
+
+
+			#df.loc[crit_emp_na, 'emp_na'] = True
+			#df.loc[crit_occ_na, 'occ_na'] = True
+			df.loc[crit_emp_na, 'cid'] = cid #fill from occ only	
+			df.loc[crit_occ_na, 'cid'] = cid #fill from emp only
+			df.loc[crit_both, 'cid'] = cid	#both occ and emp match
+
+	print("Still missing cid for the following df:")
+	x = df.loc[(df['cid'] == '')]
+	#y = sorted(x[key].fillna('').unique().tolist())
+	print(x.shape)
+
+	#y = df.loc[(df['cid'] != '')]
+	#print(y)
+
+	unique_cids = df.cid.unique().tolist()
+	print(unique_cids)
+	#df.to_csv(outfile, index=False)
+	return df
+
+
+#add_cid_test(df, companies, method=1)
+#add_cid_test(df, companies, method=2)
 
 def clean_employer_occupation_col(df, col):
 	col_clean = "{}_clean".format(col)
@@ -62,7 +162,7 @@ def clean_employer_occupation_col(df, col):
 				  'international']
 	stop_abb = 	['inc', 'co', 'comp', 'corp', 'pcs', 'pc', 'llp', 
 				 'llc', 'lp', 'int']
-	spaces = [' ', '   ', '    ', '  ']
+	spaces = [' ', '  ', '   ', '    ', '     ', '      ']
 
 	pat1 = r'\b(?:{})\b'.format('|'.join(stop_words))
 	pat2 = r'\b(?:{})\b'.format('|'.join(stop_abb))
@@ -70,10 +170,10 @@ def clean_employer_occupation_col(df, col):
 
 	df[col_clean] = (df[col].fillna('')
 						.str.lower()
-						.str.replace(pat1, '')
-						.str.replace('[^\w\s]','')
+						.str.replace(pat1, ' ')
+						.str.replace('[^\w\s]',' ')
 						.str.replace('[^\x00-\x7F]+', ' ')
-						.str.replace(pat2, '')
+						.str.replace(pat2, ' ')
 						.str.replace(pat3, ' ')
 						.str.strip()
 					)
@@ -178,13 +278,27 @@ print(x)
 #for alias in companies, run clean_dev...
 
 
-def clean_dev_contrib_csv(csv):
+def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 
-	df = pd.read_csv("sa_dev_example.csv", sep="|")
-	cols = ['cid', 'contributor_employer_clean', 'emp_count']
-	df.columns = cols
+	if csv is False:
+		df = pd.read_csv('cid_{}_to_clean.csv'.format(filetype), sep=sep)
+	else:
+		df = pd.read_csv(csv, sep=sep)
 
-	key = 'contributor_employer_clean'
+	print(df.head())
+
+	if filetype == 'emp':
+		cols = ['cid', 'contributor_employer_clean', 'emp_count']
+		df.columns = cols
+		key = 'contributor_employer_clean'
+		outfile = 'cid_emp_cleaned.csv'
+
+	if filetype == 'occ':
+		cols = ['cid', 'contributor_occupation_clean', 'occ_count']
+		df.columns = cols
+		key = 'contributor_occupation_clean'
+		outfile = 'cid_occ_cleaned.csv'
+
 
 	#make new cols
 	df['cid_val'] = ''
@@ -199,9 +313,8 @@ def clean_dev_contrib_csv(csv):
 
 	punct = r'[]\\?!\"\'#$%&(){}+*/:;,._`|~\\[<=>@\\^-]'
 
-	companies = ['Amazon.com']
-	companies = sorted(df['cid'].fillna('').unique().tolist())[7:15]
-	#companies = sorted(c)
+	#companies = ['Amazon.com']
+	companies = sorted(df['cid'].fillna('').unique().tolist())
 	print(companies)
 	
 	for cid in companies:
@@ -243,12 +356,9 @@ def clean_dev_contrib_csv(csv):
 					)
 
 
-		#m_crit = (df[key].str.match("ge ")
+		#TODO New column & criteria to reject
+		#self employed, retired, spouse, etc
 
-		#criteria = [c_crit & m_crit]
-		#subdf = df.loc[(df['cid'] == cid)]
-		#print(subdf.shape)
-		#print(subdf.head(10))
 		df.loc[criteria1, 'cid_val'] = True
 		df.loc[criteria2, 'cid_val'] = True
 		df.loc[criteria3, 'cid_val'] = True
@@ -318,14 +428,31 @@ def clean_dev_contrib_csv(csv):
 		df.loc[man_crit, 'man'] = True
 
 
-		#if subdf['contributor_employer_clean'].str.match("ge "):
-		#	subdf['cid_val'] = True
 
 		x = df.loc[(df['cid_val'] == True)]
 		print(x)
 
 		y = df.loc[(df['exec'] == True)]
-		print(y)	
+		print(y)
+
+
+	#Filtering of DF
+	keep_crit = (
+				(df['cid_val'] == True)				
+				)
+
+
+	#Keep Rows Matching Criteria
+	df = df.loc[keep_crit]
+
+	#Drop New Columns 
+	#TODO edit sql so can keep new cols
+	df = df.drop(['cid_val', 'exec', 'dir', 'man'], axis=1)
+
+	#Write Outfile and Return
+	df.to_csv(outfile, index=False)
+	return df
+
 	#y = df.loc[df['cid'] == cid]
 	#print(y)
 	#print(df.shape)
@@ -339,7 +466,8 @@ def clean_dev_contrib_csv(csv):
 	#print(y)
 
 
-clean_dev_contrib_csv("test")
+#clean_dev_contrib_csv("test")
+#clean_dev_contrib_csv("emp")
 
 #turn company_name_ids into csv
 #df = pd.DataFrame.from_dict(company_name_ids, orient='index').transpose()
