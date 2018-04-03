@@ -25,7 +25,13 @@ def clean_company_table(db, c, dev=False):
 
 
 		#insert temporary table into destination
+		#TODO modify qc.sql for new columns in clean dev
+		#WANT to keep created cols, like exec, dir, man, etc
+		#avoid repeating it in R code, etc
+		#could just do level if else exec, etc == True
 		run_sql_query(c, insert_qry, path='sql_clean/')
+
+
 
 
 #clean_company_table(db, c, dev=True)

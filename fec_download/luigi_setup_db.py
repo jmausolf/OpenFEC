@@ -15,6 +15,7 @@ from util import *
 from create_pids_table import *
 from create_indiv_cycle import *
 from create_company_table import *
+from cleanFEC import *
 from clean_company_table import *
 #from build_db import *
 
@@ -93,8 +94,51 @@ class CreateCompanyTable(luigi.Task):
 		with self.output().open('w') as out_file:
 			 out_file.write("Done with task: {}".format(self))
 
+
+#Step 4.25-4.5: Dev Clean SA, Write to File QC Cleaned File Then Step 5
+#won't actually involve db, just csv manipulations
+#clean_company_table(db, c, dev=True)
+#clean_dev_contrib_csv --> outfile == infile for step5
+#step5
+
+#Step 5: Gen Dev Clean CSV's
 #Step 5: qc filtering
 @requires(CreateCompanyTable)
+class GenDevEmpOcc(luigi.Task):
+	date_interval = luigi.DateIntervalParameter()
+	cfg = check_config("master_config.py")
+
+	def output(self):
+		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
+
+	def run(self):
+		clean_company_table(db, c, dev=True)
+
+		with self.output().open('w') as out_file:
+			 out_file.write("Done with task: {}".format(self))
+
+
+#Step 6: Clean Dev EmpOCC
+@requires(GenDevEmpOcc)
+class CleanDevEmpOcc(luigi.Task):
+	date_interval = luigi.DateIntervalParameter()
+	cfg = check_config("master_config.py")
+
+	def output(self):
+		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
+
+	def run(self):
+		clean_dev_contrib_csv("emp")
+		clean_dev_contrib_csv("occ")
+
+		with self.output().open('w') as out_file:
+			 out_file.write("Done with task: {}".format(self))
+
+
+
+
+#Step 7: QC Filtering
+@requires(CleanDevEmpOcc)
 class CleanCompanyTable(luigi.Task):
 	date_interval = luigi.DateIntervalParameter()
 	cfg = check_config("master_config.py")
@@ -103,6 +147,7 @@ class CleanCompanyTable(luigi.Task):
 		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
 
 	def run(self):
+		#clean_company_table(db, c, dev=True)
 		clean_company_table(db, c)
 
 		with self.output().open('w') as out_file:
