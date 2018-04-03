@@ -76,7 +76,7 @@ def make_cycle(df, date_col, dformat="mdy"):
 
 
 
-def add_cid(dfc, companies):
+def add_cid_old(dfc, companies):
 	df = dfc.copy()
 	df['cid'] = ''
 
@@ -90,6 +90,64 @@ def add_cid(dfc, companies):
 								str(cid), case=False, na=False), cid, df['cid']))
 
 	return df
+
+
+
+def add_cid(dfc, companies):
+	df = dfc.copy()
+	df['cid'] = ''
+
+	for cid in sorted(companies, key=len):
+
+		emp = 'contributor_employer'
+		occ = 'contributor_occupation'
+
+		#fill na's in employer/occupation
+		df[emp].fillna('', inplace=True)
+		df[occ].fillna('', inplace=True)
+
+		#(emp missing OR emp does not contain cid) & occ contains cid
+		crit_emp_na = 	(
+							(
+								(df[emp] == '') |
+								~(df[emp].str.contains(cid, case=False))
+							) &
+							(df[occ].str.contains(cid, case=False))
+						)
+
+
+		#(occ missing OR occ does not contain cid) & emp contains cid
+		crit_occ_na = 	(
+							(
+								(df[occ] == '') |
+								~(df[occ].str.contains(cid, case=False))
+							) &
+							(df[emp].str.contains(cid, case=False))
+						)
+
+			
+
+		#both contain
+		crit_both = 	(
+							(df[occ].str.contains(cid, case=False)) &
+							(df[emp].str.contains(cid, case=False))
+						)			
+
+
+		#both missing or not contain
+		#do nothing implicitly
+		df.loc[crit_emp_na, 'cid'] = cid #fill from occ only	
+		df.loc[crit_occ_na, 'cid'] = cid #fill from emp only
+		df.loc[crit_both, 'cid'] = cid	#both occ and emp match
+
+	print("Still missing cid for the following df:")
+	x = df.loc[(df['cid'] == '')]
+	print(x.shape)
+
+	unique_cids = df.cid.unique().tolist()
+	print(unique_cids)
+	return df
+
 
 
 
