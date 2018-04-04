@@ -7,6 +7,13 @@
 #PYTHONPATH='.' luigi --module luigi_setup_db CleanDevEmpOcc --local-scheduler --date-interval 2018-03-19
 #PYTHONPATH='.' luigi --module luigi_setup_db CleanCompanyTable --local-scheduler --date-interval 2018-03-19
 
+
+#Python Path Examples to Take Only the Top-N (Cleaned) Employees plus Leaders Rather Than All Cleaned Employees
+#Robustness Check
+
+#PYTHONPATH='.' luigi --module luigi_setup_db CleanCompanyTable --local-scheduler --date-interval 2018-03-19
+#PYTHONPATH='.' luigi --module luigi_setup_db CleanCompanyTable --local-scheduler --date-interval 2018-03-21 --top-n 50 --leaders
+
 import luigi
 from luigi.util import inherits, requires
 import subprocess
@@ -117,14 +124,27 @@ class GenDevEmpOcc(luigi.Task):
 @requires(GenDevEmpOcc)
 class CleanDevEmpOcc(luigi.Task):
 	date_interval = luigi.DateIntervalParameter()
+	top_n = luigi.IntParameter(default=0)
+	leaders = luigi.BoolParameter(default=False)
+
 	cfg = check_config("master_config.py")
 
 	def output(self):
 		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
 
 	def run(self):
-		clean_dev_contrib_csv("emp")
-		clean_dev_contrib_csv("occ")
+		print(self.top_n)
+		print(self.leaders)
+
+		if self.top_n > 0 and self.leaders is not False:
+			clean_dev_contrib_csv("emp", top_n=self.top_n, leaders=self.leaders)
+			clean_dev_contrib_csv("occ", top_n=self.top_n, leaders=self.leaders)
+
+		else:
+			clean_dev_contrib_csv("emp")
+			clean_dev_contrib_csv("occ")
+
+		#clean_dev_contrib_csv("occ", top_n=5, leaders=True)
 
 		with self.output().open('w') as out_file:
 			 out_file.write("Done with task: {}".format(self))
