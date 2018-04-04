@@ -59,7 +59,12 @@ INSERT INTO schedule_a_cleaned (
 
 			--qc cleaning cols
 			contributor_employer_clean,
-			contributor_occupation_clean
+			contributor_occupation_clean,
+			cid_valid,
+			executive,
+			director,
+			manager,
+			not_employed
 			
 	)
 SELECT 

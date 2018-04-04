@@ -62,6 +62,17 @@ def key_aliases(csv, inverse=True, limit=50):
 
 
 
+def anti_alias(csv, cid, write=False):
+	df = pd.read_csv(csv)
+
+	df.anti_alias.fillna(False, inplace=True)
+
+	#df.cid.fillna('', inplace=True)
+	anti_alias = df.loc[df['company'] == cid, 'anti_alias'].iloc[0]
+	return anti_alias
+
+
+
 #companies = concat_alias(fortune("fortune1000-list.csv"))
 #companies = concat_alias("data/fortune1000-list_alias_master.csv")
 #company_key = key_aliases("data/fortune1000-list_alias_master.csv")

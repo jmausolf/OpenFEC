@@ -27,6 +27,8 @@ import re
 from glob import glob
 #from company_name_ids import *
 from collections import Counter
+from master_config import cmaster, company_key
+from data.companies import anti_alias
 #from master_config import companies
 
 
@@ -68,92 +70,7 @@ df.columns = cols
 #print(df.head(5))
 
 
-def add_cid_test(dfc, companies, method):
-	df = dfc.copy()
-	df = df.drop(['cid'], axis=1)
-	df['cid'] = ''
-	#df['emp_na'] = ''
-	#df['occ_na'] = ''
 
-	outfile = "add_cid_test_{}.csv".format(str(method))
-
-	if method==1:
-		print("method1")
-		for cid in sorted(companies, key=len):
-			df['cid'] = np.where(df['contributor_employer'].isnull(), 
-							#if employer missing, search occupation
-							np.where(df['contributor_occupation'].str.contains(
-									str(cid), case=False, na=False), cid, df['cid']),
-							#else search employer
-							np.where(df['contributor_employer'].str.contains(
-									str(cid), case=False, na=False), cid, df['cid']))
-
-	
-	if method==2:
-		print("method2")
-		for cid in sorted(companies, key=len):
-
-			emp = 'contributor_employer'
-			occ = 'contributor_occupation'
-
-			#fill na's in employer/occupation
-			df[emp].fillna('', inplace=True)
-			df[occ].fillna('', inplace=True)
-
-			#(emp missing OR emp does not contain cid) & occ contains cid
-			crit_emp_na = 	(
-								(
-									(df[emp] == '') |
-									~(df[emp].str.contains(cid, case=False))
-								) &
-								(df[occ].str.contains(cid, case=False))
-							)
-
-
-			#(occ missing OR occ does not contain cid) & emp contains cid
-			crit_occ_na = 	(
-								(
-									(df[occ] == '') |
-									~(df[occ].str.contains(cid, case=False))
-								) &
-								(df[emp].str.contains(cid, case=False))
-							)
-
-			
-
-			#both contain
-			crit_both = 	(
-								(df[occ].str.contains(cid, case=False)) &
-								(df[emp].str.contains(cid, case=False))
-							)			
-
-
-			#both missing or not contain
-			#do nothing implicitly
-
-
-			#df.loc[crit_emp_na, 'emp_na'] = True
-			#df.loc[crit_occ_na, 'occ_na'] = True
-			df.loc[crit_emp_na, 'cid'] = cid #fill from occ only	
-			df.loc[crit_occ_na, 'cid'] = cid #fill from emp only
-			df.loc[crit_both, 'cid'] = cid	#both occ and emp match
-
-	print("Still missing cid for the following df:")
-	x = df.loc[(df['cid'] == '')]
-	#y = sorted(x[key].fillna('').unique().tolist())
-	print(x.shape)
-
-	#y = df.loc[(df['cid'] != '')]
-	#print(y)
-
-	unique_cids = df.cid.unique().tolist()
-	print(unique_cids)
-	#df.to_csv(outfile, index=False)
-	return df
-
-
-#add_cid_test(df, companies, method=1)
-#add_cid_test(df, companies, method=2)
 
 def clean_employer_occupation_col(df, col):
 	col_clean = "{}_clean".format(col)
@@ -266,7 +183,6 @@ def filter_company_ids(df, company=False, dev=False):
 #test df
 """
 df = pd.read_csv("sa_dev_example.csv", sep="|")
-cols = ['cid', 'contributor_employer_clean', 'emp_count']
 df.columns = cols
 print(df.shape)
 print(df.head())
@@ -285,7 +201,6 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 	else:
 		df = pd.read_csv(csv, sep=sep)
 
-	print(df.head())
 
 	if filetype == 'emp':
 		cols = ['cid', 'contributor_employer_clean', 'emp_count']
@@ -301,10 +216,12 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 
 
 	#make new cols
-	df['cid_val'] = ''
-	df['exec'] = ''
-	df['dir'] = ''
-	df['man'] = ''
+	df['cid_valid'] = ''
+	df['executive'] = ''
+	df['director'] = ''
+	df['manager'] = ''
+	df['not_employed'] = ''
+	#df['priority'] = ''
 
 	#drop rows with missing cid
 	df.cid.fillna('', inplace=True)
@@ -313,23 +230,22 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 
 	punct = r'[]\\?!\"\'#$%&(){}+*/:;,._`|~\\[<=>@\\^-]'
 
-	#companies = ['Amazon.com']
+	#companies = ['Goldman Sachs']
 	companies = sorted(df['cid'].fillna('').unique().tolist())
 	print(companies)
 	
 	for cid in companies:
+
 		match_crit2 = "{} ".format(cid.lower())
-		#match_crit3 = "{}".format(re.sub(punct, '', cid).lower())
-		match_crit4 = "{}".format(re.sub(punct, '', cid).lower())
-		#print(match_crit3)
-		#match_crit = "general electric"
+		match_crit4 = "{}".format(re.sub(punct, ' ', cid).lower())
+
 
 		#company criteria
 		#exact match only
 		criteria1 = (
 					(df['cid'] == cid) &
 					(	(df[key] == cid.lower()) |
-						(df[key] == re.sub(punct, '', cid).lower())	
+						(df[key] == re.sub(punct, ' ', cid).lower())	
 					) 
 					)
 
@@ -356,89 +272,139 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 					)
 
 
-		#TODO New column & criteria to reject
-		#self employed, retired, spouse, etc
 
-		df.loc[criteria1, 'cid_val'] = True
-		df.loc[criteria2, 'cid_val'] = True
-		df.loc[criteria3, 'cid_val'] = True
+		df.loc[criteria1, 'cid_valid'] = True
+		df.loc[criteria2, 'cid_valid'] = True
+		df.loc[criteria3, 'cid_valid'] = True
 
 		if re.search(punct, cid) is not None:
-			#print("punct found")
-			df.loc[criteria4, 'cid_val'] = True
+			df.loc[criteria4, 'cid_valid'] = True
+
+
+		#anti alias
+		anti = anti_alias(cmaster, company_key[cid])
+		print(anti)
+		if anti is False:
+			pass
+		else:
+			anti_crit = (
+						(df['cid'] == cid) &
+						(df[key].str.contains(anti))
+						) 
+						
+
+			df.loc[anti_crit, 'cid_valid'] = False
+
+		#assign priority
+		#TODO, keep x top rows, post clean per cid
+
+
+
+	#Criteria for all companies
+	#exec criteria
+	exec_crit = (
+				(df['cid_valid'] == True) &
+				(
+					(df['cid'] == cid) &
+					(	
+						(df[key].str.contains('president')) |
+						(df[key].str.contains('ceo')) |
+						(df[key].str.contains('vp')) |
+						(	(df[key].str.contains('vice')) &
+							(df[key].str.contains(r'^(?:(?!service).)*$'))
+						) |
+						(df[key].str.contains('chair')) |
+						(df[key].str.contains('chief')) |
+						(df[key].str.contains('exec')) |
+						(df[key].str.contains('cfo')) |
+						(df[key].str.contains('coo')) |
+						(df[key].str.contains('board')) 
+					)	
+				)
+				)
+
+	df.loc[exec_crit, 'executive'] = True
+
+
+	#director criteria
+	dir_crit = (
+				(df['cid_valid'] == True) &
+				(
+					(df['cid'] == cid) &
+					(	
+						(df[key].str.contains('director')) |
+						(df[key].str.contains('head')) 
+					)	
+				) & (df['executive'] != True) 
+				)
+
+	df.loc[dir_crit, 'director'] = True
+
+
+	#manager criteria
+	man_crit = (
+				(df['cid_valid'] == True) &
+				(
+					(df['cid'] == cid) &
+					(	
+						(df[key].str.contains('manager')) |
+						(df[key].str.contains('managing')) 
+					)
+
+				) &
+				(
+					(df['executive'] != True) &
+					(df['director'] != True)
+				)
+				)
+
+	df.loc[man_crit, 'manager'] = True
+
+
+	#self employed and other reject criteria
+	not_emp_crit = 	(
+					(df['cid_valid'] == True) &
+					(
+						(df[key].str.match('self')) |
+						(df[key].str.contains('self-employed')) |
+						(df[key].str.contains('self employed')) |
+						(df[key].str.contains('independent contractor')) |
+						(df[key].str.contains('freelance')) |
+						(df[key].str.contains('franchisee')) |	
+						(df[key].str.contains('unemployed')) |
+						(df[key].str.contains('retired')) |
+						(df[key].str.contains('former')) |
+						(df[key].str.contains('previous')) |
+						(df[key].str.contains('used to')) |	
+						(df[key].str.contains('no longer')) |						
+						(df[key].str.contains('recently fired')) |
+						(df[key].str.contains('laid off')) |
+						(df[key].str.contains('furloughed')) |
+						(df[key].str.contains('spouse')) |
+						(df[key].str.contains('wife')) |
+						(df[key].str.contains('housewife')) |
+						(df[key].str.contains('husband')) 
+					)
+					)
+
+
+	df.loc[not_emp_crit, 'not_employed'] = True
+
+	
+	#x = df.loc[(df['not_employed'] == True)]
+	#print(x)
+	#with pd.option_context('display.max_rows', None):
+	#y = df.loc[(df['cid_valid'] == True)]
+	#print(y)
+
+
+	#z = df.loc[(df['cid_valid'] == False)]
+	#print(z)
 	
 
-		#exec criteria
-		exec_crit = (
-					(df['cid_val'] == True) &
-					(
-						(df['cid'] == cid) &
-						(	
-							(df[key].str.contains('president')) |
-							(df[key].str.contains('ceo')) |
-							(df[key].str.contains('vp')) |
-							(	(df[key].str.contains('vice')) &
-								(df[key].str.contains(r'^(?:(?!service).)*$'))
-							) |
-							(df[key].str.contains('chair')) |
-							(df[key].str.contains('chief')) |
-							(df[key].str.contains('exec')) |
-							(df[key].str.contains('cfo')) |
-							(df[key].str.contains('coo')) |
-							(df[key].str.contains('board')) 
-						)	
-					)
-					)
-
-		df.loc[exec_crit, 'exec'] = True
-
-
-		#director criteria
-		dir_crit = (
-					(df['cid_val'] == True) &
-					(
-						(df['cid'] == cid) &
-						(	
-							(df[key].str.contains('director')) |
-							(df[key].str.contains('head')) 
-						)	
-					) & (df['exec'] != True) 
-					)
-
-		df.loc[dir_crit, 'dir'] = True
-
-
-		#manager criteria
-		man_crit = (
-					(df['cid_val'] == True) &
-					(
-						(df['cid'] == cid) &
-						(	
-							(df[key].str.contains('manager')) |
-							(df[key].str.contains('managing')) 
-						)
-
-					) &
-					(
-						(df['exec'] != True) &
-						(df['dir'] != True)
-					)
-					)
-
-		df.loc[man_crit, 'man'] = True
-
-
-
-		x = df.loc[(df['cid_val'] == True)]
-		print(x)
-
-		y = df.loc[(df['exec'] == True)]
-		print(y)
-
-
 	#Filtering of DF
-	keep_crit = (
-				(df['cid_val'] == True)				
+	keep_crit = (	(df['cid_valid'] == True) &
+					(df['not_employed'] != True)
 				)
 
 
@@ -447,7 +413,7 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 
 	#Drop New Columns 
 	#TODO edit sql so can keep new cols
-	df = df.drop(['cid_val', 'exec', 'dir', 'man'], axis=1)
+	#df = df.drop(['cid_valid', 'executive', 'director', 'manager'], axis=1)
 
 	#Write Outfile and Return
 	df.to_csv(outfile, index=False)

@@ -31,9 +31,12 @@ company_key = key_aliases(cmaster, limit=N)
 #companies = ["Amazon", "Goldman Sachs"]
 
 #companies = companies
-print(companies)
-print(company_key)
+#print(companies)
+#print(company_key["Apple"])
 
+#c = company_key["Apple"]
+#anti = anti_alias(cmaster, c)
+#print(anti)
 
 #################################################
 ## Table Key

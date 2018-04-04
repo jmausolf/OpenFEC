@@ -61,7 +61,12 @@ CREATE TABLE schedule_a_cleaned (
 
 			--qc cleaning cols
 			contributor_employer_clean TEXT,
-			contributor_occupation_clean TEXT
+			contributor_occupation_clean TEXT,
+			cid_valid TEXT,
+			executive TEXT,
+			director TEXT,
+			manager TEXT,
+			not_employed TEXT
 			
 );
 
