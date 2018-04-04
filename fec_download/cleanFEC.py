@@ -235,7 +235,7 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 	print(companies)
 	
 	for cid in companies:
-
+		print("[*] cleaning {} for {}...".format(key, cid))
 		match_crit2 = "{} ".format(cid.lower())
 		match_crit4 = "{}".format(re.sub(punct, ' ', cid).lower())
 
@@ -283,7 +283,7 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 
 		#anti alias
 		anti = anti_alias(cmaster, company_key[cid])
-		print(anti)
+		#print(anti)
 		if anti is False:
 			pass
 		else:
