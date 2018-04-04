@@ -151,15 +151,15 @@ def filter_company_ids(df, company=False, dev=False):
 	elif dev is False:
 
 		#merge on employer
-		df_cid = (pd.read_csv("cid_emp_cleaned.csv")
-					.drop(["emp_count"], axis=1))
+		df_cid = (pd.read_csv("cid_emp_cleaned.csv"))
+					#.drop(["emp_count"], axis=1))
 		df_emp = pd.merge(df, df_cid, 
 							on=['cid', 'contributor_employer_clean'])
 
 
 		#merge on occupation
-		df_cid = (pd.read_csv("cid_occ_cleaned.csv")
-					.drop(["occ_count"], axis=1))
+		df_cid = (pd.read_csv("cid_occ_cleaned.csv"))
+					#.drop(["occ_count"], axis=1))
 		df_occ = pd.merge(df, df_cid, 
 							on=['cid', 'contributor_occupation_clean'])
 
@@ -194,7 +194,7 @@ print(x)
 #for alias in companies, run clean_dev...
 
 
-def clean_dev_contrib_csv(filetype, csv=False, sep=','):
+def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=False):
 
 	if csv is False:
 		df = pd.read_csv('cid_{}_to_clean.csv'.format(filetype), sep=sep)
@@ -206,12 +206,16 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 		cols = ['cid', 'contributor_employer_clean', 'emp_count']
 		df.columns = cols
 		key = 'contributor_employer_clean'
+		count = 'emp_count'
+		rank_col = 'rank_emp'
 		outfile = 'cid_emp_cleaned.csv'
 
 	if filetype == 'occ':
 		cols = ['cid', 'contributor_occupation_clean', 'occ_count']
 		df.columns = cols
 		key = 'contributor_occupation_clean'
+		count = 'occ_count'
+		rank_col = 'rank_occ'
 		outfile = 'cid_occ_cleaned.csv'
 
 
@@ -221,7 +225,6 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 	df['director'] = ''
 	df['manager'] = ''
 	df['not_employed'] = ''
-	#df['priority'] = ''
 
 	#drop rows with missing cid
 	df.cid.fillna('', inplace=True)
@@ -300,107 +303,95 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 
 
 
-	#Criteria for all companies
-	#exec criteria
-	exec_crit = (
-				(df['cid_valid'] == True) &
-				(
-					(df['cid'] == cid) &
-					(	
-						(df[key].str.contains('president')) |
-						(df[key].str.contains('ceo')) |
-						(df[key].str.contains('vp')) |
-						(	(df[key].str.contains('vice')) &
-							(df[key].str.contains(r'^(?:(?!service).)*$'))
-						) |
-						(df[key].str.contains('chair')) |
-						(df[key].str.contains('chief')) |
-						(df[key].str.contains('exec')) |
-						(df[key].str.contains('cfo')) |
-						(df[key].str.contains('coo')) |
-						(df[key].str.contains('board')) 
-					)	
-				)
-				)
-
-	df.loc[exec_crit, 'executive'] = True
-
-
-	#director criteria
-	dir_crit = (
-				(df['cid_valid'] == True) &
-				(
-					(df['cid'] == cid) &
-					(	
-						(df[key].str.contains('director')) |
-						(df[key].str.contains('head')) 
-					)	
-				) & (df['executive'] != True) 
-				)
-
-	df.loc[dir_crit, 'director'] = True
-
-
-	#manager criteria
-	man_crit = (
-				(df['cid_valid'] == True) &
-				(
-					(df['cid'] == cid) &
-					(	
-						(df[key].str.contains('manager')) |
-						(df[key].str.contains('managing')) 
-					)
-
-				) &
-				(
-					(df['executive'] != True) &
-					(df['director'] != True)
-				)
-				)
-
-	df.loc[man_crit, 'manager'] = True
-
-
-	#self employed and other reject criteria
-	not_emp_crit = 	(
+		#Criteria for all companies
+		#exec criteria
+		exec_crit = (
 					(df['cid_valid'] == True) &
 					(
-						(df[key].str.match('self')) |
-						(df[key].str.contains('self-employed')) |
-						(df[key].str.contains('self employed')) |
-						(df[key].str.contains('independent contractor')) |
-						(df[key].str.contains('freelance')) |
-						(df[key].str.contains('franchisee')) |	
-						(df[key].str.contains('unemployed')) |
-						(df[key].str.contains('retired')) |
-						(df[key].str.contains('former')) |
-						(df[key].str.contains('previous')) |
-						(df[key].str.contains('used to')) |	
-						(df[key].str.contains('no longer')) |						
-						(df[key].str.contains('recently fired')) |
-						(df[key].str.contains('laid off')) |
-						(df[key].str.contains('furloughed')) |
-						(df[key].str.contains('spouse')) |
-						(df[key].str.contains('wife')) |
-						(df[key].str.contains('housewife')) |
-						(df[key].str.contains('husband')) 
+						(df['cid'] == cid) &
+						(	
+							(df[key].str.contains('president')) |
+							(df[key].str.contains('ceo')) |
+							(df[key].str.contains('vp')) |
+							(	(df[key].str.contains('vice')) &
+								(df[key].str.contains(r'^(?:(?!service).)*$'))
+							) |
+							(df[key].str.contains('chair')) |
+							(df[key].str.contains('chief')) |
+							(df[key].str.contains('exec')) |
+							(df[key].str.contains('cfo')) |
+							(df[key].str.contains('coo')) |
+							(df[key].str.contains('board')) 
+						)	
 					)
 					)
 
-
-	df.loc[not_emp_crit, 'not_employed'] = True
-
-	
-	#x = df.loc[(df['not_employed'] == True)]
-	#print(x)
-	#with pd.option_context('display.max_rows', None):
-	#y = df.loc[(df['cid_valid'] == True)]
-	#print(y)
+		df.loc[exec_crit, 'executive'] = True
 
 
-	#z = df.loc[(df['cid_valid'] == False)]
-	#print(z)
-	
+		#director criteria
+		dir_crit = (
+					(df['cid_valid'] == True) &
+					(
+						(df['cid'] == cid) &
+						(	
+							(df[key].str.contains('director')) |
+							(df[key].str.contains('head')) 
+						)	
+					) & (df['executive'] != True) 
+					)
+
+		df.loc[dir_crit, 'director'] = True
+
+
+		#manager criteria
+		man_crit = (
+					(df['cid_valid'] == True) &
+					(
+						(df['cid'] == cid) &
+						(	
+							(df[key].str.contains('manager')) |
+							(df[key].str.contains('managing')) 
+						)
+
+					) &
+					(
+						(df['executive'] != True) &
+						(df['director'] != True)
+					)
+					)
+
+		df.loc[man_crit, 'manager'] = True
+
+
+		#self employed and other reject criteria
+		not_emp_crit = 	(
+						(df['cid_valid'] == True) &
+						(
+							(df[key].str.match('self')) |
+							(df[key].str.contains('self-employed')) |
+							(df[key].str.contains('self employed')) |
+							(df[key].str.contains('independent contractor')) |
+							(df[key].str.contains('freelance')) |
+							(df[key].str.contains('franchisee')) |	
+							(df[key].str.contains('unemployed')) |
+							(df[key].str.contains('retired')) |
+							(df[key].str.contains('former')) |
+							(df[key].str.contains('previous')) |
+							(df[key].str.contains('used to')) |	
+							(df[key].str.contains('no longer')) |						
+							(df[key].str.contains('recently fired')) |
+							(df[key].str.contains('laid off')) |
+							(df[key].str.contains('furloughed')) |
+							(df[key].str.contains('spouse')) |
+							(df[key].str.contains('wife')) |
+							(df[key].str.contains('housewife')) |
+							(df[key].str.contains('husband')) 
+						)
+						)
+
+		df.loc[not_emp_crit, 'not_employed'] = True
+
 
 	#Filtering of DF
 	keep_crit = (	(df['cid_valid'] == True) &
@@ -410,10 +401,40 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 
 	#Keep Rows Matching Criteria
 	df = df.loc[keep_crit]
+	df = df.drop(['not_employed'], axis=1)
 
-	#Drop New Columns 
-	#TODO edit sql so can keep new cols
-	#df = df.drop(['cid_valid', 'executive', 'director', 'manager'], axis=1)
+	print(df)
+
+
+	#Ranking
+
+	df[rank_col] = df.groupby("cid")[count].rank(method="first", ascending=False)
+	#x = df.groupby("cid")[count].rank(method="first", ascending=False)
+	#print(x.tolist())
+
+	#Keep Only Top Rank Option
+	if top_n is False:
+		pass
+	else:
+		rank_crit = (df[rank_col] <= top_n)
+		keep_leaders = 	(
+							(df['executive'] == True) |
+							(df['director'] == True) |
+							(df['manager'] == True) 
+						)
+
+		if leaders is False:
+			df = df.loc[rank_crit]
+
+		elif leaders is True:
+			df = df.loc[(rank_crit | keep_leaders)]			
+
+	print(df)
+
+	x = df.loc[(df['executive'] == True)]
+	print("[*] shape of all data: {}".format(df.shape))
+	print("[*] shape of executive data, where executive is True: {}".format(x.shape))
+
 
 	#Write Outfile and Return
 	df.to_csv(outfile, index=False)
@@ -433,6 +454,9 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=','):
 
 
 #clean_dev_contrib_csv("test")
+#clean_dev_contrib_csv("emp", top_n=5, leaders=False)
+#clean_dev_contrib_csv("emp", top_n=5, leaders=True)
+
 #clean_dev_contrib_csv("emp")
 
 #turn company_name_ids into csv
@@ -497,4 +521,4 @@ def test_col(test):
 
 #filter_company_ids("Exxon", True)
 #filter_company_ids("Exxon")
-
+#apple discount drug|
