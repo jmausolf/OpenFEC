@@ -281,11 +281,10 @@ def select_schedule_a_by_company(companies, committee_table=None, pids=False):
 			{0}.cand_id AS cand_id,
 			cand_name,
 			cand_pty_affiliation,
-			cand_cmte_link.cand_election_yr AS cand_election_yr,
-			fec_election_yr AS cand_fec_election_yr,
+			cand_election_yr,
 			cand_office,
 			cand_pcc,
-			linkage_id AS cand_cmte_linkage_id,
+
 			
 
 			--info about contribution
@@ -311,10 +310,8 @@ def select_schedule_a_by_company(companies, committee_table=None, pids=False):
 			--table joins
 			FROM individual_contributions LEFT JOIN {0}
 			ON individual_contributions.cmte_id={0}.cmte_id {3}
-			LEFT JOIN cand_cmte_link
-			ON {0}.cand_id=cand_cmte_link.cand_id
 			LEFT JOIN candidate_master
-			ON cand_cmte_link.cand_id=candidate_master.cand_id
+			ON {0}.cand_id=candidate_master.cand_id
 
 			--select company and group by sub_id
 			{1}

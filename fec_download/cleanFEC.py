@@ -24,13 +24,17 @@ import pandas as pd
 import numpy as np
 import csv
 import re
+import warnings
 from glob import glob
 #from company_name_ids import *
 from collections import Counter
-from master_config import cmaster, company_key
-from data.companies import anti_alias
+#from master_config import cmaster, company_key
+from data.companies import *
 #from master_config import companies
 
+
+cmaster = "data/fortune1000-list_alias_master.csv"
+company_key = key_aliases(cmaster)
 
 
 #test df
@@ -138,6 +142,7 @@ def filter_company_ids(df, company=False, dev=False):
 		df_occ = pd.DataFrame(company_name_ids_occ)
 
 		if df_occ.shape[0] == 0:
+			warnings.warn('WARNING: no results in df_occ...')
 			pass
 		else:
 			cols = ['cid', 'contributor_occupation_clean', 'occ_count']
@@ -156,15 +161,23 @@ def filter_company_ids(df, company=False, dev=False):
 		df_emp = pd.merge(df, df_cid, 
 							on=['cid', 'contributor_employer_clean'])
 
-
 		#merge on occupation
-		df_cid = (pd.read_csv("cid_occ_cleaned.csv"))
-					#.drop(["occ_count"], axis=1))
-		df_occ = pd.merge(df, df_cid, 
-							on=['cid', 'contributor_occupation_clean'])
+		occ_file = "cid_occ_cleaned.csv"
+		if os.path.exists(occ_file):
+			df_cid = (pd.read_csv(occ_file))
+						#.drop(["occ_count"], axis=1))
+			df_occ = pd.merge(df, df_cid, 
+								on=['cid', 'contributor_occupation_clean'])
 
-		df = (df_emp.append(df_occ, ignore_index=True)
-				.drop_duplicates(subset="sub_id"))
+			df = (df_emp.append(df_occ, ignore_index=True)
+					.drop_duplicates(subset="sub_id"))
+		else:
+			print("[*] file {} not found...".format(occ_file))
+			df = df_emp.drop_duplicates(subset="sub_id")
+
+			#add missing columns
+			df['occ_count'] = ''
+			df['rank_occ'] = ''
 
 		print(df.head(10))
 		print(df.shape)
@@ -197,9 +210,15 @@ print(x)
 def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=False):
 
 	if csv is False:
-		df = pd.read_csv('cid_{}_to_clean.csv'.format(filetype), sep=sep)
+		csv_file = 'cid_{}_to_clean.csv'.format(filetype)
 	else:
-		df = pd.read_csv(csv, sep=sep)
+		csv_file = csv
+
+	if os.path.exists(csv_file):
+		df = pd.read_csv(csv_file, sep=sep)
+	else:
+		print("[*] file {} not found...".format(csv_file))
+		return
 
 
 	if filetype == 'emp':

@@ -24,7 +24,7 @@ from util import *
 from create_pids_table import *
 from create_indiv_cycle import *
 from create_company_table import *
-from cleanFEC import *
+#from cleanFEC import *
 from clean_company_table import *
 #from build_db import *
 

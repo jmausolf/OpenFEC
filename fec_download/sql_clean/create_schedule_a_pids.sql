@@ -31,10 +31,8 @@ CREATE TABLE schedule_a (
 			cand_name TEXT,
 			cand_pty_affiliation TEXT,
 			cand_election_yr NUMERIC,
-			cand_fec_election_yr NUMERIC,
 			cand_office TEXT,
 			cand_pcc TEXT,
-			cand_cmte_linkage_id TEXT,
 			
 			--info about contribution
 			contributor_transaction_dt TEXT,
