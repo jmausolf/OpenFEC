@@ -34,8 +34,9 @@ from data.companies import *
 
 
 cmaster = "data/fortune1000-list_alias_master.csv"
-company_key = key_aliases(cmaster)
-
+company_key = key_aliases(cmaster, limit=False)
+print("Company KEY:")
+print(company_key)
 
 #test df
 #df = pd.read_csv("df_chunk.csv", sep="|")
