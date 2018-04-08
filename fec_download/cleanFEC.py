@@ -25,6 +25,7 @@ import numpy as np
 import csv
 import re
 import warnings
+import os.path
 from glob import glob
 #from company_name_ids import *
 from collections import Counter
@@ -35,8 +36,8 @@ from data.companies import *
 
 cmaster = "data/fortune1000-list_alias_master.csv"
 company_key = key_aliases(cmaster, limit=False)
-print("Company KEY:")
-print(company_key)
+#print("Company KEY:")
+#print(company_key)
 
 #test df
 #df = pd.read_csv("df_chunk.csv", sep="|")
@@ -245,6 +246,7 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 	df['director'] = ''
 	df['manager'] = ''
 	df['not_employed'] = ''
+	df['cid_master'] = ''
 
 	#drop rows with missing cid
 	df.cid.fillna('', inplace=True)
@@ -253,24 +255,32 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 
 	punct = r'[]\\?!\"\'#$%&(){}+*/:;,._`|~\\[<=>@\\^-]'
 
-	#companies = ['Goldman Sachs']
 	companies = sorted(df['cid'].fillna('').unique().tolist())
 	print(companies)
 	
 	for cid in companies:
+		df.cid_master = company_key[cid]
 		print("[*] cleaning {} for {}...".format(key, cid))
-		match_crit2 = "{} ".format(cid.lower())
-		match_crit4 = "{}".format(re.sub(punct, ' ', cid).lower())
 
+		#x = df.loc[df.cid == cid]
+		#print(x.head())
+
+		cid_sub_punct = re.sub(punct, ' ', cid).lower()
+
+		match_crit2 = "{} ".format(cid.lower())
+		match_crit4 = "{}".format(cid_sub_punct)
+		match_crit5 = "{} ".format(' '.join(cid_sub_punct.split()))
 
 		#company criteria
 		#exact match only
 		criteria1 = (
 					(df['cid'] == cid) &
 					(	(df[key] == cid.lower()) |
-						(df[key] == re.sub(punct, ' ', cid).lower())	
-					) 
+						(df[key] == cid_sub_punct) |
+						(df[key] == ' '.join(cid_sub_punct.split()))
 					)
+					) 
+					
 
 		#exact match space something else
 		criteria2 = (
@@ -294,6 +304,12 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 					(df[key].str.match(match_crit4))
 					)
 
+		#exact match for cid less punct no space
+		criteria5 = (
+					(df['cid'] == cid) &
+					(df[key].str.match(match_crit5))
+					)
+
 
 
 		df.loc[criteria1, 'cid_valid'] = True
@@ -302,6 +318,7 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 
 		if re.search(punct, cid) is not None:
 			df.loc[criteria4, 'cid_valid'] = True
+			df.loc[criteria5, 'cid_valid'] = True
 
 
 		#anti alias
@@ -477,68 +494,7 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 #clean_dev_contrib_csv("emp", top_n=5, leaders=False)
 #clean_dev_contrib_csv("emp", top_n=5, leaders=True)
 
-#clean_dev_contrib_csv("emp")
-
-#turn company_name_ids into csv
-#df = pd.DataFrame.from_dict(company_name_ids, orient='index').transpose()
-#df.to_csv("company_name_ids.csv")
-#print(df.head)
-
-#tests = "Amazon.com"
-#punct = r'[]\\?!\"\'#$%&(){}+*/:;,._`|~\\[<=>@\\^-]'
-#x = re.search(punct, tests)
-#print(x.span())
-
-"""
-tests = "Amazon.com"
-x = tests.replace('[^\x00-\x7F]+', '')
-print(x)
-
-def test_col(test):
-	#col_clean = "{}_clean".format(col)
-
-	stop_words = ['and', 'the', 'company', 'companies', 'corporation', 
-				  'international']
-	stop_abb = 	['inc', 'co', 'comp', 'corp', 'pcs', 'pc', 'llp', 
-				 'llc', 'lp', 'int']
-	spaces = [' ', '   ', '    ', '  ']
-
-	pat1 = r'\b(?:{})\b'.format('|'.join(stop_words))
-	pat2 = r'\b(?:{})\b'.format('|'.join(stop_abb))
-	pat3 = r'\b(?:{})\b'.format('|'.join(spaces))
-
-	output = (test.lower()
-						.replace(pat1, '')
-						.replace('[^\w\s]','')
-						.replace('[^\x00-\x7F]+', ' ')
-						.replace(pat2, '')
-						.replace(pat3, ' ')
-						.strip()
-					)
-
-	print(output)
-
-"""
-#test_col(tests)
-#df = pd.read_csv("df_chunk.csv", sep="|")
-#filter_company_ids(df, "Apple")
+clean_dev_contrib_csv("emp")
 
 
-#filter_company_ids(df, dev=True)
-#filter_company_ids(df)
 
-
-#filter_company_ids(df, "Apple", dev=True)
-#filter_company_ids(df, "Walmart", dev=True)
-#filter_company_ids("Goldman Sachs", True)
-#filter_company_ids("Goldman Sachs")
-
-#filter_company_ids("Apple", True)
-#filter_company_ids("Apple")
-
-#filter_company_ids("Exxon Mobile", True)
-#filter_company_ids("Exxon Mobile")
-
-#filter_company_ids("Exxon", True)
-#filter_company_ids("Exxon")
-#apple discount drug|

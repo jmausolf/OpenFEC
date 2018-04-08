@@ -58,6 +58,7 @@ CREATE TABLE schedule_a_cleaned (
 			cid TEXT,
 
 			--qc cleaning cols
+			cid_master TEXT,
 			contributor_employer_clean TEXT,
 			contributor_occupation_clean TEXT,
 			emp_count NUMERIC,

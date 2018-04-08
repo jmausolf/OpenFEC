@@ -8,7 +8,7 @@
 6,6,7,CVS Health,CVS,CVS Health,
 7,7,8,General Motors,General Motors,General Motors,
 8,8,9,AT&T,ATT,AT&T,"""|att at law|"""
-9,9,10,Ford Motor,Ford,Ford Motor,
+9,9,10,Ford Motor,Ford,Ford Motor,"""|ford foundation|"""
 10,10,11,AmerisourceBergen,AmerisourceBergen,AmerisourceBergen,
 11,11,12,Amazon.com,Amazon,Amazon.com,
 12,12,13,General Electric,General Electric|GE,General Electric,
@@ -19,7 +19,7 @@
 17,17,18,Kroger,Kroger,Kroger,
 18,18,19,Chevron,Chevron,Chevron,
 19,19,20,Fannie Mae,Fannie Mae,Fannie Mae,
-20,20,21,J.P. Morgan Chase,J.P. Morgan|Morgan Chase,J.P. Morgan Chase,
+20,20,21,J.P. Morgan Chase,J.P. Morgan|JP Morgan|JPMorgan|Morgan Chase,J.P. Morgan Chase,
 21,21,22,Express Scripts Holding,Express Scripts Holding,Express Scripts Holding,
 22,22,23,Home Depot,Home Depot,Home Depot,
 23,23,24,Boeing,Boeing,Boeing,

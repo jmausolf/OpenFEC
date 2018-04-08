@@ -56,6 +56,7 @@ INSERT INTO schedule_a_cleaned (
 			cid,
 
 			--qc cleaning cols
+			cid_master,
 			contributor_employer_clean,
 			contributor_occupation_clean,
 			emp_count,
@@ -124,6 +125,7 @@ SELECT
 			cid,
 
 			--qc cleaning cols
+			cid_master,
 			contributor_employer_clean,
 			contributor_occupation_clean,
 			emp_count,
