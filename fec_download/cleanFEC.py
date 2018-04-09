@@ -1,24 +1,3 @@
-
-##TODO develop for SQL queries
-#in the api query, these functions were run on each company csv
-#in the sql version, need to filter by the desired company.
-
-#basically first run through the filtered company data and filter by desired company
-#this would be according to string matching on the company
-#likely CID
-# user string contains
-# df[df['model'].str.match('Mac')] match
-# df[df['model'].str.contains('ac')] contains
-
-#for company in config:
-# if df[df['employer'].str.contains(company)]:
-# 	df['cid'] = company
-
-#then you can develop a function to clean it
-
-
-#or conversely, write code that does all this for each company
-
 from setlogger import *
 import pandas as pd
 import numpy as np
@@ -27,54 +6,14 @@ import re
 import warnings
 import os.path
 from glob import glob
-#from company_name_ids import *
 from collections import Counter
-#from master_config import cmaster, company_key
 from data.companies import *
-#from master_config import companies
 
 
+
+#Load Company Master and Key
 cmaster = "data/fortune1000-list_alias_master.csv"
 company_key = key_aliases(cmaster, limit=False)
-#print("Company KEY:")
-#print(company_key)
-
-#test df
-#df = pd.read_csv("df_chunk.csv", sep="|")
-#df = pd.read_csv("misscid_201804021651.csv", sep="|")
-#df = pd.read_csv("misstest.csv", sep="|")
-#df = pd.read_csv("misscid_201804021725.csv", sep="|")
-
-
-#df = pd.read_csv("add_cid_test_2.csv", sep=",")
-#df = df.loc[(df["cid"] != "GE") & (df["cid"] != "ATT")]
-#print(df.shape)
-#df.to_csv("sm_add_cid_test_2.csv", index=False)
-
-"""
-cols = ['contributor_name', 'contributor_employer', 'contributor_occupation', 
-		'contributor_city', 'contributor_state', 'contributor_zip_code', 
-		'contributor_cycle', 'cmte_id', 'cmte_nm', 'cmte_pty_affiliation', 
-		'cmte_dsgn', 'cmte_type', 'cmte_filing_freq', 'cmte_org_tp', 
-		'cmte_connected_org_nm', 'party_id', 'partisan_score', 'cmte_cycle', 
-		'cand_id', 'cand_name', 'cand_pty_affiliation', 'cand_election_yr', 
-		'cand_fec_election_yr', 'cand_office', 'cand_pcc', 
-		'cand_cmte_linkage_id', 'contributor_transaction_dt', 
-		'contributor_transaction_amt', 'contributor_transaction_pgi', 
-		'contributor_transaction_tp', 'contributor_amndt_ind', 
-		'contributor_rpt_tp', 'contributor_image_num', 
-		'contributor_entity_tp', 'contributor_other_id', 
-		'contributor_tran_id', 'contributor_file_num', 'contributor_memo_cd', 
-		'contributor_memo_text', 'sub_id', 'cid']
-
-df.columns = cols
-"""
-#print(df.shape)
-#print(df.head())
-#print(df.head(5))
-#df = df.loc[df['cid'] == "Apple"]
-#print(df.head(5))
-
 
 
 
@@ -195,18 +134,6 @@ def filter_company_ids(df, company=False, dev=False):
 
 
 
-#test df
-"""
-df = pd.read_csv("sa_dev_example.csv", sep="|")
-df.columns = cols
-print(df.shape)
-print(df.head())
-
-
-x = df.loc[(df['cid'] == "Amazon.com")]
-print(x)
-"""
-#for alias in companies, run clean_dev...
 
 
 def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=False):
@@ -255,15 +182,12 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 
 	punct = r'[]\\?!\"\'#$%&(){}+*/:;,._`|~\\[<=>@\\^-]'
 
+	#Companies
 	companies = sorted(df['cid'].fillna('').unique().tolist())
 	print(companies)
 	
 	for cid in companies:
-		df.cid_master = company_key[cid]
 		print("[*] cleaning {} for {}...".format(key, cid))
-
-		#x = df.loc[df.cid == cid]
-		#print(x.head())
 
 		cid_sub_punct = re.sub(punct, ' ', cid).lower()
 
@@ -323,7 +247,6 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 
 		#anti alias
 		anti = anti_alias(cmaster, company_key[cid])
-		#print(anti)
 		if anti is False:
 			pass
 		else:
@@ -335,13 +258,8 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 
 			df.loc[anti_crit, 'cid_valid'] = False
 
-		#assign priority
-		#TODO, keep x top rows, post clean per cid
-
-
 
 		#Criteria for all companies
-		#exec criteria
 		exec_crit = (
 					(df['cid_valid'] == True) &
 					(
@@ -440,14 +358,9 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 	df = df.loc[keep_crit]
 	df = df.drop(['not_employed'], axis=1)
 
-	print(df)
-
 
 	#Ranking
-
 	df[rank_col] = df.groupby("cid")[count].rank(method="first", ascending=False)
-	#x = df.groupby("cid")[count].rank(method="first", ascending=False)
-	#print(x.tolist())
 
 	#Keep Only Top Rank Option
 	if top_n is False:
@@ -466,28 +379,18 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 		elif leaders is True:
 			df = df.loc[(rank_crit | keep_leaders)]			
 
-	print(df)
 
-	x = df.loc[(df['executive'] == True)]
-	print("[*] shape of all data: {}".format(df.shape))
-	print("[*] shape of executive data, where executive is True: {}".format(x.shape))
 
+
+	#Finally Assign Master CID from Aliases
+	df.cid_master = df.cid.apply(lambda cid: company_key[cid])
 
 	#Write Outfile and Return
+	print(df.head(10))
+	print("[*] shape of all data: {}".format(df.shape))
 	df.to_csv(outfile, index=False)
 	return df
 
-	#y = df.loc[df['cid'] == cid]
-	#print(y)
-	#print(df.shape)
-	#print(df.head())
-	
-
-	#exploring nan values
-	#print(df.head())
-	#x = df.loc[(df['cid'] == '')]
-	#y = sorted(x[key].fillna('').unique().tolist())
-	#print(y)
 
 
 #clean_dev_contrib_csv("test")
