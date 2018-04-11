@@ -133,7 +133,226 @@ def filter_company_ids(df, company=False, dev=False):
 		pass
 
 
+def cid_filter(df, cidd, key):
 
+		#cid = df['cid'].str()
+
+		punct = r'[]\\?!\"\'#$%&(){}+*/:;,._`|~\\[<=>@\\^-]'
+		#punct = 'fsjaf'
+
+		#cid_sub_punct = re.sub(punct, ' ', cid).lower()
+		cid_sub_punct = df['cid'].str.replace(punct, ' ').str.lower()
+		cid_sub_punct_ss = cid_sub_punct.str.replace(r"\s{2,}", ' ')
+		cid_sub_punct_ns = cid_sub_punct.str.replace(r"\s", '')
+		#print(cid_sub_punct_ns)
+
+		match_crit2 = "{} ".format(df.cid.str.lower())
+		match_crit4 = "{}".format(cid_sub_punct)
+		#print(match_crit4)
+		match_crit5 = "{} ".format(cid_sub_punct_ns)
+
+
+		#cid = df['cid']
+
+		#company criteria
+		#exact match only
+		criteria1 = (
+					#(df['cid'] == cid) &
+					(	(df[key] == df.cid.str.lower()) |
+						(df[key] == cid_sub_punct) |
+						(df[key] == cid_sub_punct_ns)
+					)
+					) 
+					
+
+		#exact match space something else
+		criteria2 = (
+					#(df['cid'] == cid) &
+					(df[key].str.match(match_crit2))
+					)
+
+		#exact match for cid less punct with space
+		criteria3 = (
+					#(df['cid'] == cid) &
+					(
+						(df[key].str.match("{}com".format(df.cid.str.lower()))) |
+						(df[key].str.match("{}inc".format(df.cid.str.lower())))
+					)
+					)
+
+		#exact match for cid less punct no space
+		criteria4 = (
+					#(df['cid'] == cid) &
+					(df[key].str.match(match_crit4))
+					)
+
+		#exact match for cid less punct no space
+		criteria5 = (
+					#(df['cid'] == cid) &
+					(df[key].str.match(match_crit5))
+					)
+
+
+		cid_keep_crit = (	(criteria1) |
+							(criteria2) |
+							(criteria3)
+						)
+
+		#print(cid_keep_crit)
+		#if cid_keep_crit is True:
+		#	print("it is true")
+		#else:
+		#	print("not")
+		#df.loc[criteria1, 'cid_valid'] = True
+		#df.loc[criteria2, 'cid_valid'] = True
+		#df.loc[criteria3, 'cid_valid'] = True
+
+		#if re.search(punct, df.cid) is not None:
+		#	pass
+
+		#criteria6 = (
+		#			#(df['cid'] == cid) &
+		#			(cid_sub_punct.str.match(df.cid.str.lower())) &
+		#			((criteria4) | (criteria5))
+		#			)
+		
+		#if df.cid.str.lower().match(cid_sub_punct):
+			#print("punct removed")
+			#df.loc[criteria4, 'cid_valid'] = True
+			#df.loc[criteria5, 'cid_valid'] = True
+
+
+		#anti alias
+		"""
+		anti = anti_alias(cmaster, company_key[df.cid])
+		print(anti)
+		if anti is False:
+			pass
+		else:
+			anti_crit = (
+						(df['cid'] == cid) &
+						(df[key].str.contains(anti))
+						) 
+						
+
+			#df.loc[anti_crit, 'cid_valid'] = False
+			pass	
+		"""
+
+		#return df
+
+
+def executive_filter(df, cid, key):
+		#Criteria for all companies
+		exec_crit = (
+					(df['cid_valid'] == True) &
+					(
+						(df['cid'] == cid) &
+						(	
+							(df[key].str.contains('president')) |
+							(df[key].str.contains('ceo')) |
+							(df[key].str.contains('vp')) |
+							(	(df[key].str.contains('vice')) &
+								(df[key].str.contains(r'^(?:(?!service).)*$'))
+							) |
+							(df[key].str.contains('chair')) |
+							(df[key].str.contains('chief')) |
+							(df[key].str.contains('exec')) |
+							(df[key].str.contains('cfo')) |
+							(df[key].str.contains('coo')) |
+							(df[key].str.contains('board')) 
+						)	
+					)
+					)
+
+		df.loc[exec_crit, 'executive'] = True
+
+
+def director_filter(df, cid, key):
+		#director criteria
+		dir_crit = (
+					(df['cid_valid'] == True) &
+					(
+						(df['cid'] == cid) &
+						(	
+							(df[key].str.contains('director')) |
+							(df[key].str.contains('head')) 
+						)	
+					) & (df['executive'] != True) 
+					)
+
+		df.loc[dir_crit, 'director'] = True
+
+
+def manager_filter(df, cid, key):
+		#manager criteria
+		man_crit = (
+					(df['cid_valid'] == True) &
+					(
+						(df['cid'] == cid) &
+						(	
+							(df[key].str.contains('manager')) |
+							(df[key].str.contains('managing')) 
+						)
+
+					) &
+					(
+						(df['executive'] != True) &
+						(df['director'] != True)
+					)
+					)
+
+		df.loc[man_crit, 'manager'] = True
+
+
+def employed_filter(df, cid, key):
+		#self employed and other reject criteria
+		not_emp_crit = 	(
+						(df['cid_valid'] == True) &
+						(
+							(df[key].str.match('self')) |
+							(df[key].str.contains('self-employed')) |
+							(df[key].str.contains('self employed')) |
+							(df[key].str.contains('independent contractor')) |
+							(df[key].str.contains('freelance')) |
+							(df[key].str.contains('franchisee')) |	
+							(df[key].str.contains('unemployed')) |
+							(df[key].str.contains('retired')) |
+							(df[key].str.contains('former')) |
+							(df[key].str.contains('previous')) |
+							(df[key].str.contains('used to')) |	
+							(df[key].str.contains('no longer')) |						
+							(df[key].str.contains('recently fired')) |
+							(df[key].str.contains('laid off')) |
+							(df[key].str.contains('furloughed')) |
+							(df[key].str.contains('spouse')) |
+							(df[key].str.contains('wife')) |
+							(df[key].str.contains('housewife')) |
+							(df[key].str.contains('husband')) 
+						)
+						)
+
+		df.loc[not_emp_crit, 'not_employed'] = True
+
+
+
+def company_filter(df, cid, key):
+
+
+		print("[*] cleaning {} for {}...".format(key, cid))
+
+		cid_filter(df, cid, key)
+
+		#executive_filter(df, cid, key)
+		#director_filter(df, cid, key)
+		#manager_filter(df, cid, key)
+		#employed_filter(df, cid, key)
+
+
+		#cdf = df.loc[(df['cid_valid'] == True) & (df['cid'] == cid)]
+		#print(cdf.head(10))
+
+		#return df
 
 
 def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=False):
@@ -180,172 +399,23 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 	df = df[df.cid != '']
 	print(df.shape)
 
-	punct = r'[]\\?!\"\'#$%&(){}+*/:;,._`|~\\[<=>@\\^-]'
+	
 
 	#Companies
-	companies = sorted(df['cid'].fillna('').unique().tolist())
+	#companies = sorted(df['cid'].fillna('').unique().tolist())
+	companies = ["Walmart", "Amazon"]
 	print(companies)
 	
+	#x = df.cid
+	#print(x)
+
 	for cid in companies:
-		print("[*] cleaning {} for {}...".format(key, cid))
+		company_filter(df, cid, key)
 
-		cid_sub_punct = re.sub(punct, ' ', cid).lower()
-
-		match_crit2 = "{} ".format(cid.lower())
-		match_crit4 = "{}".format(cid_sub_punct)
-		match_crit5 = "{} ".format(' '.join(cid_sub_punct.split()))
-
-		#company criteria
-		#exact match only
-		criteria1 = (
-					(df['cid'] == cid) &
-					(	(df[key] == cid.lower()) |
-						(df[key] == cid_sub_punct) |
-						(df[key] == ' '.join(cid_sub_punct.split()))
-					)
-					) 
-					
-
-		#exact match space something else
-		criteria2 = (
-					(df['cid'] == cid) &
-					(df[key].str.match(match_crit2))
-					)
-
-		#exact match for cid less punct with space
-		criteria3 = (
-					(df['cid'] == cid) &
-					(
-						#(df[key].str.match(match_crit3)) 
-						(df[key].str.match(cid.lower()+'com')) |
-						(df[key].str.match(cid.lower()+'inc'))
-					)
-					)
-
-		#exact match for cid less punct no space
-		criteria4 = (
-					(df['cid'] == cid) &
-					(df[key].str.match(match_crit4))
-					)
-
-		#exact match for cid less punct no space
-		criteria5 = (
-					(df['cid'] == cid) &
-					(df[key].str.match(match_crit5))
-					)
-
-
-
-		df.loc[criteria1, 'cid_valid'] = True
-		df.loc[criteria2, 'cid_valid'] = True
-		df.loc[criteria3, 'cid_valid'] = True
-
-		if re.search(punct, cid) is not None:
-			df.loc[criteria4, 'cid_valid'] = True
-			df.loc[criteria5, 'cid_valid'] = True
-
-
-		#anti alias
-		anti = anti_alias(cmaster, company_key[cid])
-		if anti is False:
-			pass
-		else:
-			anti_crit = (
-						(df['cid'] == cid) &
-						(df[key].str.contains(anti))
-						) 
-						
-
-			df.loc[anti_crit, 'cid_valid'] = False
-
-
-		#Criteria for all companies
-		exec_crit = (
-					(df['cid_valid'] == True) &
-					(
-						(df['cid'] == cid) &
-						(	
-							(df[key].str.contains('president')) |
-							(df[key].str.contains('ceo')) |
-							(df[key].str.contains('vp')) |
-							(	(df[key].str.contains('vice')) &
-								(df[key].str.contains(r'^(?:(?!service).)*$'))
-							) |
-							(df[key].str.contains('chair')) |
-							(df[key].str.contains('chief')) |
-							(df[key].str.contains('exec')) |
-							(df[key].str.contains('cfo')) |
-							(df[key].str.contains('coo')) |
-							(df[key].str.contains('board')) 
-						)	
-					)
-					)
-
-		df.loc[exec_crit, 'executive'] = True
-
-
-		#director criteria
-		dir_crit = (
-					(df['cid_valid'] == True) &
-					(
-						(df['cid'] == cid) &
-						(	
-							(df[key].str.contains('director')) |
-							(df[key].str.contains('head')) 
-						)	
-					) & (df['executive'] != True) 
-					)
-
-		df.loc[dir_crit, 'director'] = True
-
-
-		#manager criteria
-		man_crit = (
-					(df['cid_valid'] == True) &
-					(
-						(df['cid'] == cid) &
-						(	
-							(df[key].str.contains('manager')) |
-							(df[key].str.contains('managing')) 
-						)
-
-					) &
-					(
-						(df['executive'] != True) &
-						(df['director'] != True)
-					)
-					)
-
-		df.loc[man_crit, 'manager'] = True
-
-
-		#self employed and other reject criteria
-		not_emp_crit = 	(
-						(df['cid_valid'] == True) &
-						(
-							(df[key].str.match('self')) |
-							(df[key].str.contains('self-employed')) |
-							(df[key].str.contains('self employed')) |
-							(df[key].str.contains('independent contractor')) |
-							(df[key].str.contains('freelance')) |
-							(df[key].str.contains('franchisee')) |	
-							(df[key].str.contains('unemployed')) |
-							(df[key].str.contains('retired')) |
-							(df[key].str.contains('former')) |
-							(df[key].str.contains('previous')) |
-							(df[key].str.contains('used to')) |	
-							(df[key].str.contains('no longer')) |						
-							(df[key].str.contains('recently fired')) |
-							(df[key].str.contains('laid off')) |
-							(df[key].str.contains('furloughed')) |
-							(df[key].str.contains('spouse')) |
-							(df[key].str.contains('wife')) |
-							(df[key].str.contains('housewife')) |
-							(df[key].str.contains('husband')) 
-						)
-						)
-
-		df.loc[not_emp_crit, 'not_employed'] = True
+	#df.cid.apply(lambda cid: company_filter(df, cid, key))
+	#vfunc = np.vectorize(company_filter)
+	#vfunc(df, x, key)
+	#np.vectorize(company_filter)(df['committee_id'], df['cycle'])
 
 
 	#Filtering of DF
@@ -397,7 +467,7 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 #clean_dev_contrib_csv("emp", top_n=5, leaders=False)
 #clean_dev_contrib_csv("emp", top_n=5, leaders=True)
 
-#clean_dev_contrib_csv("emp")
+clean_dev_contrib_csv("emp")
 
 
 
