@@ -37,25 +37,14 @@ wout <- function(plt_type, cid){
 
 #All Contributions, All CID
 dfm <- fec %>% 
-  #filter(cid!="Berkshire Hathaway") %>% 
-  #filter(cid!="Home Depot") %>% 
-  # mutate(pid = fct_collapse(party_id,
-  #                           "NA-ERROR-UNKNOWN" = c("UNKNOWN", "ERROR", "NONE", "None")),
   mutate(pid = fct_collapse(party_id,
                              "NA-ERROR-UNKNOWN" = c("UNK_OTHER", "UNK", "GRE_UNK_OTHER")),
          pid5 = fct_lump(party_id, n=4),
          pid4 = fct_lump(party_id, n=3),
          pid3 = fct_lump(party_id, n=2)) %>% 
-  #mutate(pid3 = if_else(pid3!="Other", pid3, as.factor("OTHER"), missing = NULL)) %>%
   mutate(pid2 = if_else(pid3!="Other", pid3, NULL, missing = NULL)) %>% 
-  #mutate(pid2 = if_else(pid3!="UNK_OTHER", pid3, NULL, missing = NULL)) %>% 
-  # mutate(cid = factor(cid, 
-  #                     levels = c("Amazon", "Apple", "Microsoft",
-  #                                "Boeing", "Ford Motor", "General Motors",
-  #                                "Chevron", "Exxon", "Marathon Oil",
-  #                                "Citigroup", "Goldman Sachs", "Wells Fargo",
-  #                                "CVS", "Kroger", "Walmart"
-  #                     ))) %>% 
+  mutate(partisan_score = as.numeric(partisan_score)) %>%
+  mutate(ps01 = ((partisan_score+1)/2)) %>% 
   mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
   mutate(cycle = as.numeric(cmte_cycle))
   # %>% 
@@ -70,7 +59,8 @@ dfocc <- dfm %>%
          occlevels = if_else(director == "True", "DIRECTOR", occlevels),
          occlevels = if_else(manager == "True", "MANAGER", occlevels)) %>% 
   mutate(occ3 = fct_collapse(occlevels,
-                             "MANAGEMENT" = c("MANAGER", "DIRECTOR")))
+                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"))) %>% 
+  mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) 
 
 
 dfocc3 <- dfocc %>% 
@@ -81,10 +71,38 @@ dfocc3 <- dfocc %>%
   mutate(cycle = as.numeric(cycle))
 
 dfocc3 <- dfocc %>% 
-  select(cycle, pid3, pid2, cid, occlevels, occ3) %>% 
+  select(cycle, pid3, pid2, partisan_score, cid, cid_master, occlevels, occ3) %>%
+  mutate(ps01 = ((partisan_score+1)/2)) %>% 
   filter(!is.na(pid2),
          !is.na(occlevels)) %>% 
   mutate(cycle = as.numeric(cycle))
+
+
+ggplot(df, aes(make_datetime(cycle), partisan_score)) +
+  #geom_line(aes(color=cid), alpha=0.5) +
+  #geom_point(aes(shape=cid), alpha=0.5) +
+  geom_smooth(aes(fill=pid2))
+
+
+
+#outfile <- wout("plt_partisan_occ", "by_all_companies")
+#lims <- c(as.POSIXct(as.Date("2001/01/02")), NA)
+lims <- c(as.POSIXct(as.Date("1978/01/01")), NA)
+ggplot(dfocc3) +
+  geom_bar(aes(make_datetime(cycle), fill = pid2), alpha=0.95, position = "fill") +
+  geom_smooth(aes(make_datetime(cycle), ps01), color="black") +
+  #facet_grid(cycle~occ4) +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "2 year", limits = lims) +
+  #scale_x_datetime(date_labels = "%Y") +
+  scale_fill_manual(values=c("#2129B0", "#BF1200")) +
+  xlab("Contribution Cycle") +
+  ylab("Partisanship of Individual Contributions") +
+  ggtitle(paste("Contributions by Occupational Hierarchy and Company")) +
+  theme(legend.position="bottom") +
+  theme(legend.title=element_blank()) + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(strip.text.y = element_text(size = 7))
+ggsave(outfile, width = 10, height = 14)
 
 
 ##GRAPH
