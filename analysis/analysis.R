@@ -12,7 +12,11 @@ library(DBI)
 
 
 ##Load Data
-con <- dbConnect(RSQLite::SQLite(), "../fec_download/openFEC.db")
+#file = "openFEC.db"
+file = "openFEC_full_R_test.db"
+path = "../fec_download/"
+filepath = paste0(path, file)
+con <- dbConnect(RSQLite::SQLite(), filepath)
 fec <- dbGetQuery(con, "SELECT * FROM schedule_a_cleaned")  %>% 
         mutate(sub_id = as.character(sub_id))
 
@@ -74,6 +78,12 @@ dfocc3 <- dfocc %>%
   filter(!is.na(pid2),
          !is.na(occlevels),
          cycle >= 2004) %>% 
+  mutate(cycle = as.numeric(cycle))
+
+dfocc3 <- dfocc %>% 
+  select(cycle, pid3, pid2, cid, occlevels, occ3) %>% 
+  filter(!is.na(pid2),
+         !is.na(occlevels)) %>% 
   mutate(cycle = as.numeric(cycle))
 
 
@@ -170,11 +180,11 @@ a1 <- ggplot(NULL, aes(make_datetime(cycle), contrib_count, group = cid)) +
   scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
   scale_y_log10(labels = comma) +
   scale_color_manual(values=c("#2129B0", "#BF1200", "#360033")) +
-  scale_shape_manual(values=c(
-    0, 0, 0, 1, 
-    1, 1, 2, 2, 
-    2, 4, 4, 4, 
-    6, 6, 6, 6)) +
+  # scale_shape_manual(values=c(
+  #   0, 0, 0, 1, 
+  #   1, 1, 2, 2, 
+  #   2, 4, 4, 4, 
+  #   6, 6, 6, 6)) +
   xlab("Contribution Cycle") +
   ylab("Number of Schedule A Contributions") +
   ggtitle(paste("Contributions by Party: All Companies")) +
@@ -285,7 +295,7 @@ ggplot(df, aes(make_datetime(cycle), varpid, color=occ3)) +
   stat_smooth(se=FALSE, method = "lm") +
   #geom_smooth(se=FALSE) +
   #geom_point(alpha = 0.3) +
-  scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
+  #scale_x_datetime(date_labels = "%Y", date_breaks = "4 year", limits = lims) +
   scale_color_manual(values=c("#F2B809", "#03275A", "#1A7DD7")) +
   facet_wrap(~cid, nrow = 5) +
   xlab("Contribution Cycle") +
