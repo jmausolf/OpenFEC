@@ -64,9 +64,12 @@ CREATE TABLE schedule_a_cleaned (
 			emp_count NUMERIC,
 			occ_count NUMERIC,
 			cid_valid TEXT,
-			executive TEXT,
-			director TEXT,
-			manager TEXT,
+			executive_emp TEXT,
+			executive_occ TEXT,
+			director_emp TEXT,
+			director_occ TEXT,
+			manager_emp TEXT,
+			manager_occ TEXT,
 			rank_emp NUMERIC,
 			rank_occ NUMERIC
 			

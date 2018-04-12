@@ -155,6 +155,9 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 		df.columns = cols
 		key = 'contributor_employer_clean'
 		count = 'emp_count'
+		executive_col = 'executive_emp'
+		director_col = 'director_emp'
+		manager_col = 'manager_emp'
 		rank_col = 'rank_emp'
 		outfile = 'cid_emp_cleaned.csv'
 
@@ -163,15 +166,18 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 		df.columns = cols
 		key = 'contributor_occupation_clean'
 		count = 'occ_count'
+		executive_col = 'executive_occ'
+		director_col = 'director_occ'
+		manager_col = 'manager_occ'
 		rank_col = 'rank_occ'
 		outfile = 'cid_occ_cleaned.csv'
 
 
 	#make new cols
 	df['cid_valid'] = ''
-	df['executive'] = ''
-	df['director'] = ''
-	df['manager'] = ''
+	df[executive_col] = ''
+	df[director_col] = ''
+	df[manager_col] = ''
 	df['not_employed'] = ''
 	df['cid_master'] = ''
 
@@ -281,7 +287,7 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 					)
 					)
 
-		df.loc[exec_crit, 'executive'] = True
+		df.loc[exec_crit, executive_col] = True
 
 
 		#director criteria
@@ -293,10 +299,10 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 							(df[key].str.contains('director')) |
 							(df[key].str.contains('head')) 
 						)	
-					) & (df['executive'] != True) 
+					) & (df[executive_col] != True) 
 					)
 
-		df.loc[dir_crit, 'director'] = True
+		df.loc[dir_crit, director_col] = True
 
 
 		#manager criteria
@@ -311,12 +317,12 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 
 					) &
 					(
-						(df['executive'] != True) &
-						(df['director'] != True)
+						(df[executive_col] != True) &
+						(df[director_col] != True)
 					)
 					)
 
-		df.loc[man_crit, 'manager'] = True
+		df.loc[man_crit, manager_col] = True
 
 
 		#self employed and other reject criteria
@@ -368,9 +374,9 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 	else:
 		rank_crit = (df[rank_col] <= top_n)
 		keep_leaders = 	(
-							(df['executive'] == True) |
-							(df['director'] == True) |
-							(df['manager'] == True) 
+							(df[executive_col] == True) |
+							(df[director_col] == True) |
+							(df[manager_col] == True) 
 						)
 
 		if leaders is False:

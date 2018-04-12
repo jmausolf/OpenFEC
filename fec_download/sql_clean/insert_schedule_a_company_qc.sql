@@ -62,9 +62,12 @@ INSERT INTO schedule_a_cleaned (
 			emp_count,
 			occ_count,
 			cid_valid,
-			executive,
-			director,
-			manager,
+			executive_emp,
+			executive_occ,
+			director_emp,
+			director_occ,
+			manager_emp,
+			manager_occ,
 			rank_emp,
 			rank_occ
 			
@@ -131,9 +134,12 @@ SELECT
 			emp_count,
 			occ_count,
 			cid_valid,
-			executive,
-			director,
-			manager,
+			executive_emp,
+			executive_occ,
+			director_emp,
+			director_occ,
+			manager_emp,
+			manager_occ,
 			rank_emp,
 			rank_occ
 			
