@@ -9,7 +9,7 @@ def clean_company_table(db, c, dev=False):
 							alter_function=alt_dev_cids, 
 							limit=False, 
 							chunksize=10000000,
-							alt_lim=10)
+							alt_lim=10000)
 	else:
 
 		create_qry = "create_schedule_a_company_qc.sql"
