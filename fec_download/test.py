@@ -41,26 +41,11 @@ cols = ['contributor_name', 'contributor_employer', 'contributor_occupation',
 def det_emp_occ_levels(df):
 
 	df = df[['contributor_employer_clean','contributor_occupation_clean']].drop_duplicates()
-	#print(df.head())
-	#print(df.shape)
-
-	#df3 = df.drop_duplicates()
-	print(df.head())
-	print(df.shape)
 
 	executive_col = 'executive'
 	director_col = 'director'
 	manager_col = 'manager'
 
-	key = 'contributor_employer_clean'
-
-
-	#df[executive_col] = ''
-	#df[director_col] = ''
-	#df[manager_col] = ''
-
-	#keys = ['contributor_employer_clean']
-	#keys = ['contributor_occupation_clean']
 	keys = ['contributor_employer_clean', 'contributor_occupation_clean']
 
 	#Criteria for all companies
@@ -82,9 +67,7 @@ def det_emp_occ_levels(df):
 
 
 		exec_crit = (
-					#(df['cid_valid'] == True) &
 					(
-						#(df['cid'] == cid) &
 						(	
 							(df[key].str.contains('president')) |
 							(df[key].str.contains('ceo')) |
@@ -107,9 +90,7 @@ def det_emp_occ_levels(df):
 
 		#director criteria
 		dir_crit = (
-					#(df['cid_valid'] == True) &
 					(
-						#(df['cid'] == cid) &
 						(	
 							(df[key].str.contains('director')) |
 							(df[key].str.contains('head')) 
@@ -122,9 +103,7 @@ def det_emp_occ_levels(df):
 
 		#manager criteria
 		man_crit = (
-					#(df['cid_valid'] == True) &
 					(
-						#(df['cid'] == cid) &
 						(	
 							(df[key].str.contains('manager')) |
 							(df[key].str.contains('managing')) 
@@ -138,15 +117,6 @@ def det_emp_occ_levels(df):
 					)
 
 		df.loc[man_crit, manager_col] = True
-
-	#x = df.loc[(df[executive_col] == True)]
-	#x = df.loc[(df['executive_emp'] == True) | (df['executive_occ'] == True)]
-	#x = df.loc[(df['manager_emp'] == True) & (df['manager_occ'] == True)]
-	#x = df.loc[(df['executive_emp'] == True) & (df['executive_occ'] == True)]
-	#print(x.shape)
-	#print(x)
-	print(df.shape)
-	print(df.head(5))
 
 	return df
 
@@ -170,14 +140,14 @@ print(df.shape)
 
 
 #now join with original
-df_new = pd.merge(df, df_levels, 
+df = pd.merge(df, df_levels, 
 					on=['contributor_employer_clean', 'contributor_occupation_clean'])
 
 
-print(df_new.shape)
-print(df_new.head(10))
+print(df.shape)
+print(df.head(10))
 
-x = df_new.loc[(df_new['executive_emp'] == True) | (df_new['executive_occ'] == True)]
+x = df.loc[(df['executive_emp'] == True) | (df['executive_occ'] == True)]
 print(x.shape)
 
 """

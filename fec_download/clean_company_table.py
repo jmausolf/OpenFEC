@@ -18,10 +18,12 @@ def clean_company_table(db, c, dev=False):
 		run_sql_query(c, create_qry, path='sql_clean/')
 
 
+		#(Clean file to merge, then calc levels, load)
 		alter_create_table("schedule_a", "sa_tmp", db, c, 
 							alter_function=alt_clean_cids, 
 							limit=False, 
-							chunksize=1000000)
+							chunksize=1000000,
+							alt_lim=10000)
 
 
 		#insert temporary table into destination
@@ -31,3 +33,4 @@ def clean_company_table(db, c, dev=False):
 
 
 #clean_company_table(db, c, dev=True)
+#clean_company_table(db, c, dev=False)

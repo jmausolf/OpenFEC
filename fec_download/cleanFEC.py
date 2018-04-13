@@ -16,6 +16,86 @@ cmaster = "data/fortune1000-list_alias_master.csv"
 company_key = key_aliases(cmaster, limit=False)
 
 
+def det_emp_occ_levels(df):
+
+	df = df[['contributor_employer_clean','contributor_occupation_clean']].drop_duplicates()
+	print(df.shape)
+
+	keys = ['contributor_employer_clean', 'contributor_occupation_clean']
+
+	#Criteria for all companies
+	for key in keys:
+
+		if key == 'contributor_employer_clean':
+			executive_col = 'executive_emp'
+			director_col = 'director_emp'
+			manager_col = 'manager_emp'
+
+		else:
+			executive_col = 'executive_occ'
+			director_col = 'director_occ'
+			manager_col = 'manager_occ'			
+
+		df[executive_col] = ''
+		df[director_col] = ''
+		df[manager_col] = ''
+
+
+		exec_crit = (
+					(
+						(	
+							(df[key].str.contains('president')) |
+							(df[key].str.contains('ceo')) |
+							(df[key].str.contains('vp')) |
+							(	(df[key].str.contains('vice')) &
+								(df[key].str.contains(r'^(?:(?!service).)*$'))
+							) |
+							(df[key].str.contains('chair')) |
+							(df[key].str.contains('chief')) |
+							(df[key].str.contains('exec')) |
+							(df[key].str.contains('cfo')) |
+							(df[key].str.contains('coo')) |
+							(df[key].str.contains('board')) 
+						)	
+					)
+					)
+
+		df.loc[exec_crit, executive_col] = True
+
+
+		#director criteria
+		dir_crit = (
+					(
+						(	
+							(df[key].str.contains('director')) |
+							(df[key].str.contains('head')) 
+						)	
+					) & (df[executive_col] != True) 
+					)
+
+		df.loc[dir_crit, director_col] = True
+
+
+		#manager criteria
+		man_crit = (
+					(
+						(	
+							(df[key].str.contains('manager')) |
+							(df[key].str.contains('managing')) 
+						)
+
+					) &
+					(
+						(df[executive_col] != True) &
+						(df[director_col] != True)
+					)
+					)
+
+		df.loc[man_crit, manager_col] = True
+
+	return df
+
+
 
 def clean_employer_occupation_col(df, col):
 	col_clean = "{}_clean".format(col)
@@ -98,7 +178,6 @@ def filter_company_ids(df, company=False, dev=False):
 
 		#merge on employer
 		df_cid = (pd.read_csv("cid_emp_cleaned.csv"))
-					#.drop(["emp_count"], axis=1))
 		df_emp = pd.merge(df, df_cid, 
 							on=['cid', 'contributor_employer_clean'])
 
@@ -106,7 +185,6 @@ def filter_company_ids(df, company=False, dev=False):
 		occ_file = "cid_occ_cleaned.csv"
 		if os.path.exists(occ_file):
 			df_cid = (pd.read_csv(occ_file))
-						#.drop(["occ_count"], axis=1))
 			df_occ = pd.merge(df, df_cid, 
 								on=['cid', 'contributor_occupation_clean'])
 
@@ -123,11 +201,23 @@ def filter_company_ids(df, company=False, dev=False):
 		print(df.head(10))
 		print(df.shape)
 
+
+		#generate employee occupation levels
+		df_levels = det_emp_occ_levels(df)
+
+		#join df and employee occupation levels
+		df_new = pd.merge(df, df_levels, 
+							on=['contributor_employer_clean', 'contributor_occupation_clean'])
+
+
+		print(df_new.shape)
+		print(df_new.head(10))
+
 		#write outfile
 		outfile = "df_chunk_sa_test_cleaned.csv"
-		df.to_csv(outfile, index=False)
+		df_new.to_csv(outfile, index=False)
 
-		return df
+		return df_new
 
 	else:
 		pass
@@ -155,9 +245,6 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 		df.columns = cols
 		key = 'contributor_employer_clean'
 		count = 'emp_count'
-		executive_col = 'executive_emp'
-		director_col = 'director_emp'
-		manager_col = 'manager_emp'
 		rank_col = 'rank_emp'
 		outfile = 'cid_emp_cleaned.csv'
 
@@ -166,18 +253,12 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 		df.columns = cols
 		key = 'contributor_occupation_clean'
 		count = 'occ_count'
-		executive_col = 'executive_occ'
-		director_col = 'director_occ'
-		manager_col = 'manager_occ'
 		rank_col = 'rank_occ'
 		outfile = 'cid_occ_cleaned.csv'
 
 
 	#make new cols
 	df['cid_valid'] = ''
-	df[executive_col] = ''
-	df[director_col] = ''
-	df[manager_col] = ''
 	df['not_employed'] = ''
 	df['cid_master'] = ''
 
@@ -265,66 +346,6 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 			df.loc[anti_crit, 'cid_valid'] = False
 
 
-		#Criteria for all companies
-		exec_crit = (
-					(df['cid_valid'] == True) &
-					(
-						(df['cid'] == cid) &
-						(	
-							(df[key].str.contains('president')) |
-							(df[key].str.contains('ceo')) |
-							(df[key].str.contains('vp')) |
-							(	(df[key].str.contains('vice')) &
-								(df[key].str.contains(r'^(?:(?!service).)*$'))
-							) |
-							(df[key].str.contains('chair')) |
-							(df[key].str.contains('chief')) |
-							(df[key].str.contains('exec')) |
-							(df[key].str.contains('cfo')) |
-							(df[key].str.contains('coo')) |
-							(df[key].str.contains('board')) 
-						)	
-					)
-					)
-
-		df.loc[exec_crit, executive_col] = True
-
-
-		#director criteria
-		dir_crit = (
-					(df['cid_valid'] == True) &
-					(
-						(df['cid'] == cid) &
-						(	
-							(df[key].str.contains('director')) |
-							(df[key].str.contains('head')) 
-						)	
-					) & (df[executive_col] != True) 
-					)
-
-		df.loc[dir_crit, director_col] = True
-
-
-		#manager criteria
-		man_crit = (
-					(df['cid_valid'] == True) &
-					(
-						(df['cid'] == cid) &
-						(	
-							(df[key].str.contains('manager')) |
-							(df[key].str.contains('managing')) 
-						)
-
-					) &
-					(
-						(df[executive_col] != True) &
-						(df[director_col] != True)
-					)
-					)
-
-		df.loc[man_crit, manager_col] = True
-
-
 		#self employed and other reject criteria
 		not_emp_crit = 	(
 						(df['cid_valid'] == True) &
@@ -369,6 +390,8 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 	df[rank_col] = df.groupby("cid")[count].rank(method="first", ascending=False)
 
 	#Keep Only Top Rank Option
+	#TODO MOVE TO FILTER COMPANY IDS
+	"""
 	if top_n is False:
 		pass
 	else:
@@ -384,7 +407,7 @@ def clean_dev_contrib_csv(filetype, csv=False, sep=',', top_n=False, leaders=Fal
 
 		elif leaders is True:
 			df = df.loc[(rank_crit | keep_leaders)]			
-
+	"""
 
 
 
