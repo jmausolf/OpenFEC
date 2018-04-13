@@ -8,17 +8,19 @@ library(stringr)
 library(lubridate)
 library(scales)
 library(DBI)
+library(ggsci)
 
 
 
 ##Load Data
-#file = "openFEC.db"
-file = "openFEC_full_R_test.db"
+file = "openFEC.db"
+#file = "openFEC_full_R_test.db"
 path = "../fec_download/"
 filepath = paste0(path, file)
 con <- dbConnect(RSQLite::SQLite(), filepath)
 fec <- dbGetQuery(con, "SELECT * FROM schedule_a_cleaned")  %>% 
         mutate(sub_id = as.character(sub_id))
+
 
 
 source("assemble_plots.R")
@@ -55,23 +57,20 @@ dfm <- fec %>%
 #occupations <-  as.data.frame(table(dfm$contributor_occupation))
 dfocc <- dfm %>% 
   mutate(occlevels = 'OTHERS') %>% 
-  mutate(occlevels = if_else(executive == "True", "CSUITE", occlevels),
-         occlevels = if_else(director == "True", "DIRECTOR", occlevels),
-         occlevels = if_else(manager == "True", "MANAGER", occlevels)) %>% 
+  mutate(occlevels = if_else(executive_emp == "True" | executive_occ == "True", "CSUITE", occlevels),
+         occlevels = if_else(director_emp == "True" | director_occ == "True", "DIRECTOR", occlevels),
+         occlevels = if_else(manager_emp == "True" | manager_occ == "True", "MANAGER", occlevels)) %>% 
+  #Correction for Levels pre 2004 to others
+  mutate(occlevels = if_else(occlevels != "OTHERS" & cycle < 2004, "OTHERS", occlevels)) %>% 
   mutate(occ3 = fct_collapse(occlevels,
                              "MANAGEMENT" = c("MANAGER", "DIRECTOR"))) %>% 
-  mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) 
+  mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS")))
+
+
 
 
 dfocc3 <- dfocc %>% 
-  select(cycle, pid3, pid2, cid, occlevels, occ3) %>% 
-  filter(!is.na(pid2),
-         !is.na(occlevels),
-         cycle >= 2004) %>% 
-  mutate(cycle = as.numeric(cycle))
-
-dfocc3 <- dfocc %>% 
-  select(cycle, pid3, pid2, partisan_score, cid, cid_master, occlevels, occ3) %>%
+  select(cycle, pid3, pid2, partisan_score, cid, cid_master, occlevels, occ3, occ4) %>%
   mutate(ps01 = ((partisan_score+1)/2)) %>% 
   filter(!is.na(pid2),
          !is.na(occlevels)) %>% 
