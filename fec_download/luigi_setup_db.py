@@ -14,7 +14,15 @@
 #PYTHONPATH='.' luigi --module luigi_setup_db CleanCompanyTable --local-scheduler --date-interval 2018-03-19
 #PYTHONPATH='.' luigi --module luigi_setup_db CleanCompanyTable --local-scheduler --date-interval 2018-03-21 --top-n 50 --leaders
 
+from mpi4py import MPI
+#comm = MPI.COMM_WORLD
+#print("hello world")
+#print("my rank is: %d"%comm.rank)
+#exit()
+
+
 import luigi
+#import luigi.contrib.mpi as mpi
 from luigi.util import inherits, requires
 import subprocess
 import hashlib
@@ -172,5 +180,48 @@ class CleanCompanyTable(luigi.Task):
 
 
 if __name__ == "__main__":
-	luigi.run()
+	
+	comm = MPI.COMM_WORLD
+	rank = comm.Get_rank()
+
+	if rank == 0:
+		luigi.run(cmdline_args=["--local-scheduler",
+					"--date-interval=2018-04-20"],
+			main_task_cls=CleanCompanyTable)
+	else:
+		pass
+
+	#luigi.run()
+	#luigi.run(["--local-scheduler --date-interval 2018-04-20"], main_task_cls=CleanCompanyTable)
+	#exit()
+
+	#Step 1
+	#tasks = [CreatePidsTable()]
+	#mpi.run(tasks)
+
+	#Step 2
+	#tasks = [BuildDB()]
+	#mpi.run(tasks)
+
+	#Step 3
+	#tasks = [CreateIndivCycle()]
+	#mpi.run(tasks)
+	
+	#Step 4
+	#tasks = [CreateCompanyTable()]
+	#mpi.run(tasks)
+
+	#Step 5
+	#tasks = [GenDevEmpOcc()]
+	#mpi.run(tasks)
+
+	#Step 6
+	#tasks = [CleanDevEmpOcc()]
+	#mpi.run(tasks)
+
+	#Step 7
+	#tasks = [CleanCompanyTable()]
+	#mpi.run(tasks)
+
+
 
