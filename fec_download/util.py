@@ -1,5 +1,6 @@
 import time
 import sqlite3
+import hashlib
 
 #Start Time
 start_time = time.time()
@@ -36,3 +37,15 @@ def run_sql_query(cursor, sql_script, path='sql/', inject=False):
 		cursor.executescript(qry)
 	except sqlite3.IntegrityError as e:
 		pass
+
+
+
+
+def check_config(fname):
+	hash_md5 = hashlib.md5()
+	with open(fname, "rb") as f:
+		for chunk in iter(lambda: f.read(4096), b""):
+			hash_md5.update(chunk)
+	return hash_md5.hexdigest()
+
+

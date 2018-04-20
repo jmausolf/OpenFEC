@@ -109,9 +109,12 @@ def create_insert_table(c, files):
 
 
 def count_result(c, table):
-	([print("[*] total: {:,} rows in {} table"
-		.format(r[0], table)) 
-		for r in c.execute("SELECT COUNT(*) FROM {};".format(table))])
+	try:
+		([print("[*] total: {:,} rows in {} table"
+			.format(r[0], table)) 
+			for r in c.execute("SELECT COUNT(*) FROM {};".format(table))])
+	except Exception as e:
+		print(e)
 
 
 def count_results(c, table_key):
@@ -155,7 +158,7 @@ def return_sql(action, **kwargs):
 db = None
 shutdown = False
 
-def main(delete=True):
+def build_tables(table_key, delete=True):
 	global db
 
 	#All Files in Config
@@ -188,7 +191,40 @@ def interrupt(signum, frame):
 		db.close()
 
 
+def download_build(select_config, config=False):
+	
+	if select_config == "master_config":
+		from master_config import years, cycles, companies, table_key
 
+
+	if select_config == "config":
+		years = config[0]
+		cycles = config[1]
+		companies = config[2]
+		table_key = config[3]
+		#from config import years, cycles, companies, table_key
+
+
+	
+	config_profile = [years, cycles, companies, table_key]
+	print(config_profile)
+
+	#Download Requested Data
+	datasets = download_files(years, table_key)
+	download(datasets, table_key)
+
+	#Build Tables
+	build_tables(table_key, delete=True)
+
+
+
+
+
+
+#download_build("config")
+#download_build("master_config")
+
+"""
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser()
@@ -228,3 +264,4 @@ if __name__ == "__main__":
 			time.sleep(0.2)
 	else:
 		pass
+"""

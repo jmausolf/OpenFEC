@@ -1,11 +1,13 @@
 import pandas as pd
 import sqlite3
 
-#from master_config import *
+from master_config import *
+#from config import *
 from setlogger import *
 from build_db import *
 from make_sql import *
 from getPARTY import *
+from cleanFEC import *
 from util import *
 
 
@@ -73,6 +75,82 @@ def make_cycle(df, date_col, dformat="mdy"):
 	return df
 
 
+
+def add_cid_old(dfc, companies):
+	df = dfc.copy()
+	df['cid'] = ''
+
+	for cid in sorted(companies, key=len):
+		df['cid'] = np.where(df['contributor_employer'].isnull(), 
+						#if employer missing, search occupation
+						np.where(df['contributor_occupation'].str.contains(
+								str(cid), case=False, na=False), cid, df['cid']),
+						#else search employer
+						np.where(df['contributor_employer'].str.contains(
+								str(cid), case=False, na=False), cid, df['cid']))
+
+	return df
+
+
+
+def add_cid(dfc, companies):
+	df = dfc.copy()
+	df['cid'] = ''
+
+	for cid in sorted(companies, key=len):
+
+		emp = 'contributor_employer'
+		occ = 'contributor_occupation'
+
+		#fill na's in employer/occupation
+		df[emp].fillna('', inplace=True)
+		df[occ].fillna('', inplace=True)
+
+		#(emp missing OR emp does not contain cid) & occ contains cid
+		crit_emp_na = 	(
+							(
+								(df[emp] == '') |
+								~(df[emp].str.contains(cid, case=False))
+							) &
+							(df[occ].str.contains(cid, case=False))
+						)
+
+
+		#(occ missing OR occ does not contain cid) & emp contains cid
+		crit_occ_na = 	(
+							(
+								(df[occ] == '') |
+								~(df[occ].str.contains(cid, case=False))
+							) &
+							(df[emp].str.contains(cid, case=False))
+						)
+
+			
+
+		#both contain
+		crit_both = 	(
+							(df[occ].str.contains(cid, case=False)) &
+							(df[emp].str.contains(cid, case=False))
+						)			
+
+
+		#both missing or not contain
+		#do nothing implicitly
+		df.loc[crit_emp_na, 'cid'] = cid #fill from occ only	
+		df.loc[crit_occ_na, 'cid'] = cid #fill from emp only
+		df.loc[crit_both, 'cid'] = cid	#both occ and emp match
+
+	print("Still missing cid for the following df:")
+	x = df.loc[(df['cid'] == '')]
+	print(x.shape)
+
+	unique_cids = df.cid.unique().tolist()
+	print(unique_cids)
+	return df
+
+
+
+
 #Alter Functions
 def alt_cm_test(df, cycles=False, cid=False):
 	df = lower_var("cand_name", df)
@@ -110,11 +188,23 @@ def alt_cid(df, cycles=False, cid=False):
 	df['cid'] = cid
 	return df
 
+def alt_cid_companies(df, cycles=False, cid=False):
+	df = add_cid(df, companies)
+	#todo df = update_cid_key(df, key)
+	return df
+
 
 def alt_cycle(df, cycles=False, cid=False):
 	df = make_cycle(df, "transaction_dt")
 	return df
 
+def alt_clean_cids(df, cycles=False, cid=False):
+	df = filter_company_ids(df)
+	return df
+
+def alt_dev_cids(df, cycles=False, cid=False):
+	df = filter_company_ids(df, dev=True)
+	return df
 
 
 def get_alter_profile(
@@ -125,14 +215,15 @@ def get_alter_profile(
 		cycles=False,
 		cid=False,
 		replace_null=False, 
-		replace_type=False, 
+		replace_type=False,
+		alt_lim = 1, 
 		alt_types=[], **kwargs
 		):
 
 	df = pd.read_sql_query(
 			"""
-			SELECT * FROM {} LIMIT 1;
-			""".format(input_table), con=db)
+			SELECT * FROM {} LIMIT {};
+			""".format(input_table, alt_lim), con=db)
 
 	df = alter_function(df, cycles)
 
@@ -248,6 +339,14 @@ def alter_create_table(
 #alter_create_table("individual_contributions", "test_indiv", db, c, alter_function=alt_indiv_test)
 #alter_create_table("committee_master", "committee_master_unique", db, c, alter_function=alt_cmte_unique, limit=False, chunksize=1000000)
 #alter_create_table("committee_master_unique", "committee_master_pids", db, c, alter_function=alt_cmte_pid, limit=False, chunksize=1000000)
+
+#alter_create_table("schedule_a", "sa_test", db, c, alter_function=alt_clean_cids, limit=False, chunksize=1000000)
+
+
+#alter_create_table("schedule_a", "test", db, c, alter_function=alt_cmte_test, limit=False, chunksize=1000000)
+
+
+#alter_create_table("test_cid", "sa_cid_test", db, c, alter_function=alt_cid_companies, limit=False, chunksize=1000000)
 
 
 #alter_create_table("tmp", "tmp2", db, c, alter_function=alt_cid, limit=False, chunksize=1000000)

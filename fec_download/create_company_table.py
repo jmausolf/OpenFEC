@@ -28,13 +28,6 @@ def create_select_insert_company(
 		create_qry = "create_schedule_a_pids.sql"
 		insert_qry = "insert_schedule_a_pids.sql"
 
-	#TODO
-	#adjust indiv contrib to add cycle column
-	#Alter cycles example
-	#drop table if exists indiv
-	#rename table to indiv
-	#adjust join query (add cycle col)
-	#adjust create and insert qurs
 
 	#create dest table
 	if replace_if_exists is True:
@@ -42,48 +35,43 @@ def create_select_insert_company(
 		pass
 
 
-	#cid_counter = 0
-	for company in companies:
-		global start_time
-		time_elapsed(start_time)
+	global start_time
+	time_elapsed(start_time)
 
-		#create temporary table from selection
-		company_qry = select_schedule_a_by_company(
-				company,
+	#create temporary table from selection
+	companies_qry = select_schedule_a_by_company(
+				companies,
 				committee_table,
 				pids)
-		print(company_qry)
+	print(companies_qry)
 		
 		
-		run_sql_query(c, company_qry, inject=True)
-		#db.commit()
-		print(company)
+	run_sql_query(c, companies_qry, inject=True)
 
-		#alter to add cid to info before insert
-		alter_create_table("tmp", "tmp_cid", db, c, 
-						alter_function=alt_cid, 
-						cid=company, 
+	time_elapsed(start_time)
+	alter_create_table("tmp", "tmp_cid", db, c, 
+						alter_function=alt_cid_companies, 
 						limit=False, 
 						chunksize=1000000)
 
-
-		#insert temporary table into destination
-		run_sql_query(c, insert_qry, path='sql_clean/')
+	#insert temporary table into destination
+	time_elapsed(start_time)
+	run_sql_query(c, insert_qry, path='sql_clean/')
 		
 
 #create_select_insert_company(db, c, companies)
-run = True
+#run = True
 
-def main():
-	global db
-	global c
-	global run 
+def create_company_table(db, c):
+	#global db
+	#global c
+	#global run 
 
 
 	#Connect to Data
 	#db = connect_db("openFEC.db")
 	#c = db.cursor()
-	from clean_db import db, c
+	#from clean_db import db, c
 
 
 	#Build Company Queries
@@ -100,50 +88,25 @@ def main():
 
 	#Count Result
 	count_result(c, "schedule_a")
-	exit_db(db)
+	#exit_db(db)
 
 	#Final Time
 	#time_elapsed(start_time)
 	print("[*] done")
 
-	db = None
-	c = None
-	run = False
-	return
+	#db = None
+	#c = None
+	#run = False
+	#return
 
 
 
 
-
-def interrupt(signum, frame):
-	global db
-	global shutdown
-
-	print ("[*] interrupt requested, control-C a second time to confirm")
-
-	if db:
-		db.interrupt()
-		db.close()
 
 
 
 
 if __name__ == "__main__":
 
-	parser = argparse.ArgumentParser()
-	parser.add_argument("-b", "--build", 
-			default=False, 
-			type=bool, 
-			help="clean files"
-			)
-	args = parser.parse_args()
+	create_company_table()
 
-	if not (args.build):
-		parser.error('No action requested, add --build True')
-
-
-	if args.build is True:
-		main()
-
-	else:
-		pass

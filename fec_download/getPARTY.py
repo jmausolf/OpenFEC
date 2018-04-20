@@ -6,7 +6,7 @@ import threading
 import time
 import warnings
 
-from config import *
+#from config import *
 from setlogger import *
 from build_db import *
 from make_sql import *
@@ -31,7 +31,6 @@ def get_pty_by_cand_id(db, cand_id, cycle=False, verbose=False):
 		cand_qry = select_pty_by_cand_id(cand_id, cycle)
 
 	df = pd.read_sql_query(cand_qry, con=db, index_col=None)
-
 	if df.shape[0] == 0:
 
 		cand_qry = select_pty_by_cand_id(cand_id)
@@ -41,7 +40,9 @@ def get_pty_by_cand_id(db, cand_id, cycle=False, verbose=False):
 			pid = "MISSING"
 			return pid
 		else:
-			pass
+			pids = df["cand_pty_affiliation"].tolist()
+			pid = most_common_pid(pids)
+			return pid
 
 	else:
 
@@ -54,8 +55,6 @@ def get_pty_by_cand_id(db, cand_id, cycle=False, verbose=False):
 		#Get unique pid's (in the event the candidate switches parties)
 		pids = df["cand_pty_affiliation"].tolist()
 
-		#if only two entries that are different, takes most recent
-		#pid = list(Counter(pids).most_common(1))[0][0]
 		pid = most_common_pid(pids)
 		name = list(Counter(df["cand_name"].tolist()).most_common(1))[0][0]
 
@@ -87,9 +86,7 @@ def get_pty_by_cmte_id(db, cmte_id, verbose=False):
 	#Get unique pid's (in the event the candidate switches parties)
 	pids = df["cmte_pty_affiliation"].tolist()
 
-	#if only two entries that are different, takes most recent
 	try:
-		#pid = list(Counter(pids).most_common(1))[0][0]
 		pid = most_common_pid(pids)
 		name = list(Counter(df["cmte_nm"].tolist()).most_common(1))[0][0]
 	except Exception as e:
@@ -144,7 +141,7 @@ def pid_codes(pid):
 	pid = str(pid).upper()
 
 	#Major Parties
-	if pid == "DEM" or pid == "REP":
+	if pid == "DEM" or pid == "REP" or pid == "IND":
 		return True
 
 	#Major Third Parties
@@ -272,38 +269,43 @@ def search_party_id(
 	cmte_results = get_pty_by_cmte_id(db, cmte_id)
 	pid = cmte_results[0]
 	cmte_cand = cmte_results[1]
-
+  
 	#direct cmte id
 	if pid_codes(pid) is True:
 		if itemized is True:
+
+			#try to get partisan score from itemized contrib
 			results = get_parties_other_ids(db, cmte_id, cycle)
 			pid = results[0]
 			partisan_score = results[1]
+
 			return pid, partisan_score
 
 		else:
 			return pid
 
 	#search of candidate ids
-	if pid_codes(pid) is False and len(str(cmte_cand)) == 9:
+	if pid_codes(pid) is not True and len(str(cmte_cand)) == 9:
 		pid = get_pty_by_cand_id(db, cmte_cand, cycle)
-
 		if pid_codes(pid) is True:
 
 			if itemized is True:
 				results = get_parties_other_ids(db, cmte_id, cycle)
 				pid = results[0]
 				partisan_score = results[1]
+
 				return pid, partisan_score
 
 			else:
 				return pid
 
-		else: 
+		else:
+			#partisan_score = float("{:0.5f}".format(partisan_dummy(pid)))
+			#return pid, partisan_score
 			pass
 
 	#itemized search of other ids
-	if pid_codes(pid) is False and len(str(cmte_cand)) < 9:
+	if pid_codes(pid) is not True and len(str(cmte_cand)) <= 9:
 		if levels is True:
 			counter+=1
 
@@ -418,14 +420,47 @@ def get_parties_other_ids(
 #C00538835
 #C00000547
 
-#global counter 
-#global first_missing
-#counter = 0
-#first_missing = []
-#x = search_party_id(db, "C00005173", 2012, itemized=True, initial=True)
-#x = search_party_id(db, "C00509836", 2012, itemized=True, initial=True)
+"""
+global counter 
+global first_missing
+counter = 0
+first_missing = []
+#x = search_party_id(db, "C00068353", 2008, itemized=True, initial=True)
+#x = search_party_id(db, "C00509836", 2008, itemized=True, initial=True)
 #x = search_party_id(db, "C00505529", 2012, itemized=True, initial=True)
-#x = search_party_id(db, "C00000638", 2002, itemized=True, initial=True)
+#x = search_party_id(db, "C00000638", 2008, itemized=True, initial=True)
+#x = search_party_id(db, "C00446518", 2008, itemized=True, initial=True)
+#print(x)
+
+
+print("Starting test1")
+test1 = ["C00068353", "C00257642", "C00279273", "C00279315", "C00280206", "C00305110", "C00309419", "C00358895", "C00397216", "C00446518"]
+for test in test1:
+	x = search_party_id(db, test, 2008, itemized=True, initial=True)
+	print(x)
+
+#x = get_pty_by_cand_id(db, "P20000527", 2008)
+#print(x)
+
+
+print("Starting test2")
+test2 = ["C00397679", "C00368183", "C00430694"]
+for test in test2:
+	x = search_party_id(db, test, 2008, itemized=True, initial=True)
+	print(x)
+
+
+
+print("Starting test3")
+test3 = ["C00006486", "C00007658", "C00010603", "C00016899", "C00017830", "C00019075", "C00019331", "C00023838"]
+for test in test3:
+	x = search_party_id(db, test, 2008, itemized=True, initial=True)
+	print(x)
+
+"""
+
+
+
 
 #mean of empty slice: C00001347
 #errors are when all the ids are unknown or 

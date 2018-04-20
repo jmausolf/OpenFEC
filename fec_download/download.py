@@ -8,7 +8,7 @@ import re
 import zipfile
 import os
 from setlogger import *
-from config import *
+#from config import *
 
 #Get Date for Filenames
 now = datetime.datetime.now()

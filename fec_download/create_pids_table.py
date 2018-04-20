@@ -1,5 +1,6 @@
 import pandas as pd
 import sqlite3
+import time
 from setlogger import *
 from download import *
 from build_db import *
@@ -38,7 +39,10 @@ def rename(cursor, input_tables, output_prefix, reverse=False):
 def make_pid_config(year):
 	years = [year]
 	cycles = [int(year) for year in years]
-	companies = f500("data/fortune500-list.csv")[0:5]
+	cmaster = "data/fortune1000-list_alias_master.csv"
+	companies = concat_alias(cmaster, limit=N)
+	#companies = f500("data/fortune500-list.csv")[0:5]
+	#companies = companies[0:5]
 	table_key = {
 		'cm'     : ['committee_master', 'cm.txt'],
 		'cn'     : ['candidate_master', 'cn.txt'],
@@ -78,24 +82,32 @@ def make_pids_table(db, c, dest=False, lim=False, af=alt_cmte_pid_cycle):
 	else:
 		dest =  "committee_master_pids"
 
-	build_cmd = "python3 build_db.py -c True -d True -b True"
+	#build_cmd = "python3 build_db.py -c True -d True -b True"
 
 	pid_counter = 0
 	for cycle in cycles:
 		pid_counter +=1
 		if pid_counter == 1:
 			write_config(make_pid_config(str(cycle)))
-			subprocess.call(build_cmd, shell=True)
+			#subprocess.call("cat config.py", shell=True)
+			config = make_pid_config(str(cycle))
+			#subprocess.call(build_cmd, shell=True)
+			#time.sleep(1)
+			download_build("config", config)
 			alter_create_table(source, dest, db, c, alter_function=af, 
 				limit=lim, chunksize=1000000, cycles=cycle)
 		else:
 			write_config(make_pid_config(str(cycle)))
-			subprocess.call(build_cmd, shell=True)
+			#time.sleep(5)
+			config = make_pid_config(str(cycle))
+			#subprocess.call(cat config.py, shell=True)
+			#subprocess.call("cat config.py", shell=True)
+			download_build("config", config)
 			alter_create_table(source, dest, db, c, alter_function=af, 
 				limit=lim, chunksize=1000000, cycles=cycle, create=False)		
 
 
-make_pids_table(db, c)
+#make_pids_table(db, c, lim=10)
 
 
 

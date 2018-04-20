@@ -1,7 +1,7 @@
 --create new table with desired specs
-DROP TABLE if exists schedule_a;
+DROP TABLE if exists schedule_a_cleaned;
 
-CREATE TABLE schedule_a (
+CREATE TABLE schedule_a_cleaned (
 			--info about individual contributor
 			contributor_name TEXT, 
 			contributor_employer TEXT,
@@ -9,6 +9,7 @@ CREATE TABLE schedule_a (
 			contributor_city TEXT,
 			contributor_state TEXT,
 			contributor_zip_code TEXT,
+			contributor_cycle TEXT,
 
 			--individual about cmte
 			cmte_id TEXT NOT NULL,
@@ -19,6 +20,11 @@ CREATE TABLE schedule_a (
 			cmte_filing_freq TEXT,
 			cmte_org_tp TEXT,
 			cmte_connected_org_nm TEXT,
+
+			--info about cmte parties
+			party_id TEXT,
+			partisan_score NUMERIC,
+			cmte_cycle TEXT,
 
 			--info about candidates
 			cand_id TEXT,
@@ -49,8 +55,24 @@ CREATE TABLE schedule_a (
 
 			--requested company
 			--added to tmp after its creation
-			cid TEXT
+			cid TEXT,
+
+			--qc cleaning cols
+			cid_master TEXT,
+			contributor_employer_clean TEXT,
+			contributor_occupation_clean TEXT,
+			emp_count NUMERIC,
+			occ_count NUMERIC,
+			cid_valid TEXT,
+			executive_emp TEXT,
+			executive_occ TEXT,
+			director_emp TEXT,
+			director_occ TEXT,
+			manager_emp TEXT,
+			manager_occ TEXT,
+			rank_emp NUMERIC,
+			rank_occ NUMERIC
 			
 );
 
-CREATE UNIQUE INDEX idx_schedule_a ON schedule_a (sub_id);
+CREATE UNIQUE INDEX idx_schedule_a_cleaned ON schedule_a_cleaned (sub_id);

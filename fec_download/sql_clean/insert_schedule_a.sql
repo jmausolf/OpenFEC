@@ -23,10 +23,8 @@ INSERT INTO schedule_a (
 			cand_name,
 			cand_pty_affiliation,
 			cand_election_yr,
-			cand_fec_election_yr,
 			cand_office,
 			cand_pcc,
-			cand_cmte_linkage_id,
 			
 			--info about contribution
 			contributor_transaction_dt,
