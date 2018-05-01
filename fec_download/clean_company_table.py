@@ -5,10 +5,12 @@ from clean_db import *
 def clean_company_table(db, c, dev=False):
 
 	if dev is True:
+		#TODO set chunksize as >= schedule_a
+		#nb. if schedule a > chunksize, invalid results
 		alter_create_table("schedule_a", "sa_dev", db, c, 
 							alter_function=alt_dev_cids, 
 							limit=False, 
-							chunksize=10000000,
+							chunksize=100000000,
 							alt_lim=10000)
 	else:
 
