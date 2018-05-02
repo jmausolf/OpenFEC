@@ -114,29 +114,37 @@ df = clean_state_col("contributor_state", df)
 
 #group_cols = ['contributor_name_clean', 'cid_master']
 #group_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean']
-group_cols = ['contributor_name_clean', 'cid_master', 'contributor_state_clean']
-#group_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean', 'contributor_state_clean']
+#group_cols = ['contributor_name_clean', 'cid_master', 'contributor_state_clean']
+group_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean', 'contributor_state_clean']
+
+
+#check NA vals for groupcols or other cols, could be source of count seg_faults
+
 
 
 analysis_cols = ['sub_id', 'party_id', 'partisan_score', 'contributor_cycle']
 analysis_cols = ['contributor_cycle', 'sub_id', 'party_id', 'partisan_score']
 #other_cols = ['contributor_city_clean']
 
+#keep_cols = group_cols+analysis_cols+other_cols
 keep_cols = group_cols+analysis_cols
 df = df[keep_cols]
-
+df = df.fillna("missing") #key, some missing data in the states #prevents segfault error
 
 
 #x = df.groupby(group_cols).count().add_suffix('_Count').reset_index()
 #x = df.groupby(group_cols).count().add_suffix('_Count')
 #x = df.groupby(['contributor_name']).first()
-x = df.groupby(group_cols).min()
+#x = df.groupby(group_cols).min()
+x = df.groupby(group_cols).count()
 print(x.shape)
 #print(x.head(200))
 print(x.head(5))
 #print(x.shape)
 
 x.to_csv("testgroupresults.csv", sep=",")
+
+#
 
 
 #unique_cids = df.contributor_name.unique().tolist()
