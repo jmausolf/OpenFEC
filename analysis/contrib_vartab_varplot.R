@@ -1,95 +1,56 @@
+####################################
+## Load Contrib SOURCE
+####################################
 
-
-
-library(tidyverse)
-library(stargazer)
-# library(Hmisc)
-# library(stringr)
-# library(car)
-library(forcats)
-library(ggsci)
-
-#Change Append = TRUE to Not Overwrite Files
-save_stargazer <- function(output.file, ...) {
-  output <- capture.output(stargazer(...))
-  cat(paste(output, collapse = "\n"), "\n", file=output.file, append = FALSE)
-}
-
-
-
-
-
-##Make directory
-system('mkdir -p images')
-
-wout <- function(plt_type, cid){
-  outfile <- paste0("images/", plt_type, "_", str_replace_all(tolower(cid), " ", "_"), ".png")
-  return(outfile)
-}
-
-################################################
-## Clean data
-################################################
-
-
-
-
-
-
-
-#Summary Stats for Variables in Models
-df_stats <- dfocc %>% 
-  select(cycle, 
-         contributor_name,
-         cid,
-         cid_master,
-         contributor_transaction_amt,
-         party_id,
-         pid2,
-         partisan_score,
-         #pid3, 
-         #pid5, 
-         occlevels, 
-         contributor_occupation_clean) %>% 
-  mutate(occ3 = fct_collapse(occlevels,
-                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"),
-                             "OTHERS" = c("ENGINEER", "Other"))) %>% 
-  mutate(contributor_name = as.numeric(as.factor(contributor_name)),
-         party_id = as.numeric(as.factor(party_id)),
-         pid2 = as.numeric(pid2),
-         #pid3 = as.numeric(pid3),
-         #pid5 = as.numeric(pid5),
-         cid = as.numeric(as.factor(cid)),
-         cid_master = as.numeric(as.factor(cid_master)),
-         occ3 = as.numeric(occ3),
-         contributor_occupation = as.numeric(as.factor(contributor_occupation_clean))) %>% 
-  rename("Contributor Name" = contributor_name,
-         "Contribution Receipt Amount" = contributor_transaction_amt,
-         "Presidential Election Cycle" = cycle,
-         "Party Identification" = party_id,
-         "Major Party ID" = pid2,
-         "Partisan Score" = partisan_score,
-         "Company ID" = cid,
-         "Company Master ID" = cid_master,
-         "Contributor Occupation" = contributor_occupation_clean,
-         "Organizational Hierarchies" = occ3)
-
-
-save_stargazer("output/descriptive_stats.tex",
-               as.data.frame(df_stats), header=FALSE, type='latex',
-               median = TRUE,
-               font.size = "scriptsize",
-               digits = 2,
-               title = "Descriptive Statistics from the Federal Election Commission (FEC)" )
-
-#stargazer(as.data.frame(df_stats), type = "text", median = TRUE)
+source("contrib_source.R")
 
 
 
 
 ########################################
-#Variance tables
+#Variance Table + Graph Functions
 ########################################
+
+##VARIANCE DF FUNCTION
+
+make_var_df <- function(input_df, company_var){
+  require("dplyr")
+  require("lazyeval")
+  
+  #Get Variance by Organization Levels
+  
+  selvars = list('cycle', company_var, 'pid2', 'occ3')
+  groupvars = list('cycle', company_var, 'occ')
+  
+  df1a <-  input_df %>%
+    select_(.dots = selvars) %>% 
+    filter(!is.na(pid2),
+           !is.na(occ3)) %>%
+    mutate(occ = occ3) %>% 
+    group_by_(.dots = groupvars) %>% 
+    summarize(varpid = var(as.numeric(pid2)))
+  
+  #Get Variance All Levels
+  df1b <-  input_df %>%
+    select_(.dots = selvars) %>% 
+    filter(!is.na(pid2),
+           !is.na(occ3)) %>%
+    mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) %>%
+    mutate(occ = occ4) %>%
+    group_by_(.dots = groupvars) %>% 
+    summarize(varpid = var(as.numeric(pid2)))
+  
+  df1 <- rbind(df1a, df1b) %>%
+    #remove "others" from pre 2004, only all exists before levels can be det.
+    mutate(occ = ifelse(occ == "OTHERS" & cycle < 2004, NA, as.character(occ))) %>%
+    mutate(occ = factor(occ,
+                        levels = c("CSUITE", "MANAGEMENT", "OTHERS", "ALL"))) %>%
+    filter(!is.na(occ))
+  
+  return(df1)
+}
+
+
 
 
 ##VARIANCE TABLE FUNCTIONS
@@ -142,200 +103,131 @@ var_cycle_table <- function(df,
 
 
 
+##VARIANCE GRAPH FUNCTIONS
 
-#Big Tables (Use Default dfocc)
+make_var_graph <- function(df, plt_type="cid_master", plt_caption=""){
 
-#CID vs CID MASTER
+  out_by = paste("by_all_companies", plt_type, sep = "_")
+  outfile <- wout("plt_partisan_variance_occ", out_by)
+  
+  plt_title = "Variance of Within-Company Individual Contributions by Occupation and Election Cycle"
+    
+  df_var_cycle_graph <- df %>% 
+    group_by(occ, cycle) %>% 
+    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    filter(!is.nan(meanvar)) 
+  
+  g <- ggplot(df_var_cycle_graph, aes(make_datetime(cycle), meanvar)) +
+    #geom_point(aes(shape=cid), alpha=0.5) +
+    geom_smooth(color='#B28E02', alpha=0.15, size=0.5) +
+    geom_line(aes(color=occ), alpha=0.9) +
+    geom_point(aes(shape=occ), alpha=1) +
+    #scale_color_manual(values=c("#0F6D0C", "#BF1200", "#BF1200", "#BF1200" )) +
+    #scale_color_jama() +
+    scale_color_npg() +
+    scale_shape_manual(values=c(10, 1, 2, 6)) +
+    #scale_x_datetime(date_labels = "%Y", date_breaks = "2 year", limits = lims) +
+    scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+    xlab("Contribution Cycle") +
+    ylab("Variance of Company Partisan Contributions") +
+    labs(title = plt_title,
+         caption = plt_caption) +
+    theme(legend.position="bottom") +
+    guides(shape = guide_legend(override.aes = list(size = 5))) +
+    theme(legend.title=element_blank()) + 
+    theme(legend.position="bottom") +
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  
+  ggsave(outfile, width = 10, height = 6)
+  
+  return(g)
+  
+}
 
-#Get Variance by Organization Levels
-df1a <-  dfocc3 %>%
-  select(cycle, cid_master, pid2, occ3) %>% 
-  filter(!is.na(pid2),
-         !is.na(occ3)) %>%
-  mutate(occ = occ3) %>% 
-  group_by(cycle, cid_master, occ) %>% 
-  summarize(varpid = var(as.numeric(pid2)))
 
-#Get Variance All Levels
-df1b <-  dfocc3 %>%
-  select(cycle, cid_master, pid2, occ3) %>% 
-  filter(!is.na(pid2),
-         !is.na(occ3)) %>%
-  mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) %>% 
-  mutate(occ = occ4) %>% 
-  group_by(cycle, cid_master, occ) %>% 
-  summarize(varpid = var(as.numeric(pid2)))
 
-df1 <- rbind(df1a, df1b) %>% 
-  mutate(occ = factor(occ, 
-                      levels = c("CSUITE", "MANAGEMENT", "OTHERS", "ALL")))
 
+####################################
+## Make Variance Tables + Graphs
+####################################
+
+
+
+#############################
+## CID MASTER
+#############################
+
+df1 <- make_var_df(dfocc3, "cid_master")
 
 vt_all_cidmaster <- var_sum_table(df1, 
-                                  "output/var_all_cidmaster.tex", 
+                                  "output/tables/contrib_var_all_cidmaster.tex", 
                                   "Variance of Major Party Contributions by Organizational Hierarchy - CID Master")
 vt_cycle_cidmaster <- var_cycle_table(df1, 
-                                      "output/var_cycle_cidmaster.tex", 
+                                      "output/tables/contrib_var_cycle_cidmaster.tex", 
                                       "Variance of Major Party Contributions by Occupation and Year - CID Master")
 
 
 
 
-df_var_cycle_graph <- df1 %>% 
-  group_by(occ, cycle) %>% 
-  summarise(meanvar = mean(varpid, na.rm = T)) %>%
-  filter(!is.nan(meanvar)) 
-
-outfile <- wout("plt_partisan_variance_occ", "by_all_companies_cid_master")
-ggplot(df_var_cycle_graph, aes(make_datetime(cycle), meanvar)) +
-  #geom_point(aes(shape=cid), alpha=0.5) +
-  geom_smooth(color='#B28E02', alpha=0.15, size=0.5) +
-  geom_line(aes(color=occ), alpha=0.9) +
-  geom_point(aes(shape=occ), alpha=1) +
-  #scale_color_manual(values=c("#0F6D0C", "#BF1200", "#BF1200", "#BF1200" )) +
-  #scale_color_jama() +
-  scale_color_npg() +
-  scale_shape_manual(values=c(10, 1, 2, 6)) +
-  #scale_x_datetime(date_labels = "%Y", date_breaks = "2 year", limits = lims) +
-  scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
-  xlab("Contribution Cycle") +
-  ylab("Variance of Company Partisan Contributions") +
-  ggtitle(paste("Variance of Company Party Contributions by Occupation and Election Cycle - CID Master")) +
-  guides(shape = guide_legend(override.aes = list(size = 5))) +
-  theme(legend.title=element_blank()) + 
-  theme(legend.position="bottom") +
-  theme(plot.title = element_text(hjust = 0.5))
-ggsave(outfile, width = 10, height = 6)
+gr_cid_master <- make_var_graph(df1, "cid_master", "Note: Companies Identified Using - CID_MASTER")
 
 
 
 
 
-#CID vs CID MASTER
+#############################
+## CID
+#############################
 
-#Get Variance by Organization Levels
-df1a <-  dfocc3 %>%
-  select(cycle, cid, pid2, occ3) %>% 
-  filter(!is.na(pid2),
-         !is.na(occ3)) %>%
-  mutate(occ = occ3) %>% 
-  group_by(cycle, cid, occ) %>% 
-  summarize(varpid = var(as.numeric(pid2)))
+df1 <- make_var_df(dfocc3, "cid")
 
-#Get Variance All Levels
-df1b <-  dfocc3 %>%
-  select(cycle, cid, pid2, occ3) %>% 
-  filter(!is.na(pid2),
-         !is.na(occ3)) %>%
-  mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) %>% 
-  mutate(occ = occ4) %>% 
-  group_by(cycle, cid, occ) %>% 
-  summarize(varpid = var(as.numeric(pid2)))
-
-df1 <- rbind(df1a, df1b) %>% 
-  mutate(occ = factor(occ, 
-                      levels = c("CSUITE", "MANAGEMENT", "OTHERS", "ALL")))
+vt_all_cid <- var_sum_table(df1, 
+                                  "output/tables/contrib_var_all_cid.tex", 
+                                  "Variance of Major Party Contributions by Organizational Hierarchy - CID")
+vt_cycle_cid <- var_cycle_table(df1, 
+                                      "output/tables/contrib_var_cycle_cid.tex", 
+                                      "Variance of Major Party Contributions by Occupation and Year - CID")
 
 
-df_var_cycle_graph <- df1 %>% 
-  group_by(occ, cycle) %>% 
-  summarise(meanvar = mean(varpid, na.rm = T)) %>%
-  filter(!is.nan(meanvar)) 
-
-outfile <- wout("plt_partisan_variance_occ", "by_all_companies_cid")
-ggplot(df_var_cycle_graph, aes(make_datetime(cycle), meanvar)) +
-  #geom_point(aes(shape=cid), alpha=0.5) +
-  geom_smooth(color='#B28E02', alpha=0.15, size=0.5) +
-  geom_line(aes(color=occ), alpha=0.9) +
-  geom_point(aes(shape=occ), alpha=1) +
-  #scale_color_manual(values=c("#0F6D0C", "#BF1200", "#BF1200", "#BF1200" )) +
-  #scale_color_jama() +
-  scale_color_npg() +
-  scale_shape_manual(values=c(10, 1, 2, 6)) +
-  #scale_x_datetime(date_labels = "%Y", date_breaks = "2 year", limits = lims) +
-  scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
-  xlab("Contribution Cycle") +
-  ylab("Variance of Company Partisan Contributions") +
-  ggtitle(paste("Variance of Company Party Contributions by Occupation and Election Cycle - CID")) +
-  guides(shape = guide_legend(override.aes = list(size = 5))) +
-  theme(legend.title=element_blank()) + 
-  theme(legend.position="bottom") +
-  theme(plot.title = element_text(hjust = 0.5))
-ggsave(outfile, width = 10, height = 6)
-
+gr_cid <- make_var_graph(df1, "cid", "Note: Companies Identified Using - CID")
 
 
 
 #Small Tables
+
+#############################
+## SMALL TAB | CID MASTER
+#############################
+
 dfocc3_small <- dfocc3 %>% 
   filter(cycle >= 2004)
 
-#Get Variance by Organization Levels
-df1a <-  dfocc3_small %>%
-  select(cycle, cid_master, pid2, occ3) %>% 
-  filter(!is.na(pid2),
-         !is.na(occ3)) %>%
-  mutate(occ = occ3) %>% 
-  group_by(cycle, cid_master, occ) %>% 
-  summarize(varpid = var(as.numeric(pid2)))
 
-#Get Variance All Levels
-df1b <-  dfocc3_small %>%
-  select(cycle, cid_master, pid2, occ3) %>% 
-  filter(!is.na(pid2),
-         !is.na(occ3)) %>%
-  mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) %>% 
-  mutate(occ = occ4) %>% 
-  group_by(cycle, cid_master, occ) %>% 
-  summarize(varpid = var(as.numeric(pid2)))
-
-df1 <- rbind(df1a, df1b) %>% 
-  mutate(occ = factor(occ, 
-                      levels = c("CSUITE", "MANAGEMENT", "OTHERS", "ALL")))
+df1 <- make_var_df(dfocc3_small, "cid_master")
 
 
 vt_all_cidmaster_small <- var_sum_table(df1, 
-                                  "output/var_all_cidmaster_small.tex", 
+                                  "output/tables/contrib_var_all_cidmaster_small.tex", 
                                   "Variance of Major Party Contributions by Organizational Hierarchy - CID Master")
 vt_cycle_cidmaster_small <- var_cycle_table(df1, 
-                                      "output/var_cycle_cidmaster_small.tex", 
+                                      "output/tables/contrib_var_cycle_cidmaster_small.tex", 
                                       "Variance of Major Party Contributions by Occupation and Year - CID Master")
 
 
 
 
+#############################
+## SMALL TAB | CID 
+#############################
 
-#Small - CID, NOT MASTER
-
-#Get Variance by Organization Levels
-df1a <-  dfocc3_small %>%
-  select(cycle, cid, pid2, occ3) %>% 
-  filter(!is.na(pid2),
-         !is.na(occ3)) %>%
-  mutate(occ = occ3) %>% 
-  group_by(cycle, cid, occ) %>% 
-  summarize(varpid = var(as.numeric(pid2)))
-
-#Get Variance All Levels
-df1b <-  dfocc3_small %>%
-  select(cycle, cid, pid2, occ3) %>% 
-  filter(!is.na(pid2),
-         !is.na(occ3)) %>%
-  mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) %>% 
-  mutate(occ = occ4) %>% 
-  group_by(cycle, cid, occ) %>% 
-  summarize(varpid = var(as.numeric(pid2)))
-
-df1 <- rbind(df1a, df1b) %>% 
-  mutate(occ = factor(occ, 
-                      levels = c("CSUITE", "MANAGEMENT", "OTHERS", "ALL")))
-
+df1 <- make_var_df(dfocc3_small, "cid")
 
 vt_all_cid_small <- var_sum_table(df1, 
-                                        "output/var_all_cid_small.tex", 
+                                        "output/tables/contrib_var_all_cid_small.tex", 
                                         "Variance of Major Party Contributions by Organizational Hierarchy - CID")
 vt_cycle_cid_small <- var_cycle_table(df1, 
-                                            "output/var_cycle_cid_small.tex", 
+                                            "output/tables/contrib_var_cycle_cid_small.tex", 
                                             "Variance of Major Party Contributions by Occupation and Year - CID")
 
 
