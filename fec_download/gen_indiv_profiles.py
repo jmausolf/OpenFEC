@@ -33,30 +33,40 @@ print(df.shape)
 ##STEP 1 Needs to Be Cleaning the Contributor Name 
 #(To deal with diff in cases, mr, ms, middle initials, etc)
 
-#make copy of name
-df['contributor_name_clean'] = df['contributor_name']
 
-#add join multipart last names, e.g. van geis = vangeis mc afee = mcafee,
-df = join_last_names('contributor_name_clean', df)
-df = lower_clean_strip('contributor_name_clean', df) 
+def clean_name_col(name_col, df):
 
-#correct non reversed names with commas
-df = correct_non_reversed_names('contributor_name_clean', df)
+	clean_col = name_col+"_clean"
 
+	#make copy of name
+	df[clean_col] = df[name_col]
 
-df = reverse_names('contributor_name_clean', df, delim=',')
-df = rm_name_punct_except_period_dash('contributor_name_clean', df)
-df = concat_name_initials('contributor_name_clean', df)
-df = rm_suffixes_titles('contributor_name_clean', df)
-df = sep_first_middle('contributor_name_clean', df)
-df = lower_clean_strip('contributor_name_clean', df)
-df = rm_middle_name('contributor_name_clean', df)
+	#add join multipart last names, e.g. van geis = vangeis mc afee = mcafee,
+	df = join_last_names(clean_col, df)
+	df = lower_clean_strip(clean_col, df) 
+
+	#correct non reversed names with commas
+	df = correct_non_reversed_names(clean_col, df)
 
 
+	df = reverse_names(clean_col, df, delim=',')
+	df = rm_name_punct_except_period_dash(clean_col, df)
+	df = concat_name_initials(clean_col, df)
+	df = rm_suffixes_titles(clean_col, df)
+	df = sep_first_middle(clean_col, df)
+	df = lower_clean_strip(clean_col, df)
+	df = rm_middle_name(clean_col, df)
 
-df = df[['contributor_name_clean', 'contributor_name', 'cid_master']]
-print(df.head(20))
 
+
+	df = df[[clean_col, name_col, 'cid_master']]
+	print(df.head(20))
+	return df
+
+
+##STEP 2 do the group by and other indiv aggregates
+
+df = clean_name_col("contributor_name", df)
 
 x = df.groupby(['contributor_name_clean', 'cid_master']).first()
 #x = df.groupby(['contributor_name']).first()
