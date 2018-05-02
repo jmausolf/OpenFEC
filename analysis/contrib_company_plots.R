@@ -1,80 +1,15 @@
-#Load Libraries
-library(tidyverse)
-library(stargazer)
-library(knitr)
-library(pastecs)
-library(forcats)
-library(stringr)
-library(lubridate)
-library(scales)
-library(DBI)
-library(ggsci)
+####################################
+## Load Contrib SOURCE
+####################################
 
-
-
-##Load Data
-file = "openFEC.db"
-#file = "openFEC_full_R_test.db"
-path = "../fec_download/"
-filepath = paste0(path, file)
-con <- dbConnect(RSQLite::SQLite(), filepath)
-fec <- dbGetQuery(con, "SELECT * FROM schedule_a_cleaned")  %>% 
-        mutate(sub_id = as.character(sub_id))
-
-
-
-source("assemble_plots.R")
-
-##Make directory
-system('mkdir -p images')
-
-wout <- function(plt_type, cid){
-  outfile <- paste0("images/", plt_type, "_", str_replace_all(tolower(cid), " ", "_"), ".png")
-  return(outfile)
-}
-
-################################################
-## Clean data
-################################################
-
-#All Contributions, All CID
-dfm <- fec %>% 
-  mutate(pid = fct_collapse(party_id,
-                             "NA-ERROR-UNKNOWN" = c("UNK_OTHER", "UNK", "GRE_UNK_OTHER")),
-         pid5 = fct_lump(party_id, n=4),
-         pid4 = fct_lump(party_id, n=3),
-         pid3 = fct_lump(party_id, n=2)) %>% 
-  mutate(pid2 = if_else(pid3!="Other", pid3, NULL, missing = NULL)) %>% 
-  mutate(partisan_score = as.numeric(partisan_score)) %>%
-  mutate(ps01 = ((partisan_score+1)/2)) %>% 
-  mutate(occ = fct_lump(contributor_occupation, n=10)) %>% 
-  mutate(cycle = as.numeric(cmte_cycle))
-  # %>% 
-  # mutate(lncval = log(as.numeric(contributor_transaction_amt)+1)) 
-
-
-##Clean Occupations
-#occupations <-  as.data.frame(table(dfm$contributor_occupation))
-dfocc <- dfm %>% 
-  mutate(occlevels = 'OTHERS') %>% 
-  mutate(occlevels = if_else(executive_emp == "True" | executive_occ == "True", "CSUITE", occlevels),
-         occlevels = if_else(director_emp == "True" | director_occ == "True", "DIRECTOR", occlevels),
-         occlevels = if_else(manager_emp == "True" | manager_occ == "True", "MANAGER", occlevels)) %>% 
-  #Correction for Levels pre 2004 to others
-  mutate(occlevels = if_else(occlevels != "OTHERS" & cycle < 2004, "OTHERS", occlevels)) %>% 
-  mutate(occ3 = fct_collapse(occlevels,
-                             "MANAGEMENT" = c("MANAGER", "DIRECTOR"))) %>% 
-  mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS")))
+source("contrib_source.R")
 
 
 
 
-dfocc3 <- dfocc %>% 
-  select(cycle, pid3, pid2, partisan_score, cid, cid_master, occlevels, occ3, occ4) %>%
-  mutate(ps01 = ((partisan_score+1)/2)) %>% 
-  filter(!is.na(pid2),
-         !is.na(occlevels)) %>% 
-  mutate(cycle = as.numeric(cycle))
+####################################
+## Make Company Plots
+####################################
 
 
 ggplot(df, aes(make_datetime(cycle), partisan_score)) +
