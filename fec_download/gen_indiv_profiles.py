@@ -35,32 +35,36 @@ print(df.shape)
 
 #make copy of name
 df['contributor_name_clean'] = df['contributor_name']
-df = lower_var_strip('contributor_name_clean', df)
-#df = lower_var('contributor_name_clean', df)
 
+#add join multipart last names, e.g. van geis = vangeis mc afee = mcafee,
+df = join_last_names('contributor_name_clean', df)
+df = lower_clean_strip('contributor_name_clean', df) 
 
+#correct non reversed names with commas
+df = correct_non_reversed_names('contributor_name_clean', df)
 
-
-#need to first concat single letters
 
 df = reverse_names('contributor_name_clean', df, delim=',')
 df = rm_name_punct_except_period_dash('contributor_name_clean', df)
-#df = reverse_names('contributor_name_clean', df, delim=',')
 df = concat_name_initials('contributor_name_clean', df)
 df = rm_suffixes_titles('contributor_name_clean', df)
+df = sep_first_middle('contributor_name_clean', df)
+df = lower_clean_strip('contributor_name_clean', df)
+df = rm_middle_name('contributor_name_clean', df)
+
 
 
 df = df[['contributor_name_clean', 'contributor_name', 'cid_master']]
-#print(df.head(20))
+print(df.head(20))
 
 
 x = df.groupby(['contributor_name_clean', 'cid_master']).first()
 #x = df.groupby(['contributor_name']).first()
 #print(x.shape)
 print(x.head(200))
+print(x.shape)
 
-
-x.to_csv("mytest.csv", sep="|")
+df.to_csv("mytest.csv", sep="|")
 
 
 #unique_cids = df.contributor_name.unique().tolist()

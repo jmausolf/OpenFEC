@@ -43,76 +43,109 @@ def replace_char(var, df, inchar=',', outchar='_'):
 
 def rm_suffixes_titles(var, df):
 
-    s = df[var]
+	s = df[var]
 
-    #suffixes
-    s = s.str.replace(' jr.', ' ').str.replace(' junior', ' ').str.replace(' jr', ' ')
-    s = s.str.replace(' sr.', ' ').str.replace(' senior', ' ').str.replace(' sr', ' ')
-    s = s.str.replace(' iii.', ' ').str.replace(' iii', ' ').str.replace(' the third', ' ').str.replace(' third', ' ')
-    s = s.str.replace(' iv.', ' ').str.replace(' iv', ' ').str.replace(' the fourth', ' ').str.replace(' fourth', ' ')
-    s = s.str.strip()
+	#suffixes
+	s = s.str.replace(' jr.', ' ').str.replace(' junior', ' ').str.replace(' jr', ' ')
+	s = s.str.replace(' sr.', ' ').str.replace(' senior', ' ').str.replace(' sr', ' ')
+	s = s.str.replace(' iii.', ' ').str.replace(' the third', ' ').str.replace(' third', ' ')
+	s = s.str.replace(' iv.', ' ').str.replace(' the fourth', ' ').str.replace(' fourth', ' ')
+	s = s.str.strip()
 
-    #titles
-    s = s.str.replace(' mr.', ' ').str.replace(' mr', ' ')
-    s = s.str.replace(' ms.', ' ').str.replace(' ms', ' ')
-    s = s.str.replace(' mrs.', ' ').str.replace(' mrs', ' ')
-    s = s.str.replace(' miss.', ' ').str.replace(' miss', ' ')
-    s = s.str.strip()
-
-    #degrees
-    #s = s.str.replace(' dr.', ' ').str.replace(' dr', ' ')
-    #s = s.str.replace(' m.d.', ' ').str.replace(' md', ' ')
-    #s = s.str.replace(' ph.d.', ' ').str.replace(' phd', ' ')
-    #s = s.str.replace(' j.d.', ' ').str.replace(' jd', ' ')
-    #s = s.str.replace(' m.b.a.', ' ').str.replace(' mba', ' ')
-    #s = s.str.strip()
+	#titles
+	s = s.str.replace(' mr.', ' ').str.replace(' mr', ' ')
+	s = s.str.replace(' ms.', ' ').str.replace(' ms', ' ')
+	s = s.str.replace(' mrs.', ' ').str.replace(' mrs', ' ')
+	s = s.str.replace(' miss.', ' ').str.replace(' miss', ' ')
+	s = s.str.strip()
 
 
-    s = s.str.replace(' . ', ' ')
+	#lingering mr, ms, mrs
+	pat = r'(\b[mr]{2,3}\s)|(\b[ms]{2,3}\s)|(\b[mrs]{3,3}\s)'
+	s = s.str.replace(pat, ' ').str.strip()
+
+	#other titles or suffixes not caught (with periods)
+	s = s.str.replace(r'(\b[a-z]{2,3}\.)', ' ')
 
 
-    #replace more than one white space with a space
-    s = s.str.replace(r"\s{2,}", ' ')
 
-    s.name = var
-    df = df.drop(var, axis=1)
-    df = pd.concat([df, s], axis=1)
-    return(df)
+	#degrees
+	#s = s.str.replace(' dr.', ' ').str.replace(' dr', ' ')
+	#s = s.str.replace(' m.d.', ' ').str.replace(' md', ' ')
+	#s = s.str.replace(' ph.d.', ' ').str.replace(' phd', ' ')
+	#s = s.str.replace(' j.d.', ' ').str.replace(' jd', ' ')
+	#s = s.str.replace(' m.b.a.', ' ').str.replace(' mba', ' ')
+	#s = s.str.strip()
+
+	#replace more than one white space with a space
+	s = s.str.replace(r"\s{2,}", ' ')
+
+	#replace extra periods
+	s = s.str.replace(' . ', ' ')
+
+	s.name = var
+	df = df.drop(var, axis=1)
+	df = pd.concat([df, s], axis=1)
+	return(df)
 
 
 
 def concat_name_initials(var, df):
 
-    s = df[var]
+	s = df[var]
 
-    #add periods to multiple initials without periods 
-    #s = s.str.replace(r"(\b[a-z]{1,1}\s){1,2}", '\\1__')
-    #s = s.str.replace(" __", '. ')
+	#add periods to multiple initials without periods 
+	#s = s.str.replace(r"(\b[a-z]{1,1}\s){1,2}", '\\1__')
+	#s = s.str.replace(" __", '. ')
 
-    #single letter word without period
-    s = s.str.replace(r'(\b[a-z]{1,1}\s)', '\\1__')
-    s = s.str.replace(" __", '. ')
+	#single letter word without period
+	s = s.str.replace(r'(\b[a-z]{1,1}\s)', '\\1__')
+	s = s.str.replace(" __", '. ')
 
-    #concat initials with periods 
-    s = s.str.replace(r"(\b[a-z]{1,1}\.\s)+(\b[a-z]{1,1}\.)", '\\1__\\2')
-    s = s.str.replace(". __", '.')
+	#concat initials with periods 
+	s = s.str.replace(r"(\b[a-z]{1,1}\.\s)+(\b[a-z]{1,1}\.)", '\\1__\\2')
+	s = s.str.replace(". __", '.')
 
-    #s.name = var
-    df = df.drop(var, axis=1)
-    df = pd.concat([df, s], axis=1)
-    return(df)
+	#s.name = var
+	df = df.drop(var, axis=1)
+	df = pd.concat([df, s], axis=1)
+	return(df)
+
+
+def split_fm(name):
+	f, m = name[:-3], name[-3:]
+	return "{} {}".format(f, m)
+
+
+def sep_first_middle(var, df):
+	s = df[var]
+	pat = r"(?P<one>\w+) (?P<two>\w+) (?P<three>\w+)"
+	pat = r"([a-z]{4,}\.\s)"
+	repl = lambda m: split_fm(m.group(0))
+	s = s.str.replace(pat, repl)
+	s.name = var
+	df = df.drop(var, axis=1)
+	df = pd.concat([df, s], axis=1)
+	return(df)
+
+
+
+
+
+def join_last_names(var, df, sep=''):
+	s = df[var]
+	pat = r'(\b[A-Za-z]{2,}\s)(\b[A-Za-z]{2,}\,)'
+	repl = lambda m: m.group(0).replace(' ', sep)
+	s = s.str.replace(pat, repl)
+	s.name = var
+	df = df.drop(var, axis=1)
+	df = pd.concat([df, s], axis=1)
+	return(df)
+
 
 
 def rm_mid_initials_suffixes(var, df):
 
-    #replace
-
-
-	#replace text preceding ".", e.g. jr. sen.
-	s = df[var].str.replace(r"[a-z]+\.", '')
-
-	#replace text following a comma
-	#ensure names are reversed previously
 	s = s.str.replace(r"\,\s[a-z]+", '')
 
 
@@ -138,7 +171,11 @@ def keep_first_last(namelist):
 			first = namelist[0]
 			last = namelist[-1]
 			first_last = [first, last]
-			name = " ".join(first_last).strip()
+
+			if re.match(r'([a-z]+\.)+', first):
+				name = " ".join(namelist).strip()
+			else:
+				name = " ".join(first_last).strip()
 
 		else:
 			name = " ".join(namelist).strip()
@@ -256,16 +293,26 @@ def split_race_gender(df):
 	return(df)
 
 
-def reverse_names(var, df, lower=True, delim='_'):
+def reverse_names(var, df, lower=True, delim=','):
 	d = delim
 	if lower is True:
-		s = df[var].apply(lambda x: d.join(x.split(d)[::-1])).str.replace(d, ' ').str.lower()
+		s = df[var].apply(lambda x: d.join(x.split(d)[::-1])).str.replace(d, ' ').str.lower().str.strip()
 	else:
-		s = df[var].apply(lambda x: d.join(x.split(d)[::-1])).str.replace(d, ' ')   
+		s = df[var].apply(lambda x: d.join(x.split(d)[::-1])).str.replace(d, ' ').str.strip()
 	#df = df.drop(var, axis=1).join(s)
 	df = df.drop(var, axis=1)
 	df = pd.concat([df, s], axis=1)
 	return(df)
+
+
+def correct_non_reversed_names(var, df):
+	pat = r"(\b[A-Za-z]+\s)((\b[A-Za-z]{0,1}\,)|(\b[A-Za-z]{0,1}\.,))"
+	repl = lambda m: m.group(0).replace(',', ' ')
+	s = df[var].str.replace(pat, repl)
+	s.name = var
+	df = df.drop(var, axis=1)
+	df = pd.concat([df, s], axis=1)
+	return df
 
 def lower_var(var, df):
 	s = df[var].str.lower()
@@ -274,8 +321,10 @@ def lower_var(var, df):
 	return(df)
 
 
-def lower_var_strip(var, df):
+def lower_clean_strip(var, df):
     s = df[var].str.lower()
+    s = s.str.replace(r"\s\-\s", '-')
+    s = s.str.replace(r"\s\.", ' ')
     s = s.str.replace(r"\s{2,}", ' ')
     s = s.str.strip()
     df = df.drop(var, axis=1)
@@ -284,11 +333,11 @@ def lower_var_strip(var, df):
 
 
 def rm_name_punct_except_period_dash(var, df):
-    s = df[var].str.lower()
-    s = s.str.replace(r'[]\\?!\"\'#$%&(){}+*/:;_`|~\\[<=>@\\^]', '')
-    df = df.drop(var, axis=1)
-    df = pd.concat([df, s], axis=1)
-    return(df)
+	s = df[var].str.lower()
+	s = s.str.replace(r'[]\\?!\"\'#$%&(){}+*/:;_`|~\\[<=>@\\^]', '')
+	df = df.drop(var, axis=1)
+	df = pd.concat([df, s], axis=1)
+	return(df)
 
 
 def title_var(var, df):
