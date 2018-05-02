@@ -130,8 +130,6 @@ def sep_first_middle(var, df):
 
 
 
-
-
 def join_last_names(var, df, sep=''):
 	s = df[var]
 	pat = r'(\b[A-Za-z]{2,}\s)(\b[A-Za-z]{2,}\,)'
@@ -142,6 +140,18 @@ def join_last_names(var, df, sep=''):
 	df = pd.concat([df, s], axis=1)
 	return(df)
 
+
+def concat_split_cities(var, df, sep=''):
+    s = df[var]
+
+    #captures mc lean but not el paso
+    pat = r'(\b[CMcm]{2,2}\s)(\b[A-Za-z]{1,})'
+    repl = lambda m: m.group(0).replace(' ', sep)
+    s = s.str.replace(pat, repl)
+    s.name = var
+    df = df.drop(var, axis=1)
+    df = pd.concat([df, s], axis=1)
+    return(df)
 
 
 def rm_mid_initials_suffixes(var, df):
@@ -307,7 +317,7 @@ def reverse_names(var, df, lower=True, delim=','):
 
 def correct_non_reversed_names(var, df):
 	pat = r"(\b[A-Za-z]+\s)((\b[A-Za-z]{0,1}\,)|(\b[A-Za-z]{0,1}\.,))"
-	repl = lambda m: m.group(0).replace(',', ' ')
+	repl = lambda m: m.group(0).replace(',', '  ')
 	s = df[var].str.replace(pat, repl)
 	s.name = var
 	df = df.drop(var, axis=1)
@@ -332,12 +342,19 @@ def lower_clean_strip(var, df):
     return(df)
 
 
-def rm_name_punct_except_period_dash(var, df):
+def rm_punct_except_period_dash_comma(var, df):
 	s = df[var].str.lower()
 	s = s.str.replace(r'[]\\?!\"\'#$%&(){}+*/:;_`|~\\[<=>@\\^]', '')
 	df = df.drop(var, axis=1)
 	df = pd.concat([df, s], axis=1)
 	return(df)
+
+def rm_punct_col(var, df):
+    s = df[var].str.lower()
+    s = s.str.replace(r'[]\\?!\"\'#$%&(){}+*/:;,._`|~\\[<=>@\\^-]', '')
+    df = df.drop(var, axis=1)
+    df = pd.concat([df, s], axis=1)
+    return(df)
 
 
 def title_var(var, df):
