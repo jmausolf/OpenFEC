@@ -22,6 +22,8 @@ fec <- dbGetQuery(con, "SELECT * FROM schedule_a_cleaned")  %>%
         mutate(sub_id = as.character(sub_id))
 
 
+#write to csv temp
+write_csv(fec, "openfec_sa_cleaned_041318.csv")
 
 source("assemble_plots.R")
 
