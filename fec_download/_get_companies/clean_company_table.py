@@ -1,5 +1,5 @@
-from util import *
-from clean_db import *
+from _util.util import *
+from _build_db.clean_db import *
 
 
 def clean_company_table(db, c, dev=False):

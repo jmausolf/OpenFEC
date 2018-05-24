@@ -8,8 +8,8 @@ import codecs
 import argparse
 from glob import glob
 #from config import *
-from setlogger import *
-from download import *
+from _util.setlogger import *
+from . download import *
 
 
 def choose_config(config_spec):

@@ -7,10 +7,10 @@ import time
 import warnings
 
 #from config import *
-from setlogger import *
-from build_db import *
-from make_sql import *
-from util import *
+from _util.setlogger import *
+from _build_db.build_db import *
+from _util.make_sql import *
+from _util.util import *
 
 from collections import Counter
 

@@ -3,12 +3,12 @@ import sqlite3
 
 from master_config import *
 #from config import *
-from setlogger import *
-from build_db import *
-from make_sql import *
-from getPARTY import *
-from cleanFEC import *
-from util import *
+from _util.setlogger import *
+from . build_db import *
+from _util.make_sql import *
+from _get_parties.getPARTY import *
+from _get_companies.cleanFEC import *
+from _util.util import *
 
 
 #Connect to Data

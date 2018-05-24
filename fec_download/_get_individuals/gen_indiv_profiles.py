@@ -19,7 +19,7 @@ from collections import Counter
 #from ... import setlogger
 #from ..setlogger import *
 
-from setlogger import *
+from _util.setlogger import *
 from data.companies import *
 from . gen_indiv_utils import *
 #from . gen_indiv_utils import *

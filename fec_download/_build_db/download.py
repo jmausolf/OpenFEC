@@ -7,7 +7,7 @@ from glob import glob
 import re
 import zipfile
 import os
-from setlogger import *
+from _util.setlogger import *
 #from config import *
 
 #Get Date for Filenames

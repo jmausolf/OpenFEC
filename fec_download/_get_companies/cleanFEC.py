@@ -1,4 +1,4 @@
-from setlogger import *
+from _util.setlogger import *
 import pandas as pd
 import numpy as np
 import csv

@@ -1,12 +1,13 @@
 import pandas as pd
 import sqlite3
 import time
-from setlogger import *
-from download import *
-from build_db import *
-from make_sql import *
-from getPARTY import *
-from clean_db import *
+
+from _util.setlogger import *
+from _build_db.download import *
+from _build_db.build_db import *
+from _util.make_sql import *
+from _get_parties.getPARTY import *
+from _build_db.clean_db import *
 from master_config import *
 
 

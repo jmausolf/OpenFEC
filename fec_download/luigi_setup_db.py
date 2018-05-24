@@ -20,12 +20,12 @@ import subprocess
 import hashlib
 
 #import python code
-from util import *
-from create_pids_table import *
-from create_indiv_cycle import *
-from create_company_table import *
+from _util.util import *
+from _get_parties.create_pids_table import *
+from _build_db.create_indiv_cycle import *
+from _get_companies.create_company_table import *
 #from cleanFEC import *
-from clean_company_table import *
+from _get_companies.clean_company_table import *
 #from build_db import *
 
 

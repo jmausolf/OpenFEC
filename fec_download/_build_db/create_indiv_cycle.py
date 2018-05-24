@@ -1,10 +1,10 @@
 import sqlite3
 import time
 import warnings
-from setlogger import *
-from make_sql import *
-from clean_db import *
-from util import *
+from _util.setlogger import *
+from _util.make_sql import *
+from . clean_db import *
+from _util.util import *
 
 
 
