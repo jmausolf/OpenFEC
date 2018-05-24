@@ -1,4 +1,3 @@
-from setlogger import *
 import pandas as pd
 import numpy as np
 import csv
@@ -7,8 +6,23 @@ import warnings
 import os.path
 from glob import glob
 from collections import Counter
+
+
+#Attach Code in Parent Dir
+#p = '../'
+#p = '.'
+#import sys
+#print(sys.path)
+#sys.path.append(p)
+#print(sys.path)
+
+#from ... import setlogger
+#from ..setlogger import *
+
+from setlogger import *
 from data.companies import *
-from gen_indiv_utils import *
+from . gen_indiv_utils import *
+#from . gen_indiv_utils import *
 
 
 
@@ -136,7 +150,27 @@ df = df.fillna("missing") #key, some missing data in the states #prevents segfau
 #x = df.groupby(group_cols).count().add_suffix('_Count')
 #x = df.groupby(['contributor_name']).first()
 #x = df.groupby(group_cols).min()
+
+##Need to convert cols to correct datatypes
+
+print(df.dtypes)
+
+
+
+"""
 x = df.groupby(group_cols).count()
+
+
+x = df.groupby(group_cols).agg(
+		{	'contributor_cycle' : [min, max, 'count'],
+			'sub_id' : 'count',
+			'party_id': ['first', 'count'],
+			'partisan_score': [min, max, 'mean', 'median']
+		}
+		)
+
+
+
 print(x.shape)
 #print(x.head(200))
 print(x.head(5))
@@ -145,7 +179,7 @@ print(x.head(5))
 x.to_csv("testgroupresults.csv", sep=",")
 
 #
-
+"""
 
 #unique_cids = df.contributor_name.unique().tolist()
 #print(len(unique_cids))

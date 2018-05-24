@@ -6,17 +6,9 @@ import sys
 import json
 import subprocess
 
-#Clear cleaned files to allow running-script numerous times
-def rm_cleaned_files():
-	subprocess.call("rm downloads/*_cleaned.csv", shell=True)
 
 
 #Some Utility Functions for Cleaning the Data
-def loadCSVs():
-	police_files = glob('downloads/*{}*.csv'.format('police'))
-	crowdsource_files = glob('downloads/*{}*.csv'.format('crowdsource'))
-	return(police_files, crowdsource_files)
-
 
 def remove_non_ascii_2(text):
 	import re
