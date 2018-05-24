@@ -121,29 +121,42 @@ df = clean_state_col("contributor_state", df)
 
 #df = pd.read_csv("mytest.csv", sep="|")
 
+def clean_contrib_data(df):
+
+	df = clean_name_col("contributor_name", df)
+	df = clean_city_col("contributor_city", df)
+	df = clean_state_col("contributor_state", df)
+	return df
 
 
+#clean_contrib_data(df)
 
 
+df = clean_name_col("contributor_name", df)
+df = clean_city_col("contributor_city", df)
+df = clean_state_col("contributor_state", df)
+
+#need to groupby cycle not across cycles
 
 #group_cols = ['contributor_name_clean', 'cid_master']
 #group_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean']
 #group_cols = ['contributor_name_clean', 'cid_master', 'contributor_state_clean']
-group_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean', 'contributor_state_clean']
+group_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean', 'contributor_state_clean', 'contributor_cycle']
 
 
 #check NA vals for groupcols or other cols, could be source of count seg_faults
 
 
 
-analysis_cols = ['sub_id', 'party_id', 'partisan_score', 'contributor_cycle']
-analysis_cols = ['contributor_cycle', 'sub_id', 'party_id', 'partisan_score']
+#analysis_cols = ['sub_id', 'party_id', 'partisan_score', 'contributor_cycle']
+#analysis_cols = ['contributor_cycle', 'sub_id', 'party_id', 'partisan_score']
+analysis_cols = ['sub_id', 'party_id', 'partisan_score']
 #other_cols = ['contributor_city_clean']
 
 #keep_cols = group_cols+analysis_cols+other_cols
 keep_cols = group_cols+analysis_cols
 df = df[keep_cols]
-df = df.fillna("missing") #key, some missing data in the states #prevents segfault error
+df = df.fillna("0") #key, some missing data in the states #prevents segfault error
 
 
 #x = df.groupby(group_cols).count().add_suffix('_Count').reset_index()
@@ -152,13 +165,28 @@ df = df.fillna("missing") #key, some missing data in the states #prevents segfau
 #x = df.groupby(group_cols).min()
 
 ##Need to convert cols to correct datatypes
+print(df.dtypes)
+
+#Convert analysis cols to correct data type
+
+
+#cols = ['contributor_cycle', 'partisan_score']
+cols = ['partisan_score']
+df[cols] = df[cols].apply(pd.to_numeric, errors='coerce', axis=1)
 
 print(df.dtypes)
 
 
-
 """
 x = df.groupby(group_cols).count()
+print(x.shape)
+print(x.head(5))
+x.to_csv("testgroupresults.csv", sep=",")
+
+"""
+
+
+#x = df.groupby(group_cols).count()
 
 
 x = df.groupby(group_cols).agg(
@@ -179,7 +207,7 @@ print(x.head(5))
 x.to_csv("testgroupresults.csv", sep=",")
 
 #
-"""
+
 
 #unique_cids = df.contributor_name.unique().tolist()
 #print(len(unique_cids))
