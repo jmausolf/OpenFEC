@@ -189,7 +189,7 @@ x.to_csv("testgroupresults.csv", sep=",")
 #x = df.groupby(group_cols).count()
 
 
-x = df.groupby(group_cols).agg(
+grouped = df.groupby(group_cols).agg(
 		{	'contributor_cycle' : [min, max, 'count'],
 			'sub_id' : 'count',
 			'party_id': ['first', 'count'],
@@ -198,13 +198,17 @@ x = df.groupby(group_cols).agg(
 		)
 
 
+#Rename Grouped Columns
+grouped.columns = ["_".join(x) for x in grouped.columns.ravel()]
 
-print(x.shape)
+
+
+print(grouped.shape)
 #print(x.head(200))
-print(x.head(5))
+print(grouped.head(5))
 #print(x.shape)
 
-x.to_csv("testgroupresults.csv", sep=",")
+grouped.to_csv("testgroupresults.csv", sep=",")
 
 #
 
