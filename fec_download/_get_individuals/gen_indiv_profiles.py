@@ -8,21 +8,11 @@ from glob import glob
 from collections import Counter
 
 
-#Attach Code in Parent Dir
-#p = '../'
-#p = '.'
-#import sys
-#print(sys.path)
-#sys.path.append(p)
-#print(sys.path)
-
-#from ... import setlogger
-#from ..setlogger import *
 
 from _util.setlogger import *
 from data.companies import *
 from . gen_indiv_utils import *
-#from . gen_indiv_utils import *
+
 
 
 
@@ -33,15 +23,7 @@ cmaster = "data/fortune1000-list_alias_master.csv"
 company_key = key_aliases(cmaster, limit=False)
 
 
-#df = pd.read_csv("schedule_a_cleaned_201804101300.csv", sep="|")
-df = pd.read_csv("schedule_a_cleaned_201804101302.csv", sep="|")
-#print(df)
-df["cid_master"] = df.cid.apply(lambda cid: company_key[cid])
 
-print(df.shape)
-#print(df.head(10))
-
-#####################
 
 
 
@@ -72,11 +54,6 @@ def clean_name_col(name_col, df):
 	df = lower_clean_strip(clean_col, df)
 	df = rm_middle_name(clean_col, df)
 
-
-
-	#what cols to pass to the next groupby?
-	#df = df[[clean_col, name_col, 'cid_master', contributor_city, ]]
-	#print(df.head(20))
 	return df
 
 
@@ -89,8 +66,6 @@ def clean_city_col(city_col, df):
 	df = concat_split_cities(clean_col, df)
 	df = rm_punct_col(clean_col, df)
 
-	#df = df[[clean_col, city_col]]
-	#print(df.head(20))
 	return df
 
 
@@ -103,9 +78,6 @@ def clean_state_col(state_col, df):
 	df = concat_split_cities(clean_col, df)
 	df = rm_punct_col(clean_col, df)
 
-	#keep_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean', 'contributor_state_clean']
-	#df = df[keep_cols]
-	#print(x.head(20))
 	return df
 
 
@@ -114,14 +86,20 @@ def clean_state_col(state_col, df):
 
 ##STEP 2 do the group by and other indiv aggregates
 
-df = clean_name_col("contributor_name", df)
-df = clean_city_col("contributor_city", df)
-df = clean_state_col("contributor_state", df)
+#df = clean_name_col("contributor_name", df)
+#df = clean_city_col("contributor_city", df)
+#df = clean_state_col("contributor_state", df)
 #df.to_csv("mytest.csv", sep="|")
 
 #df = pd.read_csv("mytest.csv", sep="|")
 
-def clean_contrib_data(df):
+def clean_contrib_data():
+
+	df = pd.read_csv("schedule_a_cleaned_201804101302.csv", sep="|")
+	#print(df)
+	df["cid_master"] = df.cid.apply(lambda cid: company_key[cid])
+
+	print(df.shape)
 
 	df = clean_name_col("contributor_name", df)
 	df = clean_city_col("contributor_city", df)
@@ -129,64 +107,36 @@ def clean_contrib_data(df):
 	return df
 
 
-#clean_contrib_data(df)
+
+#Make DF
+df = clean_contrib_data()
 
 
-df = clean_name_col("contributor_name", df)
-df = clean_city_col("contributor_city", df)
-df = clean_state_col("contributor_state", df)
+
 
 #need to groupby cycle not across cycles
-
-#group_cols = ['contributor_name_clean', 'cid_master']
-#group_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean']
-#group_cols = ['contributor_name_clean', 'cid_master', 'contributor_state_clean']
-group_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean', 'contributor_state_clean', 'contributor_cycle']
+#group_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean', 'contributor_state_clean', 'contributor_cycle']
+group_cols = ['contributor_name_clean', 'cid_master', 'contributor_cycle']
 
 
 #check NA vals for groupcols or other cols, could be source of count seg_faults
-
-
-
-#analysis_cols = ['sub_id', 'party_id', 'partisan_score', 'contributor_cycle']
-#analysis_cols = ['contributor_cycle', 'sub_id', 'party_id', 'partisan_score']
 analysis_cols = ['sub_id', 'party_id', 'partisan_score']
 #other_cols = ['contributor_city_clean']
 
 #keep_cols = group_cols+analysis_cols+other_cols
 keep_cols = group_cols+analysis_cols
 df = df[keep_cols]
-df = df.fillna("0") #key, some missing data in the states #prevents segfault error
+df = df.fillna("missing") #key, some missing data in the states #prevents segfault error
 
 
-#x = df.groupby(group_cols).count().add_suffix('_Count').reset_index()
-#x = df.groupby(group_cols).count().add_suffix('_Count')
-#x = df.groupby(['contributor_name']).first()
-#x = df.groupby(group_cols).min()
-
-##Need to convert cols to correct datatypes
-print(df.dtypes)
 
 #Convert analysis cols to correct data type
-
-
 #cols = ['contributor_cycle', 'partisan_score']
 cols = ['partisan_score']
 df[cols] = df[cols].apply(pd.to_numeric, errors='coerce', axis=1)
 
 print(df.dtypes)
 
-
-"""
-x = df.groupby(group_cols).count()
-print(x.shape)
-print(x.head(5))
-x.to_csv("testgroupresults.csv", sep=",")
-
-"""
-
-
-#x = df.groupby(group_cols).count()
 
 
 grouped = df.groupby(group_cols).agg(
@@ -202,16 +152,8 @@ grouped = df.groupby(group_cols).agg(
 grouped.columns = ["_".join(x) for x in grouped.columns.ravel()]
 
 
-
+#Inspect and Save
 print(grouped.shape)
-#print(x.head(200))
 print(grouped.head(5))
-#print(x.shape)
-
 grouped.to_csv("testgroupresults.csv", sep=",")
 
-#
-
-
-#unique_cids = df.contributor_name.unique().tolist()
-#print(len(unique_cids))
