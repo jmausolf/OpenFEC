@@ -8,6 +8,7 @@ from . build_db import *
 from _util.make_sql import *
 from _get_parties.getPARTY import *
 from _get_companies.cleanFEC import *
+from _get_individuals.gen_indiv_profiles import *
 from _util.util import *
 
 
@@ -204,6 +205,10 @@ def alt_clean_cids(df, cycles=False, cid=False):
 
 def alt_dev_cids(df, cycles=False, cid=False):
 	df = filter_company_ids(df, dev=True)
+	return df
+
+def alt_group_indiv(df, cycles=False, cid=False):
+	df = get_individual_partisans(df)
 	return df
 
 
