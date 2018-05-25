@@ -11,6 +11,7 @@ from collections import OrderedDict
 
 
 from _util.setlogger import *
+from _util.util import *
 from data.companies import *
 from . gen_indiv_utils import *
 
@@ -85,6 +86,10 @@ def clean_state_col(state_col, df):
 
 def clean_contrib_data(input_df=None, file=None):
 
+	#start time
+	global start_time
+
+
 	if file is None and input_df is not None:
 		df = input_df
 	else:
@@ -106,6 +111,9 @@ def clean_contrib_data(input_df=None, file=None):
 	df = clean_name_col("contributor_name", df)
 	df = clean_city_col("contributor_city", df)
 	df = clean_state_col("contributor_state", df)
+
+	time_elapsed(start_time)
+
 	return df
 
 
@@ -123,6 +131,9 @@ def clean_contrib_data(input_df=None, file=None):
 
 
 def group_individuals(clean_df):
+
+	#start time
+	global start_time
 
 	df = clean_df
 
@@ -208,7 +219,10 @@ def group_individuals(clean_df):
 	grouped = grouped.reset_index()
 	print(grouped.shape)
 	print(grouped.head(5))
-	
+
+
+	time_elapsed(start_time)
+
 	return grouped
 
 
