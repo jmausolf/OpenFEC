@@ -30,18 +30,14 @@ from _util.util import *
 from _get_parties.create_pids_table import *
 from _build_db.create_indiv_cycle import *
 from _get_companies.create_company_table import *
-#from cleanFEC import *
 from _get_companies.clean_company_table import *
 from _get_individuals.get_indiv import *
-#from build_db import *
 
 
-#class CheckConfig(luigi.Task):
-#	cfg = luigi.Parameter()
+
 
 
 #Step 1
-#@requires(CheckConfig(cfg=check_config("master_config.py")))
 class CreatePidsTable(luigi.Task):
 
 
@@ -54,7 +50,6 @@ class CreatePidsTable(luigi.Task):
 
 	def run(self):
 		make_pids_table(db, c)
-		#make_pids_table(db, c, lim=10)
 		with self.output().open('w') as out_file:
 			 out_file.write("Done with task: {}".format(self))
 
@@ -104,7 +99,6 @@ class CreateCompanyTable(luigi.Task):
 		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
 
 	def run(self):
-		#add_cycle_indiv(db, c, "individual_contributions")
 		create_company_table(db, c)
 
 		with self.output().open('w') as out_file:

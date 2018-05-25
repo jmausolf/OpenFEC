@@ -118,17 +118,10 @@ def clean_contrib_data(input_df=None, file=None):
 
 
 
-#Make DF
-#chedule_a_cleaned_201804101302.csv
-#df = clean_contrib_data(file="schedule_a_cleaned_201805251423.csv")
-#df = clean_contrib_data(input_df=df)
 
 
 
-
-
-##STEP 2 do the group by and other indiv aggregates
-
+##STEP 2: Groupby and Individual Aggregations
 
 def group_individuals(clean_df):
 
@@ -137,13 +130,10 @@ def group_individuals(clean_df):
 
 	df = clean_df
 
-	#need to groupby cycle not across cycles
-	#group_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean', 'contributor_state_clean', 'contributor_cycle']
+	#Group and Analysis Columns
 	group_cols = ['contributor_name_clean', 'cid_master', 'contributor_cycle']
 
 
-	#check NA vals for groupcols or other cols, could be source of count seg_faults
-	#analysis_cols = ['sub_id', 'party_id', 'partisan_score', 'contributor_city_clean', 'contributor_state_clean']
 	analysis_cols = [	'sub_id', \
 						'contributor_city_clean', 'contributor_state_clean', 'contributor_zip_code', \
 						'contributor_employer_clean', 'contributor_occupation_clean', \
@@ -157,22 +147,18 @@ def group_individuals(clean_df):
 					]
 
 
-
-	#keep_cols = group_cols+analysis_cols+other_cols
+	#Total Columns
 	keep_cols = group_cols+analysis_cols
 	df = df[keep_cols]
-	df = df.fillna("missing") #key, some missing data in the states #prevents segfault error
+
+	#Fill in  missing data to prevent segfault error
+	df = df.fillna("missing")
 
 
 
 	#Convert analysis cols to correct data type
-	#cols = ['contributor_cycle', 'partisan_score']
 	cols = ['partisan_score', 'contributor_transaction_amt']
 	df[cols] = df[cols].apply(pd.to_numeric, errors='coerce', axis=1)
-
-
-
-	#print(df.dtypes)
 
 
 	#Custom mode function to avoid repetative lambda's
@@ -210,12 +196,7 @@ def group_individuals(clean_df):
 	#Rename Grouped Columns
 	grouped.columns = ["_".join(x) for x in grouped.columns.ravel()]
 
-
-	#Inspect and Save
-	print(grouped.shape)
-	print(grouped.head(5))
-	#grouped.to_csv("testgroupresults.csv", sep=",")
-
+	#Reset Index to Write Groupby Cols to DB
 	grouped = grouped.reset_index()
 	print(grouped.shape)
 	print(grouped.head(5))
@@ -227,11 +208,8 @@ def group_individuals(clean_df):
 
 
 
-#group_individuals(df)
 
-
-
-
+#Putting it all Together
 def get_individual_partisans(df):
 
 	clean_df = clean_contrib_data(input_df=df)
@@ -240,7 +218,6 @@ def get_individual_partisans(df):
 
 
 
-#get_individual_partisans(df)
 
 
 
