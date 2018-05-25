@@ -6,6 +6,7 @@ import warnings
 import os.path
 from glob import glob
 from collections import Counter
+from collections import OrderedDict
 
 
 
@@ -120,8 +121,18 @@ group_cols = ['contributor_name_clean', 'cid_master', 'contributor_cycle']
 
 
 #check NA vals for groupcols or other cols, could be source of count seg_faults
-analysis_cols = ['sub_id', 'party_id', 'partisan_score']
+analysis_cols = ['sub_id', 'party_id', 'partisan_score', 'contributor_city_clean', 'contributor_state_clean']
 #other_cols = ['contributor_city_clean']
+
+#TODO Analysis Columns
+#city most common
+#state most common
+#party_id most common
+#cmte id most common
+#cmte name most common
+#contributor position most common
+
+#so basically, need a way to get the most common text value, or convert to category and do that
 
 #keep_cols = group_cols+analysis_cols+other_cols
 keep_cols = group_cols+analysis_cols
@@ -138,13 +149,24 @@ df[cols] = df[cols].apply(pd.to_numeric, errors='coerce', axis=1)
 print(df.dtypes)
 
 
+#Custom mode function to avoid repetative lambda's
+def mode(x):
+    return x.mode()
+
+#Custom mode name for pretty columns
+#mode.__name__ = 'mode'
+
 
 grouped = df.groupby(group_cols).agg(
-		{	'contributor_cycle' : [min, max, 'count'],
-			'sub_id' : 'count',
-			'party_id': ['first', 'count'],
-			'partisan_score': [min, max, 'mean', 'median']
-		}
+
+		OrderedDict([
+			('contributor_cycle' , [min, max, 'count']),
+			('contributor_city_clean' , mode),
+			('contributor_state_clean' , mode),
+			('sub_id' , 'count'),
+			('party_id' , ['first', 'count']),
+			('partisan_score' , [min, max, 'mean', 'median'])
+		])
 		)
 
 
