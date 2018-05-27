@@ -38,6 +38,7 @@ def create_select_insert_company(
 	global start_time
 	time_elapsed(start_time)
 
+	
 	#create temporary table from selection
 	companies_qry = select_schedule_a_by_company(
 				companies,
@@ -56,8 +57,23 @@ def create_select_insert_company(
 
 	#insert temporary table into destination
 	time_elapsed(start_time)
-	run_sql_query(c, insert_qry, path='sql_clean/')
-		
+	#run_sql_query(c, insert_qry, path='sql_clean/')
+
+
+	alter_create_table(
+			"tmp_cid", "schedule_a", 
+			db, c, 
+			alter_function=alt_pass, 
+			limit=False, 
+			chunksize=1000000, 
+			index=True, 
+			unique=True, 
+			key="sub_id",
+			replace_null=[7, 37],
+			alt_types=["NUMERIC", "NUMERIC", "NUMERIC"],
+			replace_type=[16, 21, 34]
+			)
+
 
 #create_select_insert_company(db, c, companies)
 #run = True

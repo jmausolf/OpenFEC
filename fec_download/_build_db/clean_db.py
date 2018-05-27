@@ -161,6 +161,9 @@ def alt_cm_test(df, cycles=False, cid=False):
 def alt_cmte_test(df, cycles=False, cid=False):
 	return df
 
+def alt_pass(df, cycles=False, cid=False):
+	return df
+
 
 def alt_cmte_unique(df, cycles=False, cid=False):
 	cols = cols = ['cmte_id', 'cmte_nm', 'cmte_pty_affiliation', 'cand_id']
