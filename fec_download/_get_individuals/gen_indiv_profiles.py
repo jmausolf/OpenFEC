@@ -11,6 +11,7 @@ from collections import OrderedDict
 
 
 from _util.setlogger import *
+from _util.util import *
 from data.companies import *
 from . gen_indiv_utils import *
 
@@ -22,7 +23,6 @@ from . gen_indiv_utils import *
 #Load Company Master and Key
 cmaster = "data/fortune1000-list_alias_master.csv"
 company_key = key_aliases(cmaster, limit=False)
-
 
 
 
@@ -84,19 +84,25 @@ def clean_state_col(state_col, df):
 
 
 
+def clean_contrib_data(input_df=None, file=None):
 
-##STEP 2 do the group by and other indiv aggregates
+	#start time
+	global start_time
 
-#df = clean_name_col("contributor_name", df)
-#df = clean_city_col("contributor_city", df)
-#df = clean_state_col("contributor_state", df)
-#df.to_csv("mytest.csv", sep="|")
 
-#df = pd.read_csv("mytest.csv", sep="|")
-
-def clean_contrib_data():
-
-	df = pd.read_csv("schedule_a_cleaned_201804101302.csv", sep="|")
+	if file is None and input_df is not None:
+		df = input_df
+	else:
+		df = pd.read_csv(file, sep="|", 
+			dtype={	'contributor_zip_code' : 'str',
+					'contributor_transaction_tp' : 'str',
+					'sub_id' : 'str',
+					'executive_emp' : 'str',
+					'executive_occ' : 'str',
+					'director_emp' : 'str',
+					'director_occ' : 'str',
+					'manager_emp' : 'str',
+					'manager_occ' : 'str'})
 	#print(df)
 	df["cid_master"] = df.cid.apply(lambda cid: company_key[cid])
 
@@ -105,77 +111,123 @@ def clean_contrib_data():
 	df = clean_name_col("contributor_name", df)
 	df = clean_city_col("contributor_city", df)
 	df = clean_state_col("contributor_state", df)
+
+	time_elapsed(start_time)
+
 	return df
 
 
 
-#Make DF
-df = clean_contrib_data()
+
+
+
+##STEP 2: Groupby and Individual Aggregations
+
+def group_individuals(clean_df):
+
+	#start time
+	global start_time
+
+	df = clean_df
+
+	#Group and Analysis Columns
+	group_cols = ['contributor_name_clean', 'cid_master', 'contributor_cycle']
+
+
+	analysis_cols = [	'sub_id', \
+						'contributor_city_clean', 'contributor_state_clean', 'contributor_zip_code', \
+						'contributor_employer_clean', 'contributor_occupation_clean', \
+						'executive_emp', 'executive_occ', \
+						'director_emp', 'director_occ', \
+						'manager_emp', 'manager_occ', \
+						'cmte_id', 'cmte_nm', \
+						'party_id', 'partisan_score', \
+						'contributor_transaction_amt', \
+						'contributor_transaction_tp', 'contributor_rpt_tp' \
+					]
+
+
+	#Total Columns
+	keep_cols = group_cols+analysis_cols
+	df = df[keep_cols]
+
+	#Fill in  missing data to prevent segfault error
+	df = df.fillna("missing")
+
+
+
+	#Convert analysis cols to correct data type
+	cols = ['partisan_score', 'contributor_transaction_amt']
+	df[cols] = df[cols].apply(pd.to_numeric, errors='coerce', axis=1)
+
+
+	#Custom mode function to avoid repetative lambda's
+	def mode(x):
+	    return x.mode()
+
+
+	#Group By Code
+	grouped = df.groupby(group_cols).agg(
+
+			OrderedDict([
+				('sub_id' , 'count'),
+				('contributor_city_clean' , mode),
+				('contributor_state_clean' , mode),
+				('contributor_zip_code' , mode),
+				('contributor_employer_clean' , mode),
+				('contributor_occupation_clean' , mode),
+				('executive_emp' , mode),
+				('executive_occ' , mode),
+				('director_emp' , mode),
+				('director_occ' , mode),
+				('manager_emp' , mode),
+				('manager_occ' , mode),
+				('cmte_id' , mode),
+				('cmte_nm' , mode),
+				('party_id' , ['count', 'first', mode]),
+				('partisan_score' , ['count', min, max, 'mean', 'median', mode]),
+				('contributor_transaction_amt' , ['count', min, max, 'mean', 'median', mode]),
+				('contributor_transaction_tp' , mode),
+				('contributor_rpt_tp' , mode)
+			])
+			)
+
+
+	#Rename Grouped Columns
+	grouped.columns = ["_".join(x) for x in grouped.columns.ravel()]
+
+	#Reset Index to Write Groupby Cols to DB
+	grouped = grouped.reset_index()
+	print(grouped.shape)
+	print(grouped.head(5))
+
+
+	time_elapsed(start_time)
+
+	return grouped
 
 
 
 
-#need to groupby cycle not across cycles
-#group_cols = ['contributor_name_clean', 'cid_master', 'contributor_city_clean', 'contributor_state_clean', 'contributor_cycle']
-group_cols = ['contributor_name_clean', 'cid_master', 'contributor_cycle']
+#Putting it all Together
+def get_individual_partisans(df):
 
+	clean_df = clean_contrib_data(input_df=df)
 
-#check NA vals for groupcols or other cols, could be source of count seg_faults
-analysis_cols = ['sub_id', 'party_id', 'partisan_score', 'contributor_city_clean', 'contributor_state_clean']
-#other_cols = ['contributor_city_clean']
-
-#TODO Analysis Columns
-#city most common
-#state most common
-#party_id most common
-#cmte id most common
-#cmte name most common
-#contributor position most common
-
-#so basically, need a way to get the most common text value, or convert to category and do that
-
-#keep_cols = group_cols+analysis_cols+other_cols
-keep_cols = group_cols+analysis_cols
-df = df[keep_cols]
-df = df.fillna("missing") #key, some missing data in the states #prevents segfault error
+	return group_individuals(clean_df)
 
 
 
-#Convert analysis cols to correct data type
-#cols = ['contributor_cycle', 'partisan_score']
-cols = ['partisan_score']
-df[cols] = df[cols].apply(pd.to_numeric, errors='coerce', axis=1)
-
-print(df.dtypes)
 
 
-#Custom mode function to avoid repetative lambda's
-def mode(x):
-    return x.mode()
-
-#Custom mode name for pretty columns
-#mode.__name__ = 'mode'
 
 
-grouped = df.groupby(group_cols).agg(
-
-		OrderedDict([
-			('contributor_cycle' , [min, max, 'count']),
-			('contributor_city_clean' , mode),
-			('contributor_state_clean' , mode),
-			('sub_id' , 'count'),
-			('party_id' , ['first', 'count']),
-			('partisan_score' , [min, max, 'mean', 'median'])
-		])
-		)
 
 
-#Rename Grouped Columns
-grouped.columns = ["_".join(x) for x in grouped.columns.ravel()]
 
 
-#Inspect and Save
-print(grouped.shape)
-print(grouped.head(5))
-grouped.to_csv("testgroupresults.csv", sep=",")
+
+
+
+
 

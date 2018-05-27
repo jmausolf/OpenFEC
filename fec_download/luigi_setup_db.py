@@ -14,6 +14,12 @@
 #PYTHONPATH='.' luigi --module luigi_setup_db CleanCompanyTable --local-scheduler --date-interval 2018-03-19
 #PYTHONPATH='.' luigi --module luigi_setup_db CleanCompanyTable --local-scheduler --date-interval 2018-03-21 --top-n 50 --leaders
 
+
+
+#PYTHONPATH='.' luigi --module luigi_setup_db GenIndividualPartisansTable --local-scheduler --date-interval 2018-05-24
+
+
+
 import luigi
 from luigi.util import inherits, requires
 import subprocess
@@ -24,17 +30,14 @@ from _util.util import *
 from _get_parties.create_pids_table import *
 from _build_db.create_indiv_cycle import *
 from _get_companies.create_company_table import *
-#from cleanFEC import *
 from _get_companies.clean_company_table import *
-#from build_db import *
+from _get_individuals.get_indiv import *
 
 
-#class CheckConfig(luigi.Task):
-#	cfg = luigi.Parameter()
+
 
 
 #Step 1
-#@requires(CheckConfig(cfg=check_config("master_config.py")))
 class CreatePidsTable(luigi.Task):
 
 
@@ -47,7 +50,6 @@ class CreatePidsTable(luigi.Task):
 
 	def run(self):
 		make_pids_table(db, c)
-		#make_pids_table(db, c, lim=10)
 		with self.output().open('w') as out_file:
 			 out_file.write("Done with task: {}".format(self))
 
@@ -97,7 +99,6 @@ class CreateCompanyTable(luigi.Task):
 		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
 
 	def run(self):
-		#add_cycle_indiv(db, c, "individual_contributions")
 		create_company_table(db, c)
 
 		with self.output().open('w') as out_file:
@@ -162,8 +163,24 @@ class CleanCompanyTable(luigi.Task):
 		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
 
 	def run(self):
-		#clean_company_table(db, c, dev=True)
 		clean_company_table(db, c)
+
+		with self.output().open('w') as out_file:
+			 out_file.write("Done with task: {}".format(self))
+
+
+
+#Step 8: Get Individual Partisans
+@requires(CleanCompanyTable)
+class GenIndividualPartisansTable(luigi.Task):
+	date_interval = luigi.DateIntervalParameter()
+	cfg = check_config("master_config.py")
+
+	def output(self):
+		return luigi.LocalTarget('logs/luigi/log_{}.txt'.format(self))
+
+	def run(self):
+		gen_indiv_table(db, c)
 
 		with self.output().open('w') as out_file:
 			 out_file.write("Done with task: {}".format(self))

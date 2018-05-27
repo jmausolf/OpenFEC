@@ -1,7 +1,4 @@
-
-
-"""
-from _get_individuals.gen_indiv_profiles import *
+from . gen_indiv_profiles import *
 
 
 from _util.util import *
@@ -19,10 +16,3 @@ def gen_indiv_table(db, c):
 
 
 
-gen_indiv_table(db, c)
-"""
-
-from _get_individuals.get_indiv import *
-
-
-gen_indiv_table(db, c)
