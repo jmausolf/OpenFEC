@@ -2,9 +2,9 @@
 ## Years
 #################################################
 
-#years = ['1980', '1982', '1984', '1986', '1988', '1990', '1992', '1994', '1996', '1998', '2000', '2002', '2004', '2006', '2008', '2010', '2012', '2014', '2016', '2018']
+years = ['1980', '1982', '1984', '1986', '1988', '1990', '1992', '1994', '1996', '1998', '2000', '2002', '2004', '2006', '2008', '2010', '2012', '2014', '2016', '2018']
 #years = ['2004', '2008']
-years = ['1994']
+#years = ['1994']
 #years = ['1980']
 #years = ['1980', '1982']
 #years = ['200', '2006', '2008']
@@ -20,8 +20,8 @@ cycles = [int(year) for year in years]
 #from data.companies import companies, company_key
 from data.companies import *
 
-#N = 105
-N = 15
+N = 105
+#N = 15
 cmaster = "data/fortune1000-list_alias_master.csv"
 companies = concat_alias(cmaster, limit=N)
 company_key = key_aliases(cmaster, limit=N)
