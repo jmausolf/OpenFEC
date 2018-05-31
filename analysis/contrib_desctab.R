@@ -6,6 +6,46 @@ source("contrib_source.R")
 
 
 
+####################################
+## Make Table Describing Tables
+####################################
+
+fec_tabs <-  read_csv("fec_tables_desc_05302018.csv") %>% 
+  select(-`FEC Longform Name`) 
+
+save_stargazer("output/tables/table_descriptive_stats.tex",
+               as.data.frame(fec_tabs), header=FALSE, type='latex',
+               font.size = "scriptsize",
+               digits = 2,
+               title = "Descriptive Overview of FEC Data Tables", 
+               summary = FALSE,
+               rownames = FALSE)
+
+
+names_ex <-  read_csv("cleaned_names_example.csv") %>% 
+  select(-`Name Example Cleaned`)
+
+save_stargazer("output/tables/name_examples.tex",
+               as.data.frame(names_ex), header=FALSE, type='latex',
+               font.size = "footnotesize",
+               title = "Select Example of Possible Name Permutations for John Allen Smith", 
+               summary = FALSE,
+               rownames = FALSE)
+
+
+
+names_ex_cleaned <-  read_csv("cleaned_names_example.csv")
+
+save_stargazer("output/tables/name_examples_cleaned.tex",
+               as.data.frame(names_ex_cleaned), header=FALSE, type='latex',
+               font.size = "footnotesize",
+               title = "Two Discrete Normalized Names for John Allen Smith", 
+               summary = FALSE,
+               rownames = FALSE)
+
+
+
+
 
 ####################################
 ## Make Descriptive Stats Tables
