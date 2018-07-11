@@ -38,7 +38,7 @@ fec_indiv <- dbGetQuery(con, "SELECT * FROM individual_partisans")
 ## CORE DATA CLEANING
 
 
-dfm <- fec %>% 
+dfm <- fec_indiv %>% 
   mutate(pid = fct_collapse(party_id_mode,
                             "REP" = c("REP", "Rep", "['REP' 'Rep']", "['' 'REP']"),
                             "DEM" = c("DEM", "Dem", "['' 'DEM']"),
