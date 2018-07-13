@@ -4,7 +4,7 @@
 
 source("indiv_source.R")
 
-
+library(RColorBrewer)
 
 
 ########################################
@@ -192,29 +192,106 @@ make_var_graph <- function(df, plt_type="cid_master", plt_caption=""){
   df_var_cycle_graph <- df %>% 
     group_by(occ, cycle) %>% 
     summarise(meanvar = mean(varpid, na.rm = T)) %>%
-    filter(!is.nan(meanvar)) 
+    filter(!is.nan(meanvar)) %>% 
+    mutate(polarization = 1-meanvar)
   
-  g <- ggplot(df_var_cycle_graph, aes(make_datetime(cycle), meanvar)) +
-    #geom_point(aes(shape=cid), alpha=0.5) +
-    geom_smooth(color='#B28E02', alpha=0.15, size=0.5) +
+  g <- ggplot(df_var_cycle_graph, aes(make_datetime(cycle), polarization)) +
+    geom_smooth(color="#3A084A", alpha=0.15, size=0.5) +
     geom_line(aes(color=occ), alpha=0.9) +
     geom_point(aes(shape=occ), alpha=1) +
-    #scale_color_manual(values=c("#0F6D0C", "#BF1200", "#BF1200", "#BF1200" )) +
-    #scale_color_jama() +
-    scale_color_npg() +
+    scale_color_manual(values=colors_neutral) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
-    #scale_x_datetime(date_labels = "%Y", date_breaks = "2 year", limits = lims) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+    scale_y_continuous(limits = c(0.75, 0.95)) +
     xlab("Contribution Cycle") +
-    ylab("Variance of Company Partisan Contributions") +
-    labs(title = plt_title,
-         caption = plt_caption) +
+    #ylab("Partisan Polarization ") +
+    ylab(expression(Partisan~Polarization=={1-VAR(PID)}))
+  labs(title = plt_title,
+       caption = plt_caption) +
+    theme_minimal() +
     theme(legend.position="bottom") +
     guides(shape = guide_legend(override.aes = list(size = 5))) +
     theme(legend.title=element_blank()) + 
-    theme(legend.position="bottom") +
     theme(plot.title = element_text(hjust = 0.5))
   
+  
+  ggsave(outfile, width = 10, height = 6)
+  
+  return(g)
+  
+}
+
+
+
+make_var_graph_neu <- function(df, plt_type="cid_master", plt_caption="", plt_title=""){
+  
+  out_by = paste("by_all_companies", plt_type, sep = "_")
+  outfile <- wout("indiv_plt_partisan_variance_occ", out_by)
+  
+  #plt_title = "Variance of Within-Company Individual Contributions by Occupation and Election Cycle"
+  
+  df_var_cycle_graph <- df %>% 
+    group_by(occ, cycle) %>% 
+    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    filter(!is.nan(meanvar)) %>% 
+    mutate(polarization = 1-meanvar)
+  
+  g <- ggplot(df_var_cycle_graph, aes(make_datetime(cycle), polarization)) +
+    geom_smooth(color="#3A084A", alpha=0.15, size=0.5) +
+    geom_line(aes(color=occ), alpha=0.9) +
+    geom_point(aes(shape=occ), alpha=1) +
+    scale_color_manual(values=colors_neutral) +
+    scale_shape_manual(values=c(10, 1, 2, 6)) +
+    scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+    scale_y_continuous(limits = c(0.75, 0.95)) +
+    xlab("Contribution Cycle") +
+    ylab(expression(Partisan~Polarization=={1-VAR(PID)})) +
+    labs(title = plt_title,
+       caption = plt_caption) +
+    theme_minimal() +
+    theme(legend.position="bottom") +
+    guides(shape = guide_legend(override.aes = list(size = 5))) +
+    theme(legend.title=element_blank()) + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  
+  ggsave(outfile, width = 10, height = 6)
+  
+  return(g)
+  
+}
+
+
+make_var_graph_dem <- function(df, plt_type="cid_master", plt_caption="", plt_title=""){
+  
+  out_by = paste("by_all_companies", plt_type, sep = "_")
+  outfile <- wout("indiv_plt_partisan_variance_occ", out_by)
+  
+  #plt_title = "Variance of Within-Company Individual Contributions by Occupation and Election Cycle"
+  
+  df_var_cycle_graph <- df %>% 
+    group_by(occ, cycle) %>% 
+    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    filter(!is.nan(meanvar)) %>% 
+    mutate(polarization = 1-meanvar)
+  
+  g <- ggplot(df_var_cycle_graph, aes(make_datetime(cycle), polarization)) +
+    geom_smooth(color="#2129B0", alpha=0.15, size=0.5) +
+    geom_line(aes(color=occ), alpha=0.9) +
+    geom_point(aes(shape=occ), alpha=1) +
+    scale_color_manual(values=colors_dem) +
+    scale_shape_manual(values=c(10, 1, 2, 6)) +
+    scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+    scale_y_continuous(limits = c(0.75, 0.95)) +
+    xlab("Contribution Cycle") +
+    ylab(expression(Partisan~Polarization=={1-VAR(PID)})) +
+    labs(title = plt_title,
+         caption = plt_caption) +
+    theme_minimal() +
+    theme(legend.position="bottom") +
+    guides(shape = guide_legend(override.aes = list(size = 5))) +
+    theme(legend.title=element_blank()) + 
+    theme(plot.title = element_text(hjust = 0.5))
   
   ggsave(outfile, width = 10, height = 6)
   
@@ -314,3 +391,119 @@ vt_cycle_cid_small <- var_cycle_table(df1,
 
 
 
+#############################
+## CID MASTER - POST HCA
+#############################
+
+df1_pid <- make_var_df(dfocc3_hca, "cid_master")
+df1_ps <- make_var_df_partisan(dfocc3_hca, "cid_master")
+#df1_part_hist <- make_partisan_hist_df(dfocc3_hca, "cid_master")
+
+vt_all_cidmaster <- var_sum_table(df1_pid, 
+                                  "output/tables/indiv_var_all_cidmaster_pid_hca.tex", 
+                                  "Variance of Individual Contributor Partisanship (Major Parties) by Organizational Hierarchy - CID Master")
+vt_cycle_cidmaster <- var_cycle_table(df1_ps, 
+                                      "output/tables/indiv_var_cycle_cidmaster_ps_hca.tex", 
+                                      "Variance of Individual Contributor Partisanship (Partisan Score) by Occupation and Year - CID Master")
+
+
+
+
+gr_cid_master_pid <- make_var_graph(df1_pid, "cid_master_pid_hca", "Note: Post-Agnes Polarized Firms")
+gr_cid_master_ps <- make_var_graph(df1_ps, "cid_master_ps_hca", "Note: Post-Agnes Polarized Firms")
+
+
+
+
+## Dem Firms
+df1_pid <- make_var_df(dfocc3_hca_dem, "cid_master")
+df1_ps <- make_var_df_partisan(dfocc3_hca_dem, "cid_master")
+#df1_part_hist <- make_partisan_hist_df(dfocc3_hca_dem, "cid_master")
+
+vt_all_cidmaster <- var_sum_table(df1_pid, 
+                                  "output/tables/indiv_var_all_cidmaster_pid_hca_dem.tex", 
+                                  "Variance of Individual Contributor Partisanship (Major Parties) by Organizational Hierarchy - CID Master")
+vt_cycle_cidmaster <- var_cycle_table(df1_ps, 
+                                      "output/tables/indiv_var_cycle_cidmaster_ps_hca_dem.tex", 
+                                      "Variance of Individual Contributor Partisanship (Partisan Score) by Occupation and Year - CID Master")
+
+
+
+
+gr_cid_master_pid <- make_var_graph(df1_pid, "cid_master_pid_hca_dem", "Note: Post-Agnes Polarized Firms")
+gr_cid_master_ps <- make_var_graph(df1_ps, "cid_master_ps_hca_dem", "Note: Post-Agnes Polarized Firms")
+
+
+
+
+## Other Firms
+df1_pid <- make_var_df(dfocc3_hca_oth, "cid_master")
+df1_ps <- make_var_df_partisan(dfocc3_hca_oth, "cid_master")
+#df1_part_hist <- make_partisan_hist_df(dfocc3_hca_rep, "cid_master")
+
+vt_all_cidmaster <- var_sum_table(df1_pid, 
+                                  "output/tables/indiv_var_all_cidmaster_pid_hca_oth.tex", 
+                                  "Variance of Individual Contributor Partisanship (Major Parties) by Organizational Hierarchy - CID Master")
+vt_cycle_cidmaster <- var_cycle_table(df1_ps, 
+                                      "output/tables/indiv_var_cycle_cidmaster_ps_hca_oth.tex", 
+                                      "Variance of Individual Contributor Partisanship (Partisan Score) by Occupation and Year - CID Master")
+
+
+
+
+gr_cid_master_pid <- make_var_graph(df1_pid, "cid_master_pid_hca_oth", "Note: Post-Agnes Other Firms")
+gr_cid_master_ps <- make_var_graph(df1_ps, "cid_master_ps_hca_oth", "Note: Post-Agnes Other Firms")
+
+
+
+
+
+
+## Republican Firms
+df1_pid <- make_var_df(dfocc3_hca_rep, "cid_master")
+df1_ps <- make_var_df_partisan(dfocc3_hca_rep, "cid_master")
+#df1_part_hist <- make_partisan_hist_df(dfocc3_hca_rep, "cid_master")
+
+vt_all_cidmaster <- var_sum_table(df1_pid, 
+                                  "output/tables/indiv_var_all_cidmaster_pid_hca_rep.tex", 
+                                  "Variance of Individual Contributor Partisanship (Major Parties) by Organizational Hierarchy - CID Master")
+vt_cycle_cidmaster <- var_cycle_table(df1_ps, 
+                                      "output/tables/indiv_var_cycle_cidmaster_ps_hca_rep.tex", 
+                                      "Variance of Individual Contributor Partisanship (Partisan Score) by Occupation and Year - CID Master")
+
+
+
+
+gr_cid_master_pid <- make_var_graph(df1_pid, "cid_master_pid_hca_rep", "Note: Post-Agnes Polarized Republican Firms")
+gr_cid_master_ps <- make_var_graph(df1_ps, "cid_master_ps_hca_rep", "Note: Post-Agnes Polarized Republican Firms")
+
+colors_neutral = rev(brewer.pal(n = 8, name = "Purples")[5:8])
+colors_dem = rev(brewer.pal(n = 8, name = "Blues")[5:8])
+
+plt_title = "Partisan Polarization - AGNES Polarized Democratic Firms"
+plt_caption = "caption"
+
+df_var_cycle_graph <- df1_pid %>% 
+  group_by(occ, cycle) %>% 
+  summarise(meanvar = mean(varpid, na.rm = T)) %>%
+  filter(!is.nan(meanvar)) %>% 
+  mutate(polarization = 1-meanvar)
+
+ggplot(df_var_cycle_graph, aes(make_datetime(cycle), polarization)) +
+  geom_smooth(color="#2129B0", alpha=0.15, size=0.5) +
+  geom_line(aes(color=occ), alpha=0.9) +
+  geom_point(aes(shape=occ), alpha=1) +
+  scale_color_manual(values=colors_dem) +
+  scale_shape_manual(values=c(10, 1, 2, 6)) +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+  scale_y_continuous(limits = c(0.75, 0.95)) +
+  xlab("Contribution Cycle") +
+  #ylab("Partisan Polarization ") +
+  ylab(expression(Partisan~Polarization=={1-VAR(PID)})) +
+  labs(title = plt_title,
+       caption = plt_caption) +
+  theme_minimal() +
+  theme(legend.position="bottom") +
+  guides(shape = guide_legend(override.aes = list(size = 5))) +
+  theme(legend.title=element_blank()) + 
+  theme(plot.title = element_text(hjust = 0.5))

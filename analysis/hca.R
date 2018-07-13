@@ -13,42 +13,210 @@ library(dendsort)
 library(heatmap.plus)
 library(RColorBrewer)
 library(forcats)
+library(reshape2)
+library(zoo)
 
-
+options(scipen=999)
 
 ########################################
 ## Data Preparation
 ########################################
 
 
+spread_chr <- function(data, key_col, value_cols, fill = NA, 
+                       convert = FALSE,drop = TRUE,sep = NULL){
+  n_val <- length(value_cols)
+  result <- vector(mode = "list", length = n_val)
+  id_cols <- setdiff(names(data), c(key_col,value_cols))
+  
+  for (i in seq_along(result)){
+    result[[i]] <- spread(data = data[,c(id_cols,key_col,value_cols[i]),drop = FALSE],
+                          key = !!key_col,
+                          value = !!value_cols[i],
+                          fill = fill,
+                          convert = convert,
+                          drop = drop,
+                          sep = paste0(sep,value_cols[i],sep))
+  }
+  
+  result %>%
+    purrr::reduce(.f = full_join, by = id_cols)
+}
+
+
+
+
+
+# selvars = list('cycle', company_var, 'pid2', 'occ3')
+# groupvars = list('cycle', company_var, 'occ')
+# 
+# df1a <-  dfocc3 %>%
+#   select(cycle, cid_master, pid2, occ3) %>% 
+#   filter(!is.na(pid2),
+#          !is.na(occ3)) %>%
+#   mutate(occ = occ3) %>% 
+#   group_by(cycle, cid_master, occ) %>% 
+#   summarize(varpid = var(as.numeric(pid2)))
+# 
+# 
+# df_filtered <- dfocc %>%
+#   #filter(cycle >= cycle_min & cycle <= cycle_max ) %>%
+#   filter(cycle >= 2004 & cycle <= 2008 ) %>%
+#   #filter(cycle >= 1980 & cycle <= 2000 ) %>%
+#   filter(!is.na(pid2),
+#          !is.na(partisan_score),
+#          !is.na(occ3),
+#          !is.na(occlevels)) %>%
+#   #Group by Company (Collapse Across Cycles)
+#   #group_by(cid_master)
+#   group_by(cycle, cid_master, occ3) %>%
+#   summarize(var_pid2 = var(as.numeric(pid2), na.rm = TRUE),
+#             var_ps = var(as.numeric(partisan_score), na.rm = TRUE),
+#             mean_ps = mean(partisan_score, na.rm = TRUE),
+#             median_ps = median(partisan_score, na.rm = TRUE),
+#             mean_ps_mode = mean(as.numeric(partisan_score_mode, na.rm = TRUE))
+# 
+#   )
+# 
+# #Spread OCC Columns
+# df_filtered <- df_filtered %>%
+#   spread_chr(key_col = "occ3",
+#              value_cols = tail(names(df_filtered), -3),
+#              sep = "_") %>% 
+#   summarize(cor_cs_mn = cor())
+#   
+# 
+# #Spread Year Columns
+# df_filtered <- df_filtered %>% 
+#   spread_chr(key_col = "cycle",
+#              value_cols = tail(names(df_filtered), -2),
+#              sep = "_") 
+# 
+# 
+# #Convert to Format Needed for HCA (and Graphs)
+# df <- as.data.frame(df_filtered)
+# 
+# #Add company names as rownames
+# rownames(df) <- df$cid_master
+# df$cid_master <- NULL
+# 
+# #Prep and Standardize Data
+# 
+# #M
+# df <- na.aggregate(df)
+# df <- na.omit(df)
+# 
+# #Prep and Standardize Data
+# df <- scale(df)
 
 ########################################
 ## Functions
 ########################################
 
+post_cluster_df <- function(df_filtered, hca_model, cycle_min = 1980, cycle_max = 2020){
+  #Inspect Clusters
+  dfclust <- rejoin_clusters_data(df_filtered, hca_model) %>% 
+    select(cid_master, cluster)
+  
 
-prepare_hca_df <- function(input_df, cycle_min = 1980, cycle_max = 2020){
-  df_filtered <- input_df %>% 
+  df_simple <- dfocc %>%
     filter(cycle >= cycle_min & cycle <= cycle_max ) %>% 
     
     #Group by Company (Collapse Across Cycles)
     group_by(cid_master) %>%
     
     #Features
-    summarize(mean_partisan_score = mean(partisan_score, na.rm = TRUE),
-                median_partisan_score = median(partisan_score, na.rm = TRUE))
+    summarize(var_pid2 = var(as.numeric(pid2), na.rm = TRUE),
+              #var_ps = var(as.numeric(partisan_score), na.rm = TRUE),
+              mean_pid2 = mean(as.numeric(pid2), na.rm = TRUE),
+              #mean_pid3 = mean(as.numeric(pid3), na.rm = TRUE),
+              #median_pid = median(as.numeric(pid), na.rm = TRUE),
+              median_pid2 = median(as.numeric(pid2), na.rm = TRUE),
+              #median_pid3 = median(as.numeric(pid3), na.rm = TRUE),
+              mean_ps = mean(partisan_score, na.rm = TRUE),
+              median_ps = median(partisan_score, na.rm = TRUE),
+              mean_ps_mode = mean(as.numeric(partisan_score_mode), na.rm = TRUE), 
+              mean_ps_min = mean(as.numeric(partisan_score_min), na.rm = TRUE),
+              mean_ps_max = mean(as.numeric(partisan_score_max), na.rm = TRUE)
+              #sum_pid_count = sum(as.numeric(party_id_count))
+    )
+  
+  #Join
+  df_post_cluster <- full_join(dfclust, df_simple)
+  
+  return(df_post_cluster)
+  
+}
 
-    
-  #Convert to Format Needed for HCA (and Graphs)
-  df <- as.data.frame(df_filtered)
-    
-  #Add company names as rownames
-  rownames(df) <- df$cid_master
-  df$cid_master <- NULL
 
-  #Prep and Standardize Data
-  df <- na.omit(df)
-  df <- scale(df)
+
+prepare_hca_df <- function(input_df, cycle_min = 1980, cycle_max = 2020){
+  
+  
+  # df_filtered <- input_df %>% 
+  #   filter(cycle >= cycle_min & cycle <= cycle_max ) %>% 
+  #   
+  #   #Group by Company (Collapse Across Cycles)
+  #   group_by(cid_master) %>%
+  #   
+  #   #Features
+  #   summarize(mean_partisan_score = mean(partisan_score, na.rm = TRUE),
+  #               median_partisan_score = median(partisan_score, na.rm = TRUE))
+  
+  df_filtered <- input_df %>% 
+    filter(cycle >= cycle_min & cycle <= cycle_max ) %>% 
+      #filter(cycle >= 1980 & cycle <= 2000 ) %>% 
+      filter(!is.na(pid2),
+             !is.na(partisan_score),
+             !is.na(occ3),
+             !is.na(occlevels)) %>% 
+      #Group by Company (Collapse Across Cycles)
+      #group_by(cid_master) 
+      group_by(cycle, cid_master, occ3) %>% 
+      summarize(var_pid2 = var(as.numeric(pid2), na.rm = TRUE),
+                #var_ps = var(as.numeric(partisan_score), na.rm = TRUE),
+                mean_pid2 = mean(as.numeric(pid2), na.rm = TRUE),
+                #mean_pid3 = mean(as.numeric(pid3), na.rm = TRUE),
+                #median_pid = median(as.numeric(pid), na.rm = TRUE),
+                median_pid2 = median(as.numeric(pid2), na.rm = TRUE),
+                #median_pid3 = median(as.numeric(pid3), na.rm = TRUE),
+                mean_ps = mean(partisan_score, na.rm = TRUE),
+                median_ps = median(partisan_score, na.rm = TRUE),
+                mean_ps_mode = mean(as.numeric(partisan_score_mode), na.rm = TRUE), 
+                mean_ps_min = mean(as.numeric(partisan_score_min), na.rm = TRUE),
+                mean_ps_max = mean(as.numeric(partisan_score_max), na.rm = TRUE)
+                #sum_pid_count = sum(as.numeric(party_id_count))
+                
+      )
+    
+    #Spread OCC Columns
+    df_filtered <- df_filtered %>% 
+      spread_chr(key_col = "occ3",
+                 value_cols = tail(names(df_filtered), -3),
+                 sep = "_") 
+    
+    #Spread Year Columns
+    df_filtered <- df_filtered %>% 
+      spread_chr(key_col = "cycle",
+                 value_cols = tail(names(df_filtered), -2),
+                 sep = "_") 
+    
+    
+    #Convert to Format Needed for HCA (and Graphs)
+    df <- as.data.frame(df_filtered)
+    
+    #Add company names as rownames
+    rownames(df) <- df$cid_master
+    df$cid_master <- NULL
+    
+    #Prep and Standardize Data
+    
+    #M
+    df <- na.aggregate(df)
+    df <- na.omit(df)
+    
+    #Prep and Standardize Data
+    df <- scale(df)
   
   out_dfs <- list(df_filtered, df)
   return(out_dfs)
@@ -58,9 +226,9 @@ prepare_hca_df <- function(input_df, cycle_min = 1980, cycle_max = 2020){
 
 rejoin_clusters_data <- function(df_filtered,
                                  hca_model, 
-                                 K=4, 
-                                 shapesvec=c("15", "0", "1", "19"),
-                                 colorsvec=c("#BF1200", "#BF1200", "#2129B0", "#2129B0")
+                                 K=3 
+                                 #shapesvec=c("15", "0", "1", "19", "4"),
+                                 #colorsvec=c("#BF1200", "#BF1200", "#2129B0", "#2129B0", "#77777")
 ) {
   
   #require("lazyeval")
@@ -77,6 +245,7 @@ rejoin_clusters_data <- function(df_filtered,
   sub_grp_df$cid_master <- rownames(sub_grp_df)
   sub_grp_df <- sub_grp_df %>% arrange(cid_master)
   sub_grp_sorted <- sub_grp_df$sub_grp
+  df_filtered$cluster <-  sub_grp_sorted
   
   #s <- shapes
   #c <- colors
@@ -88,19 +257,21 @@ rejoin_clusters_data <- function(df_filtered,
   
   #See what groups original data is in
   dfclust <- df_filtered %>%
-    mutate(cluster = sub_grp_sorted) %>% 
+    #mutate(cluster = sub_grp_sorted) %>% 
     arrange(cluster) %>% 
     mutate(shapes = as.numeric(as.character(fct_recode(as.factor(cluster),
                                                        "15" = "1",
-                                                       "0" = "2",
-                                                       "1" = "3",
-                                                       "19" = "4"
+                                                       "4" = "2",
+                                                       "19" = "3"
+                                                       #"19" = "4",
+                                                       #"4" = "5"
     )))) %>% 
     mutate(colors = as.character(fct_recode(as.factor(cluster),
                                             "#BF1200" = "1",
-                                            "#BF1200" = "2",
-                                            "#2129B0" = "3",
-                                            "#2129B0" = "4"
+                                            "#3A084A" = "2",
+                                            "#2129B0" = "3"
+                                            #"#2129B0" = "4",
+                                            #"#777777" = "5"
     )))
   
   return(dfclust)
@@ -121,8 +292,8 @@ make_partisan_plot <- function(hca_model, df_filtered, gtitle="my graph title", 
   
   #Specify Graph Options
   dend <- as.dendrogram(hca_model) %>% 
-    color_branches(k = 4, col=c("#BF1200", "#BF1200", "#2129B0", "#2129B0")) %>% 
-    color_labels(k = 4, col=c("#BF1200", "#BF1200", "#2129B0", "#2129B0")) %>% 
+    color_branches(k = 3, col=c("#BF1200", "#3A084A", "#2129B0")) %>% 
+    color_labels(k = 3, col=c("#BF1200", "#3A084A", "#2129B0")) %>% 
     assign_values_to_leaves_nodePar(value=shapevec, "pch") %>% 
     assign_values_to_leaves_nodePar(value=colorvec, "col") 
   
@@ -139,11 +310,12 @@ make_partisan_plot <- function(hca_model, df_filtered, gtitle="my graph title", 
     par(mfrow = c(1,1))
     par(mar=c(3,4,1,6)) # set margins
     labels_cex(dend) <- 0.4
+    #plot(dendsort(dend, type="average", isReverse=FALSE), horiz  = TRUE, cex = 0.5)
     plot(dend, horiz  = TRUE, cex = 0.5)
     legend("bottomleft", 
-           legend = c("Polorized Democrat" , "Lean Democrat" , "Lean Republican" , "Polorized Republican"), 
-           col = c("#2129B0", "#2129B0", "#BF1200", "#BF1200"), 
-           pch = c(19,1,0,15), bty = "n",  pt.cex = 1.5, cex = 0.8 , 
+           legend = c("Polorized Democrat" , "Amphibious Partisans" , "Polorized Republican"), 
+           col = c("#2129B0", "#3A084A", "#BF1200"), 
+           pch = c(19,4,15), bty = "n",  pt.cex = 1.5, cex = 0.8 , 
            text.col = "black", horiz = FALSE, inset = c(0.0, 0.0))
     title(main = gtitle)      
   }
@@ -166,9 +338,9 @@ make_partisan_plot <- function(hca_model, df_filtered, gtitle="my graph title", 
     par(mar=c(1,3,1,0)) # set margins
     plot(dend, cex = 0.5, leaflab = "none")
     legend("topleft",
-           legend = c("Polorized Democrat" , "Lean Democrat" , "Lean Republican" , "Polorized Republican"),
-           col = c("#2129B0", "#2129B0", "#BF1200", "#BF1200"),
-           pch = c(19,1,0,15), bty = "n",  pt.cex = 1.5, cex = 0.8 ,
+           legend = c("Polorized Democrat" , "Amphibious Partisans" , "Polorized Republican"), 
+           col = c("#2129B0", "#3A084A", "#BF1200"), 
+           pch = c(19,4,15), bty = "n",  pt.cex = 1.5, cex = 0.8 , 
            text.col = "black", horiz = FALSE, inset = c(0.0, 0.05))
     
     #Horz
@@ -238,7 +410,7 @@ make_partisan_plot(hc3, df_org, "Hiearchical Cluster Model Partisan Polarization
 
 ##2002-2008
 
-hca_df <- prepare_hca_df(dfocc3, 2002, 2008)
+hca_df <- prepare_hca_df(dfocc, 2004, 2008)
 df_org <- hca_df[[1]]
 df <- hca_df[[2]]
 
@@ -250,17 +422,36 @@ d <- dist(df, method = "euclidean")
 hc3 <- agnes(df, method = "ward")
 
 #Make Plots
-make_partisan_plot(hc3, df_org, "Hiearchical Cluster Model Partisan Polarization 2002 - 2008 (AGNES HCA Using Ward)", 
-                   "2002_2008" )
+make_partisan_plot(hc3, df_org, "Hiearchical Cluster Model Partisan Polarization 2004 - 2008 (AGNES HCA Using Ward)", 
+                   "2004_2008" )
 
 
 
 ##2002-2008
+y1 = 2010
+y2 = 2018
+gtitle = paste("Hiearchical Cluster Model of Partisan Polarization", y1, "-", y2, "(AGNES HCA Using Ward)", sep = " ")
+gfile = paste(y1, y2, sep = "_")
 
-hca_df <- prepare_hca_df(dfocc3, 2010, 2018)
+hca_df <- prepare_hca_df(dfocc, y1, y2)
 df_org <- hca_df[[1]]
 df <- hca_df[[2]]
 
+
+# methods to assess
+m <- c( "average", "single", "complete", "ward")
+names(m) <- c( "average", "single", "complete", "ward")
+
+# function to compute coefficient
+ac <- function(x) {
+  agnes(df, method = x)$ac
+}
+
+map_dbl(m, ac)
+
+#diana coef
+hcd <- diana(df)
+hcd$dc
 
 # Dissimilarity matrix
 d <- dist(df, method = "euclidean")
@@ -268,9 +459,12 @@ d <- dist(df, method = "euclidean")
 #Basic Model
 hc3 <- agnes(df, method = "ward")
 
+#Post Cluster DF
+post_df <- post_cluster_df(df_org, hc3, y1, y2)
+
+
 #Make Plots
-make_partisan_plot(hc3, df_org, "Hiearchical Cluster Model Partisan Polarization 2010 - 2018 (AGNES HCA Using Ward)", 
-                   "2010_2018" )
+make_partisan_plot(hc3, df_org, gtitle, gfile)
 
 
 
@@ -278,7 +472,14 @@ make_partisan_plot(hc3, df_org, "Hiearchical Cluster Model Partisan Polarization
 
 
 
+#Optimal Clusters
+ppi <- 600
+fp <- "output/plots/"
+png(paste0(fp,"_optimal_clusters_plot.png"), width=11.5*ppi, height=8*ppi, res=ppi)
 
+#pdf(paste0(fp,modnm,"_",gtyp,"_horiz_plot.pdf"), width=11.5, height=8)
+fviz_nbclust(df, FUN = hcut, method = "wss")
+dev.off()
 
 
 ########################################
@@ -309,9 +510,9 @@ make_partisan_plot(hc3, df_org, "Hiearchical Cluster Model Partisan Polarization
 # rect.hclust(dendsort(hc5, type="min", isReverse=TRUE), k = 4, border = 2:5)
 # 
 # 
-# plot(dendsort(hc3, type="min", isReverse=TRUE), cex = 0.6)
-
-
+# plot(dendsort(as.dendrogram(hc3), type="min", isReverse=TRUE), cex = 0.6)
+# 
+# 
 
 
 
