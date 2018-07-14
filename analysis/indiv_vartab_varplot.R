@@ -243,7 +243,7 @@ make_var_graph_neu <- function(df, plt_type="cid_master", plt_caption="", plt_ti
     scale_color_manual(values=colors_neutral) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
-    scale_y_continuous(limits = c(0.75, 0.95)) +
+    #scale_y_continuous(limits = c(0.75, 0.95)) +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(PID)})) +
     labs(title = plt_title,
@@ -282,7 +282,7 @@ make_var_graph_dem <- function(df, plt_type="cid_master", plt_caption="", plt_ti
     scale_color_manual(values=colors_dem) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
-    scale_y_continuous(limits = c(0.75, 0.95)) +
+    #scale_y_continuous(limits = c(0.75, 0.95)) +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(PID)})) +
     labs(title = plt_title,
@@ -429,9 +429,11 @@ vt_cycle_cidmaster <- var_cycle_table(df1_ps,
 
 
 
+colors_dem = rev(brewer.pal(n = 8, name = "Blues")[5:8])
+plt_title = "Partisan Polarization - AGNES Polarized Democratic Firms"
 
-gr_cid_master_pid <- make_var_graph(df1_pid, "cid_master_pid_hca_dem", "Note: Post-Agnes Polarized Firms")
-gr_cid_master_ps <- make_var_graph(df1_ps, "cid_master_ps_hca_dem", "Note: Post-Agnes Polarized Firms")
+gr_cid_master_pid <- make_var_graph_dem(df1_pid, "cid_master_pid_hca_dem", "Note: Party ID Used to Calculate Partisan Polarization", plt_title)
+gr_cid_master_ps <- make_var_graph_dem(df1_ps, "cid_master_ps_hca_dem", "Note: Partisan Score Used to Calculate Partisan Polarization", plt_title)
 
 
 
