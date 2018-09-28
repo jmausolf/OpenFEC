@@ -22,6 +22,17 @@ save_stargazer("output/tables/table_descriptive_stats.tex",
                rownames = FALSE)
 
 
+fec100 <-  read_csv("F100_desc.csv")
+
+save_stargazer("output/tables/table_descriptive_stats_F100.tex",
+               as.data.frame(fec100), header=FALSE, type='latex',
+               font.size = "scriptsize",
+               digits = 2,
+               title = "Data for Fortune 100 Companies", 
+               summary = FALSE,
+               rownames = FALSE)
+
+
 names_ex <-  read_csv("cleaned_names_example.csv") %>% 
   select(-`Name Example Cleaned`)
 
@@ -95,7 +106,8 @@ save_stargazer("output/tables/contrib_descriptive_stats.tex",
                median = TRUE,
                font.size = "scriptsize",
                digits = 2,
-               title = "Descriptive Statistics from the Federal Election Commission (FEC)" )
+               title = "Descriptive Statistics from the Federal Election Commission (FEC)",
+               rownames = FALSE)
 
 #stargazer(as.data.frame(df_stats), type = "text", median = TRUE)
 
