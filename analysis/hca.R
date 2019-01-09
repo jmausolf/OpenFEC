@@ -474,6 +474,7 @@ mean(dfocc3_hca_all$partisan_score)
 mean(dfocc3_hca_all$median_ps)
 mean(dfocc3_hca_all$median_pid2)
 mean(dfocc3_hca_all$var_pid2)
+table(dfocc3_hca_all$pid2)
 
 
 ## join post cluster to dfocc3
@@ -483,6 +484,7 @@ mean(dfocc3_hca_dem$partisan_score)
 mean(dfocc3_hca_dem$median_ps)
 mean(dfocc3_hca_dem$median_pid2)
 mean(dfocc3_hca_dem$var_pid2)
+table(dfocc3_hca_dem$pid2)
 
 ## join post cluster to dfocc3
 dfocc3_hca_rep <- left_join(dfocc3, df_post_cluster) %>% 
@@ -491,6 +493,7 @@ mean(dfocc3_hca_rep$partisan_score)
 mean(dfocc3_hca_rep$median_ps)
 mean(dfocc3_hca_rep$median_pid2)
 mean(dfocc3_hca_rep$var_pid2)
+table(dfocc3_hca_rep$pid2)
 
 
 ## join post cluster to dfocc3
@@ -500,5 +503,6 @@ mean(dfocc3_hca_oth$partisan_score)
 mean(dfocc3_hca_oth$median_ps)
 mean(dfocc3_hca_oth$median_pid2)
 mean(dfocc3_hca_oth$var_pid2)
+table(dfocc3_hca_oth$pid2)
 
 
