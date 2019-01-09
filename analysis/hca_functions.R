@@ -334,9 +334,9 @@ make_partisan_plot_2004_2018 <- function(hca_model, df_filtered, gtitle="my grap
     #2 = NEU/AMP
     #3 = DEM
     mutate(cluster2 = as.numeric(as.character(fct_recode(as.factor(cluster),
-                                                       "1" = "1",
-                                                       "3" = "2",
-                                                       "2" = "3"
+                                                       "1" = "1",  #Rep
+                                                       "3" = "2",  #Neu
+                                                       "2" = "3"   #Dem
                                                        #"19" = "4",
                                                        #"4" = "5"
     )))) %>%     
@@ -433,6 +433,10 @@ make_partisan_plot_2004_2018 <- function(hca_model, df_filtered, gtitle="my grap
   
   
 }
+
+
+
+
 
 
 
