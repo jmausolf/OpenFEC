@@ -205,7 +205,7 @@ make_var_graph_base_pid <- function(df, plt_type="cid_master", plt_caption="", p
     scale_color_manual(values=colors_base) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
-    scale_y_continuous(limits = c(0.77, 0.97)) +
+    scale_y_continuous(limits = c(0.75, 0.97)) +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Party~ID)})) +
     labs(title = plt_title,
@@ -286,7 +286,7 @@ make_var_graph_dem_pid <- function(df, plt_type="cid_master", plt_caption="", pl
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Party~ID)})) +
-    scale_y_continuous(limits = c(0.77, 0.97)) +
+    scale_y_continuous(limits = c(0.75, 0.97)) +
     labs(title = plt_title,
          caption = plt_caption) +
     theme_minimal() +
@@ -361,7 +361,7 @@ make_var_graph_rep_pid <- function(df, plt_type="cid_master", plt_caption="", pl
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Party~ID)})) +
-    scale_y_continuous(limits = c(0.77, 0.97)) +
+    scale_y_continuous(limits = c(0.75, 0.97)) +
     labs(title = plt_title,
          caption = plt_caption) +
     theme_minimal() +
@@ -435,7 +435,7 @@ make_var_graph_oth_pid <- function(df, plt_type="cid_master", plt_caption="", pl
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Party~ID)})) +
-    scale_y_continuous(limits = c(0.77, 0.97)) +
+    scale_y_continuous(limits = c(0.75, 0.97)) +
     labs(title = plt_title,
          caption = plt_caption) +
     theme_minimal() +
