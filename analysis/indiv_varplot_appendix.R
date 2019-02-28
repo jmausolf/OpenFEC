@@ -39,11 +39,13 @@ df_analysis <- left_join(df_1980_constant, df_filtered)
 df1_pid <- make_var_df(df_analysis, "cid_master")
 df1_ps <- make_var_df_partisan(df_analysis, "cid_master")
 
-plt_title1 = "Partisan Polarization (PID) - 1980 Constant Firms, Unclassified"
-plt_title2 = "Partisan Polarization (Partisan Score) - 1980 Constant Firms, Unclassified"
+title1 = "Partisan Polarization (PID) - 1980 Firms"
+title2 = "Partisan Polarization (PS) - 1980 Firms"
+sub = "1980 Constant Firms, Unclassified"
 
-gr_cid_master_pid <- make_var_graph_base_pid(df1_pid, "cid_master_pid_1980n10", plt_title1)
-gr_cid_master_ps <- make_var_graph_base_ps(df1_ps, "cid_master_ps_1980n10", plt_title2)
+
+gr_cid_master_pid <- make_var_graph_base_pid(df1_pid, "cid_master_pid_1980n10", title1)
+gr_cid_master_ps <- make_var_graph_base_ps(df1_ps, "cid_master_ps_1980n10", title2)
 
 
 
