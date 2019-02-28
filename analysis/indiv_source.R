@@ -13,9 +13,7 @@ library(lubridate)
 library(scales)
 library(DBI)
 library(ggsci)
-
-
-
+library(bbplot)
 
 
 ####################################
@@ -34,6 +32,7 @@ fec_indiv <- dbGetQuery(con, "SELECT * FROM individual_partisans")
 #write_csv(fec, "openfec_sa_cleaned_041318.csv")
 
 
+  
 #####################
 ## CORE DATA CLEANING
 
@@ -48,7 +47,9 @@ dfm <- fec_indiv %>%
   mutate(partisan_score = as.numeric(partisan_score_mean)) %>%
   mutate(ps01 = ((partisan_score+1)/2)) %>% 
   mutate(occ = fct_lump(contributor_occupation_clean_mode, n=10)) %>% 
-  mutate(cycle = as.numeric(contributor_cycle))
+  mutate(cycle = as.numeric(contributor_cycle)) %>% 
+  mutate(id = row_number())
+  
 
 
 ##Clean Occupations
@@ -67,13 +68,58 @@ dfocc <- dfm %>%
          contributor_cycle >= 1980 & contributor_cycle < 2020)
 
 
-dfocc3 <- dfocc %>% 
-  select(cycle, pid3, pid2, partisan_score, cid_master, occlevels, occ3, occ4) %>%
-  mutate(ps01 = ((partisan_score+1)/2)) %>% 
-  filter(!is.na(pid2),
-         !is.na(occlevels))
+# dfocc3 <- dfocc %>% 
+#   select(cycle, pid3, pid2, partisan_score, cid_master, occlevels, occ3, occ4, n_indiv, n_contrib) %>%
+#   mutate(ps01 = ((partisan_score+1)/2)) %>% 
+#   filter(!is.na(pid2))
 
 
+
+
+#####################
+## COUNTS PER CID_MASTER/CYCLE
+
+##Get Number of Contributions by the Sum of Unique Sub Ids
+df_n_contrib <- dfocc %>% 
+  mutate(sub_id_count = as.numeric(sub_id_count)) %>% 
+  group_by(cid_master, contributor_cycle) %>% 
+  summarise('n_contrib' = sum(sub_id_count))
+
+##Get the Number of Individuals within a Company in an Election Cycle
+##Get raw indiv count (including those with non-pid2 parties and missing ps)
+df_raw_indiv <- dfocc %>% 
+  add_count(cid_master, contributor_cycle, sort=TRUE)  %>%
+  rename('n_indiv_raw' = n) 
+
+
+##Get only valid pid2 count
+df_pid_indiv <- dfocc %>%
+  filter(!is.na(pid2)) %>% 
+  add_count(cid_master, contributor_cycle, sort=TRUE)  %>%
+  rename('n_indiv_pid' = n) %>% 
+  select(cid_master, contributor_cycle, n_indiv_pid) %>% 
+  distinct()
+
+
+##Get only valid partisan score count
+df_ps_indiv <- dfocc %>%
+  filter(!is.na(partisan_score)) %>% 
+  add_count(cid_master, contributor_cycle, sort=TRUE)  %>%
+  rename('n_indiv_ps' = n) %>% 
+  select(cid_master, contributor_cycle, n_indiv_ps) %>% 
+  distinct()
+
+
+##Join Different Metrics
+df_filtered <- df_raw_indiv %>% 
+  left_join(df_pid_indiv) %>% 
+  left_join(df_ps_indiv) %>% 
+  left_join(df_n_contrib)
+
+
+
+##Delete Excess Data
+rm(list=c('dfm', 'df_raw_indiv', 'df_pid_indiv', 'df_ps_indiv', 'df_n_contrib'))
 
 ####################################
 ## CORE FOLDERS

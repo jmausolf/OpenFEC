@@ -8,20 +8,40 @@ source("indiv_vartab_varplot_functions.R")
 
 colors_base <- pal_nejm("default")(8)
 colors_base <- pal_aaas("default")(8)
+colors_base <- pal_tableau(pal = "Tableau10")(8)
 #colors_base <- rev(pal_aaas("default")(8)[5:8])
 
 ####################################
 ## Make Variance Tables + Graphs
 ####################################
 
+##Filter 
+nf = 0
+df_analysis <- df_filtered %>%
+  filter(n_indiv_raw >= nf) %>%
+  filter(n_indiv_pid >= nf) %>% 
+  filter(n_indiv_ps >= nf) %>% 
+  filter(n_contrib >= nf) 
 
+
+df_check <- df_analysis %>% 
+  count(cid_master, cycle)
+# dfocc3 <- dfocc3 %>%
+#   filter(n_indiv >= 100) %>% 
+#   filter(n_contrib >= 100)
+# 
+# #Check Companies, Cycles
+# df3_check <- dfocc3 %>% 
+#   count(cid_master, cycle)
+
+##NOTE: dfocc3 removing NA pid2, (but drops cases where pid2 DNE but partisan score exists)
 
 #############################
 ## CID MASTER
 #############################
 
-df1_pid <- make_var_df(dfocc, "cid_master")
-df1_ps <- make_var_df_partisan(dfocc, "cid_master")
+df1_pid <- make_var_df(df_analysis, "cid_master")
+df1_ps <- make_var_df_partisan(df_analysis, "cid_master")
 #df1_part_hist <- make_partisan_hist_df(dfocc, "cid_master")
 
 plt_title = "Partisan Polarization - All Firms, Unclassified"
@@ -36,9 +56,9 @@ vt_cycle_cidmaster <- var_cycle_table(df1_ps,
                                       tab_title2)
 
 
-
-gr_cid_master_pid <- make_var_graph_base_pid(df1_pid, "cid_master_pid_base", "Note: Party ID Used to Calculate Partisan Polarization", plt_title)
-gr_cid_master_ps <- make_var_graph_base_ps(df1_ps, "cid_master_ps_base", "Note: Partisan Score Used to Calculate Partisan Polarization", plt_title)
+source("indiv_vartab_varplot_functions.R")
+gr_cid_master_pid <- make_var_graph_base_pid(df1_pid, "cid_master_pid_base", plt_title)
+gr_cid_master_ps <- make_var_graph_base_ps(df1_ps, "cid_master_ps_base", plt_title)
 
 
 

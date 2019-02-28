@@ -6,6 +6,8 @@
 
 library(RColorBrewer)
 
+#Overwrite bbplot finalise_plot() function
+source("bb_finalise_plot_academic.R")
 
 ########################################
 #Variance Table + Graph Functions
@@ -185,13 +187,11 @@ var_cycle_table <- function(df,
 ##----------------------------  
 ## Base Graph - Pre HCA
 
-make_var_graph_base_pid <- function(df, plt_type="cid_master", plt_caption="", plt_title=""){
+make_var_graph_base_pid <- function(df, plt_type="cid_master", plt_title="", plt_caption=""){
 
   out_by = paste("by_all_companies", plt_type, sep = "_")
   outfile <- wout("indiv_plt_partisan_variance_occ", out_by)
   
-  #plt_title = "Variance of Within-Company Individual Contributions by Occupation and Election Cycle"
-    
   df_var_cycle_graph <- df %>% 
     group_by(occ, cycle) %>% 
     summarise(meanvar = mean(varpid, na.rm = T)) %>%
@@ -202,29 +202,37 @@ make_var_graph_base_pid <- function(df, plt_type="cid_master", plt_caption="", p
     geom_smooth(color="#3A084A", alpha=0.15, size=0.5) +
     geom_line(aes(color=occ), alpha=0.9) +
     geom_point(aes(shape=occ), alpha=1) +
+    
+    #Add bbcstyle
+    bbc_style() +
+    
     scale_color_manual(values=colors_base) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
     scale_y_continuous(limits = c(0.75, 0.97)) +
+    
+    #Add axis titles
+    theme(axis.title = element_text(size = 18)) +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Party~ID)})) +
     labs(title = plt_title,
          caption = plt_caption) +
-    theme_minimal() +
-    theme(legend.position="bottom") +
+    
+    #Add x axis ticks
+    theme(
+      axis.ticks.x = element_line(colour = "#333333"), 
+      axis.ticks.length =  unit(0.26, "cm"),
+      axis.text = element_text(size=11, color="#222222")) +
     guides(shape = guide_legend(override.aes = list(size = 5))) +
-    theme(legend.title=element_blank()) + 
     theme(plot.title = element_text(hjust = 0.5))
   
-  
-  ggsave(outfile, width = 10, height = 6)
-  
+  finalise_plot(g, plt_caption, outfile, footer=FALSE)
   return(g)
   
 }
 
 
-make_var_graph_base_ps <- function(df, plt_type="cid_master", plt_caption="", plt_title=""){
+make_var_graph_base_ps <- function(df, plt_type="cid_master", plt_title="", plt_caption=""){
 
   out_by = paste("by_all_companies", plt_type, sep = "_")
   outfile <- wout("indiv_plt_partisan_variance_occ", out_by)
@@ -241,23 +249,31 @@ make_var_graph_base_ps <- function(df, plt_type="cid_master", plt_caption="", pl
     geom_smooth(color="#3A084A", alpha=0.15, size=0.5) +
     geom_line(aes(color=occ), alpha=0.9) +
     geom_point(aes(shape=occ), alpha=1) +
+
+    #Add bbcstyle
+    bbc_style() +
+    
     scale_color_manual(values=colors_base) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
     scale_y_continuous(limits = c(0.2, 1.0)) +
+    
+    #Add axis titles
+    theme(axis.title = element_text(size = 18)) +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Partisan~Score)})) +
     labs(title = plt_title,
          caption = plt_caption) +
-    theme_minimal() +
-    theme(legend.position="bottom") +
+    
+    #Add x axis ticks
+    theme(
+      axis.ticks.x = element_line(colour = "#333333"), 
+      axis.ticks.length =  unit(0.26, "cm"),
+      axis.text = element_text(size=11, color="#222222")) +
     guides(shape = guide_legend(override.aes = list(size = 5))) +
-    theme(legend.title=element_blank()) + 
     theme(plot.title = element_text(hjust = 0.5))
   
-  
-  ggsave(outfile, width = 10, height = 6)
-  
+  finalise_plot(g, plt_caption, outfile, footer=FALSE)
   return(g)
   
 }
