@@ -222,7 +222,7 @@ make_var_graph_base_pid <- function(df, plt_type="cid_master", plt_title="", plt
     theme(
       axis.ticks.x = element_line(colour = "#333333"), 
       axis.ticks.length =  unit(0.26, "cm"),
-      axis.text = element_text(size=11, color="#222222")) +
+      axis.text = element_text(size=10, color="#222222")) +
     guides(shape = guide_legend(override.aes = list(size = 5))) +
     theme(plot.title = element_text(hjust = 0.5))
   
@@ -269,7 +269,7 @@ make_var_graph_base_ps <- function(df, plt_type="cid_master", plt_title="", plt_
     theme(
       axis.ticks.x = element_line(colour = "#333333"), 
       axis.ticks.length =  unit(0.26, "cm"),
-      axis.text = element_text(size=11, color="#222222")) +
+      axis.text = element_text(size=10, color="#222222")) +
     guides(shape = guide_legend(override.aes = list(size = 5))) +
     theme(plot.title = element_text(hjust = 0.5))
   

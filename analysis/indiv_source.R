@@ -13,7 +13,9 @@ library(lubridate)
 library(scales)
 library(DBI)
 library(ggsci)
+library(rbokeh)
 library(bbplot)
+
 
 
 ####################################
@@ -48,7 +50,13 @@ dfm <- fec_indiv %>%
   mutate(ps01 = ((partisan_score+1)/2)) %>% 
   mutate(occ = fct_lump(contributor_occupation_clean_mode, n=10)) %>% 
   mutate(cycle = as.numeric(contributor_cycle)) %>% 
-  mutate(id = row_number())
+  mutate(id = row_number()) %>% 
+
+  #Remove Questionable cid_master's
+  filter(cid_master != 'Southern',
+         cid_master != 'Williams',
+         cid_master != 'Harris',
+         cid_master != 'Ball')
   
 
 
@@ -117,9 +125,40 @@ df_filtered <- df_raw_indiv %>%
   left_join(df_n_contrib)
 
 
-
 ##Delete Excess Data
 rm(list=c('dfm', 'df_raw_indiv', 'df_pid_indiv', 'df_ps_indiv', 'df_n_contrib'))
+
+
+##Year Filter Function
+get_cid_contant_n <- function(df, n, year=1980, filter_var=n_indiv_pid){
+  
+  filter_var <- enexpr(filter_var)
+  
+  #Get all Companies in year with >= n (of filter_var)
+  df_start_gt_n <- df %>% 
+    mutate(contributor_cycle = as.numeric(contributor_cycle)) %>% 
+    filter(contributor_cycle == 1980) %>% 
+    filter(!!filter_var >= n) %>% 
+    select(cid_master) %>% 
+    distinct()
+  
+  #Get all Companies in Anyyear with < 10 indiv pid
+  df_any_lt_n <- df %>% 
+    filter(!!filter_var < n) %>% 
+    select(cid_master) %>% 
+    distinct()
+  
+  
+  #Get only companies that exist at start with >=10 
+  #and have at least 10 every following year (using antijoin)
+  df_constant <- anti_join(df_start_gt_n, df_any_lt_n)
+  return(df_constant)
+  
+  
+}
+
+
+
 
 ####################################
 ## CORE FOLDERS
@@ -191,6 +230,8 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     }
   }
 }
+
+
 
 
 
