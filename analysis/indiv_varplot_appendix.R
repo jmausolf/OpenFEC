@@ -6,24 +6,10 @@ source("indiv_source.R")
 source("indiv_vartab_varplot_functions.R")
 
 
-colors_base <- pal_tableau(pal = "Tableau10")(8)
 
 ####################################
 ## Make Variance Tables + Graphs
 ####################################
-
-##Number Filter 
-nf = 0
-df_analysis <- df_filtered %>%
-  filter(n_indiv_raw >= nf) %>%
-  filter(n_indiv_pid >= nf) %>% 
-  filter(n_indiv_ps >= nf) %>% 
-  filter(n_contrib >= nf) 
-
-
-df_check <- df_analysis %>% 
-  count(cid_master, cycle)
-
 
 ##Year Filter & N Filter
 df_1980_constant <- get_cid_contant_n(df_filtered, 10)

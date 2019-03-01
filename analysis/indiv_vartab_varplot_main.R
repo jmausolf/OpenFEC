@@ -6,17 +6,12 @@ source("indiv_source.R")
 source("indiv_vartab_varplot_functions.R")
 
 
-#colors_base <- pal_nejm("default")(8)
-#colors_base <- pal_aaas("default")(8)
-colors_base <- pal_tableau(pal = "Tableau10")(8)
-#colors_base <- rev(pal_aaas("default")(8)[5:8])
-
 ####################################
 ## Make Variance Tables + Graphs
 ####################################
 
 ##Number Filter 
-nf = 0
+nf = 10
 df_analysis <- df_filtered %>%
   filter(n_indiv_raw >= nf) %>%
   filter(n_indiv_pid >= nf) %>% 
@@ -25,7 +20,8 @@ df_analysis <- df_filtered %>%
 
 
 df_check <- df_analysis %>% 
-  count(cid_master, cycle)
+  count(cid_master, cycle) %>% 
+  distinct()
 
 
 
@@ -64,7 +60,7 @@ vt_cycle_cidmaster <- var_cycle_table(df1_ps,
                                       tab_title2)
 
 
-source("indiv_vartab_varplot_functions.R")
+
 gr_cid_master_pid <- make_var_graph_base_pid(df1_pid, "cid_master_pid_base", plt_title)
 gr_cid_master_ps <- make_var_graph_base_ps(df1_ps, "cid_master_ps_base", plt_title)
 

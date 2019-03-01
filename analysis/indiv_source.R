@@ -33,6 +33,20 @@ fec_indiv <- dbGetQuery(con, "SELECT * FROM individual_partisans")
 #write to csv temp
 #write_csv(fec, "openfec_sa_cleaned_041318.csv")
 
+##Small DF's to Help Clean Companies
+companies <-  fec_indiv %>%
+  select(cid_master) %>% 
+  distinct()
+
+companies_emp <-  fec_indiv %>%
+  select(cid_master, contributor_employer_clean_mode) %>%
+  add_count(cid_master, contributor_employer_clean_mode, sort=TRUE) %>% 
+  distinct()
+
+companies_occ <-  fec_indiv %>%
+  select(cid_master, contributor_occupation_clean_mode) %>%
+  add_count(cid_master, contributor_occupation_clean_mode, sort=TRUE) %>% 
+  distinct()
 
   
 #####################
@@ -55,8 +69,46 @@ dfm <- fec_indiv %>%
   #Remove Questionable cid_master's
   filter(cid_master != 'Southern',
          cid_master != 'Williams',
-         cid_master != 'Harris',
-         cid_master != 'Ball')
+         cid_master != 'Ball',
+         cid_master != 'PVH',
+         cid_master != 'Dover',
+         
+      ) %>% 
+
+  #Remove Questionable employer_clean_mode's
+  filter(contributor_employer_clean_mode != 'gap solutions',
+         contributor_employer_clean_mode != 'apple graphics',
+         !str_detect(contributor_employer_clean_mode, "not.+employed"),
+         !str_detect(contributor_employer_clean_mode, "self.+"),
+         !str_detect(contributor_employer_clean_mode, "cummins.+law"),
+         !str_detect(contributor_employer_clean_mode, "cummins.+al"),
+         !str_detect(contributor_employer_clean_mode, "apple+.h"),
+         !str_detect(contributor_employer_clean_mode, "apple+.financ*"),
+         !str_detect(contributor_employer_clean_mode, "apple+.phar"),
+         !str_detect(contributor_employer_clean_mode, "apple+.a"),
+         !str_detect(contributor_employer_clean_mode, "apple+.b"),
+         !str_detect(contributor_employer_clean_mode, "apple+.co(?!m)"),
+         !str_detect(contributor_employer_clean_mode, "apple+.c(?!o)"),
+         !str_detect(contributor_employer_clean_mode, "apple+.d"),
+         !str_detect(contributor_employer_clean_mode, "apple+.education"),
+         !str_detect(contributor_employer_clean_mode, "apple+.f"),
+         !str_detect(contributor_employer_clean_mode, "apple+.i(?!nc)"),
+         !str_detect(contributor_employer_clean_mode, "apple+.j"),
+         !str_detect(contributor_employer_clean_mode, "apple+.l"),
+         !str_detect(contributor_employer_clean_mode, "apple+.m"),
+         !str_detect(contributor_employer_clean_mode, "apple+.n"),
+         !str_detect(contributor_employer_clean_mode, "apple+.o"),
+         !str_detect(contributor_employer_clean_mode, "apple+.p(?!ro)"),
+         !str_detect(contributor_employer_clean_mode, "apple+.q"),
+         !str_detect(contributor_employer_clean_mode, "apple+.ro"),
+         !str_detect(contributor_employer_clean_mode, "apple+.s(?!of)"),
+         !str_detect(contributor_employer_clean_mode, "apple+.t"),
+         !str_detect(contributor_employer_clean_mode, "apple+.ve"),
+         !str_detect(contributor_employer_clean_mode, "apple+.w"),
+         !str_detect(contributor_employer_clean_mode, "vf+.(?![j]|[o]|wo)"),
+         !str_detect(contributor_employer_clean_mode, "global partners+."),
+         !str_detect(contributor_employer_clean_mode, "harris+.(?!exe)")
+      )
   
 
 
@@ -76,10 +128,6 @@ dfocc <- dfm %>%
          contributor_cycle >= 1980 & contributor_cycle < 2020)
 
 
-# dfocc3 <- dfocc %>% 
-#   select(cycle, pid3, pid2, partisan_score, cid_master, occlevels, occ3, occ4, n_indiv, n_contrib) %>%
-#   mutate(ps01 = ((partisan_score+1)/2)) %>% 
-#   filter(!is.na(pid2))
 
 
 
@@ -127,6 +175,7 @@ df_filtered <- df_raw_indiv %>%
 
 ##Delete Excess Data
 rm(list=c('dfm', 'df_raw_indiv', 'df_pid_indiv', 'df_ps_indiv', 'df_n_contrib'))
+rm(list=c('dfocc', 'fec_indiv'))
 
 
 ##Year Filter Function

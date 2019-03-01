@@ -5,9 +5,15 @@
 #source("indiv_source.R")
 
 library(RColorBrewer)
+library(ggthemes)
 
 #Overwrite bbplot finalise_plot() function
 source("bb_finalise_plot_academic.R")
+
+#Set Base Color
+pal <- tableau_color_pal(palette = "Color Blind", type = c("regular"), direction = 1)
+show_col(pal(4))
+colors_base <- pal(4)
 
 ########################################
 #Variance Table + Graph Functions

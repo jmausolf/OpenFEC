@@ -19,7 +19,7 @@ library(qwraps2)
 options(qwraps2_markup = "latex") 
 
 ##Number Filter 
-nf = 10
+nf = 0
 df_analysis <- df_filtered %>%
   filter(n_indiv_raw >= nf) %>%
   filter(n_indiv_pid >= nf) %>% 
