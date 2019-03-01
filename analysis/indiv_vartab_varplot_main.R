@@ -1,5 +1,5 @@
 ####################################
-## Load Contrib SOURCE
+## Load SOURCE
 ####################################
 
 source("indiv_source.R")
