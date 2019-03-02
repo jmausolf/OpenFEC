@@ -15,6 +15,11 @@ pal <- tableau_color_pal(palette = "Color Blind", type = c("regular"), direction
 show_col(pal(4))
 colors_base <- pal(4)
 
+show_col(pal(2))
+colors_base1 <- pal(2)
+tab_blue = "#1770aa"
+tab_orange = "#fc7d0b"
+
 ########################################
 #Variance Table + Graph Functions
 ########################################

@@ -24,14 +24,11 @@ library(bbplot)
 
 ##Load Data
 file = "openFEC.db"
-#file = "openFEC_full_R_test.db"
 path = "../fec_download/"
 filepath = paste0(path, file)
 con <- dbConnect(RSQLite::SQLite(), filepath)
 fec_indiv <- dbGetQuery(con, "SELECT * FROM individual_partisans") 
 
-#write to csv temp
-#write_csv(fec, "openfec_sa_cleaned_041318.csv")
 
 ##Small DF's to Help Clean Companies
 companies <-  fec_indiv %>%
@@ -49,9 +46,9 @@ companies_occ <-  fec_indiv %>%
   distinct()
 
   
-#####################
+#############################
 ## CORE DATA CLEANING
-
+#############################
 
 dfm <- fec_indiv %>% 
   mutate(pid = fct_collapse(party_id_mode,
@@ -130,10 +127,10 @@ dfocc <- dfm %>%
 
 
 
-
-
-#####################
+#################################
 ## COUNTS PER CID_MASTER/CYCLE
+## df_filtered
+#################################
 
 ##Get Number of Contributions by the Sum of Unique Sub Ids
 df_n_contrib <- dfocc %>% 
@@ -166,6 +163,7 @@ df_ps_indiv <- dfocc %>%
   distinct()
 
 
+
 ##Join Different Metrics
 df_filtered <- df_raw_indiv %>% 
   left_join(df_pid_indiv) %>% 
@@ -173,40 +171,23 @@ df_filtered <- df_raw_indiv %>%
   left_join(df_n_contrib)
 
 
+####################################
+## Set Individual Threshold
+## df_analysis
+####################################
+
+##Number Filter 
+nf = 10
+df_analysis <- df_filtered %>%
+  filter(n_indiv_raw >= nf) %>%
+  filter(n_indiv_pid >= nf) %>% 
+  filter(n_indiv_ps >= nf) %>% 
+  filter(n_contrib >= nf) 
+
+
 ##Delete Excess Data
 rm(list=c('dfm', 'df_raw_indiv', 'df_pid_indiv', 'df_ps_indiv', 'df_n_contrib'))
 rm(list=c('dfocc', 'fec_indiv'))
-
-
-##Year Filter Function
-get_cid_contant_n <- function(df, n, year=1980, filter_var=n_indiv_pid){
-  
-  filter_var <- enexpr(filter_var)
-  
-  #Get all Companies in year with >= n (of filter_var)
-  df_start_gt_n <- df %>% 
-    mutate(contributor_cycle = as.numeric(contributor_cycle)) %>% 
-    filter(contributor_cycle == 1980) %>% 
-    filter(!!filter_var >= n) %>% 
-    select(cid_master) %>% 
-    distinct()
-  
-  #Get all Companies in Anyyear with < 10 indiv pid
-  df_any_lt_n <- df %>% 
-    filter(!!filter_var < n) %>% 
-    select(cid_master) %>% 
-    distinct()
-  
-  
-  #Get only companies that exist at start with >=10 
-  #and have at least 10 every following year (using antijoin)
-  df_constant <- anti_join(df_start_gt_n, df_any_lt_n)
-  return(df_constant)
-  
-  
-}
-
-
 
 
 ####################################
@@ -228,22 +209,12 @@ save_stargazer <- function(output.file, ...) {
   cat(paste(output, collapse = "\n"), "\n", file=output.file, append = FALSE)
 }
 
-
 wout <- function(plt_type, cid){
   outfile <- paste0("output/plots/", plt_type, "_", str_replace_all(tolower(cid), " ", "_"), ".png")
   return(outfile)
 }
 
 # Multiple plot function
-#
-# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
-# - cols:   Number of columns in layout
-# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
-#
-# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
-# then plot 1 will go in the upper left, 2 will go in the upper right, and
-# 3 will go all the way across the bottom.
-#
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   library(grid)
   
@@ -281,6 +252,34 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 }
 
 
+#Make Constant Firms (Used for Robusness Checks/Appendix)
+
+##Year Filter Function
+get_cid_contant_n <- function(df, n, year=1980, filter_var=n_indiv_pid){
+  
+  filter_var <- enexpr(filter_var)
+  
+  #Get all Companies in year with >= n (of filter_var)
+  df_start_gt_n <- df %>% 
+    mutate(contributor_cycle = as.numeric(contributor_cycle)) %>% 
+    filter(contributor_cycle == 1980) %>% 
+    filter(!!filter_var >= n) %>% 
+    select(cid_master) %>% 
+    distinct()
+  
+  #Get all Companies in Anyyear with < 10 indiv pid
+  df_any_lt_n <- df %>% 
+    filter(!!filter_var < n) %>% 
+    select(cid_master) %>% 
+    distinct()
+  
+  
+  #Get only companies that exist at start with >=10 
+  #and have at least 10 every following year (using antijoin)
+  df_constant <- anti_join(df_start_gt_n, df_any_lt_n)
+  return(df_constant)
+  
+}
 
 
 
