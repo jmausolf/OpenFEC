@@ -2,10 +2,7 @@
 ## Load SOURCE
 ####################################
 
-source("indiv_source.R")
-
-library(RColorBrewer)
-
+#source("indiv_source.R")
 
 ########################################
 #Variance Table + Graph Functions

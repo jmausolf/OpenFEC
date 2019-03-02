@@ -15,6 +15,13 @@ library(DBI)
 library(ggsci)
 library(rbokeh)
 library(bbplot)
+library(magrittr)
+library(qwraps2)
+library(RColorBrewer)
+library(ggthemes)
+
+#Overwrite bbplot finalise_plot() function
+source("bb_finalise_plot_academic.R")
 
 
 

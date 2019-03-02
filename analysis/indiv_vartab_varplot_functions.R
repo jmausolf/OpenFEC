@@ -2,14 +2,6 @@
 ## Load Contrib SOURCE
 ####################################
 
-#source("indiv_source.R")
-
-library(RColorBrewer)
-library(ggthemes)
-
-#Overwrite bbplot finalise_plot() function
-source("bb_finalise_plot_academic.R")
-
 #Set Base Color
 pal <- tableau_color_pal(palette = "Color Blind", type = c("regular"), direction = 1)
 show_col(pal(4))
@@ -221,6 +213,7 @@ make_var_graph_base_pid <- function(df, plt_type="cid_master", plt_title="", plt
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
     scale_y_continuous(limits = c(0.75, 0.97)) +
+    geom_hline(yintercept = 0.75, size = 1, colour="#333333") +
     
     #Add axis titles
     theme(axis.title = element_text(size = 18)) +
@@ -268,6 +261,8 @@ make_var_graph_base_ps <- function(df, plt_type="cid_master", plt_title="", plt_
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
     scale_y_continuous(limits = c(0.2, 1.0)) +
+    geom_hline(yintercept = 0.2, size = 1, colour="#333333") +
+
     
     #Add axis titles
     theme(axis.title = element_text(size = 18)) +
@@ -308,22 +303,32 @@ make_var_graph_dem_pid <- function(df, plt_type="cid_master", plt_caption="", pl
     geom_smooth(color="#2129B0", alpha=0.15, size=0.5) +
     geom_line(aes(color=occ), alpha=0.9) +
     geom_point(aes(shape=occ), alpha=1) +
+
+    #Add bbcstyle
+    bbc_style() +
+    
     scale_color_manual(values=colors_dem) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+    scale_y_continuous(limits = c(0.75, 0.97)) +
+    geom_hline(yintercept = 0.75, size = 1, colour="#333333") +
+    
+    #Add axis titles
+    theme(axis.title = element_text(size = 18)) +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Party~ID)})) +
-    scale_y_continuous(limits = c(0.75, 0.97)) +
     labs(title = plt_title,
          caption = plt_caption) +
-    theme_minimal() +
-    theme(legend.position="bottom") +
+    
+    #Add x axis ticks
+    theme(
+      axis.ticks.x = element_line(colour = "#333333"), 
+      axis.ticks.length =  unit(0.26, "cm"),
+      axis.text = element_text(size=10, color="#222222")) +
     guides(shape = guide_legend(override.aes = list(size = 5))) +
-    theme(legend.title=element_blank()) + 
     theme(plot.title = element_text(hjust = 0.5))
   
-  ggsave(outfile, width = 10, height = 6)
-  
+  finalise_plot(g, plt_caption, outfile, footer=FALSE)
   return(g)
   
 }
@@ -344,22 +349,32 @@ make_var_graph_dem_ps <- function(df, plt_type="cid_master", plt_caption="", plt
     geom_smooth(color="#2129B0", alpha=0.15, size=0.5) +
     geom_line(aes(color=occ), alpha=0.9) +
     geom_point(aes(shape=occ), alpha=1) +
+
+    #Add bbcstyle
+    bbc_style() +
+    
     scale_color_manual(values=colors_dem) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+    scale_y_continuous(limits = c(0.2, 1.0)) +
+    geom_hline(yintercept = 0.2, size = 1, colour="#333333") +
+    
+    #Add axis titles
+    theme(axis.title = element_text(size = 18)) +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Partisan~Score)})) +
-    scale_y_continuous(limits = c(0.2, 1.0)) +
     labs(title = plt_title,
          caption = plt_caption) +
-    theme_minimal() +
-    theme(legend.position="bottom") +
+    
+    #Add x axis ticks
+    theme(
+      axis.ticks.x = element_line(colour = "#333333"), 
+      axis.ticks.length =  unit(0.26, "cm"),
+      axis.text = element_text(size=10, color="#222222")) +
     guides(shape = guide_legend(override.aes = list(size = 5))) +
-    theme(legend.title=element_blank()) + 
     theme(plot.title = element_text(hjust = 0.5))
   
-  ggsave(outfile, width = 10, height = 6)
-  
+  finalise_plot(g, plt_caption, outfile, footer=FALSE)
   return(g)
   
 }
@@ -383,22 +398,32 @@ make_var_graph_rep_pid <- function(df, plt_type="cid_master", plt_caption="", pl
     geom_smooth(color="#BF1200", alpha=0.15, size=0.5) +
     geom_line(aes(color=occ), alpha=0.9) +
     geom_point(aes(shape=occ), alpha=1) +
+
+    #Add bbcstyle
+    bbc_style() +
+    
     scale_color_manual(values=colors_rep) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+    scale_y_continuous(limits = c(0.75, 0.97)) +
+    geom_hline(yintercept = 0.75, size = 1, colour="#333333") +
+    
+    #Add axis titles
+    theme(axis.title = element_text(size = 18)) +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Party~ID)})) +
-    scale_y_continuous(limits = c(0.75, 0.97)) +
     labs(title = plt_title,
          caption = plt_caption) +
-    theme_minimal() +
-    theme(legend.position="bottom") +
+    
+    #Add x axis ticks
+    theme(
+      axis.ticks.x = element_line(colour = "#333333"), 
+      axis.ticks.length =  unit(0.26, "cm"),
+      axis.text = element_text(size=10, color="#222222")) +
     guides(shape = guide_legend(override.aes = list(size = 5))) +
-    theme(legend.title=element_blank()) + 
     theme(plot.title = element_text(hjust = 0.5))
   
-  ggsave(outfile, width = 10, height = 6)
-  
+  finalise_plot(g, plt_caption, outfile, footer=FALSE)
   return(g)
   
 }
@@ -419,22 +444,32 @@ make_var_graph_rep_ps <- function(df, plt_type="cid_master", plt_caption="", plt
     geom_smooth(color="#BF1200", alpha=0.15, size=0.5) +
     geom_line(aes(color=occ), alpha=0.9) +
     geom_point(aes(shape=occ), alpha=1) +
+
+    #Add bbcstyle
+    bbc_style() +
+    
     scale_color_manual(values=colors_rep) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+    scale_y_continuous(limits = c(0.2, 1.0)) +
+    geom_hline(yintercept = 0.2, size = 1, colour="#333333") +
+    
+    #Add axis titles
+    theme(axis.title = element_text(size = 18)) +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Partisan~Score)})) +
-    scale_y_continuous(limits = c(0.2, 1.0)) +
     labs(title = plt_title,
          caption = plt_caption) +
-    theme_minimal() +
-    theme(legend.position="bottom") +
+    
+    #Add x axis ticks
+    theme(
+      axis.ticks.x = element_line(colour = "#333333"), 
+      axis.ticks.length =  unit(0.26, "cm"),
+      axis.text = element_text(size=10, color="#222222")) +
     guides(shape = guide_legend(override.aes = list(size = 5))) +
-    theme(legend.title=element_blank()) + 
     theme(plot.title = element_text(hjust = 0.5))
   
-  ggsave(outfile, width = 10, height = 6)
-  
+  finalise_plot(g, plt_caption, outfile, footer=FALSE)
   return(g)
   
 }
@@ -457,22 +492,32 @@ make_var_graph_oth_pid <- function(df, plt_type="cid_master", plt_caption="", pl
     geom_smooth(color="#3A084A", alpha=0.15, size=0.5) +
     geom_line(aes(color=occ), alpha=0.9) +
     geom_point(aes(shape=occ), alpha=1) +
+
+    #Add bbcstyle
+    bbc_style() +
+    
     scale_color_manual(values=colors_neutral) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+    scale_y_continuous(limits = c(0.75, 0.97)) +
+    geom_hline(yintercept = 0.75, size = 1, colour="#333333") +
+    
+    #Add axis titles
+    theme(axis.title = element_text(size = 18)) +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Party~ID)})) +
-    scale_y_continuous(limits = c(0.75, 0.97)) +
     labs(title = plt_title,
          caption = plt_caption) +
-    theme_minimal() +
-    theme(legend.position="bottom") +
+    
+    #Add x axis ticks
+    theme(
+      axis.ticks.x = element_line(colour = "#333333"), 
+      axis.ticks.length =  unit(0.26, "cm"),
+      axis.text = element_text(size=10, color="#222222")) +
     guides(shape = guide_legend(override.aes = list(size = 5))) +
-    theme(legend.title=element_blank()) + 
     theme(plot.title = element_text(hjust = 0.5))
   
-  ggsave(outfile, width = 10, height = 6)
-  
+  finalise_plot(g, plt_caption, outfile, footer=FALSE)
   return(g)
   
 }
@@ -493,22 +538,32 @@ make_var_graph_oth_ps <- function(df, plt_type="cid_master", plt_caption="", plt
     geom_smooth(color="#3A084A", alpha=0.15, size=0.5) +
     geom_line(aes(color=occ), alpha=0.9) +
     geom_point(aes(shape=occ), alpha=1) +
+
+    #Add bbcstyle
+    bbc_style() +
+    
     scale_color_manual(values=colors_neutral) +
     scale_shape_manual(values=c(10, 1, 2, 6)) +
     scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+    scale_y_continuous(limits = c(0.2, 1.0)) +
+    geom_hline(yintercept = 0.2, size = 1, colour="#333333") +
+    
+    #Add axis titles
+    theme(axis.title = element_text(size = 18)) +
     xlab("Contribution Cycle") +
     ylab(expression(Partisan~Polarization=={1-VAR(Partisan~Score)})) +
-    scale_y_continuous(limits = c(0.2, 1.0)) +
     labs(title = plt_title,
          caption = plt_caption) +
-    theme_minimal() +
-    theme(legend.position="bottom") +
+    
+    #Add x axis ticks
+    theme(
+      axis.ticks.x = element_line(colour = "#333333"), 
+      axis.ticks.length =  unit(0.26, "cm"),
+      axis.text = element_text(size=10, color="#222222")) +
     guides(shape = guide_legend(override.aes = list(size = 5))) +
-    theme(legend.title=element_blank()) + 
     theme(plot.title = element_text(hjust = 0.5))
   
-  ggsave(outfile, width = 10, height = 6)
-  
+  finalise_plot(g, plt_caption, outfile, footer=FALSE)
   return(g)
   
 }

@@ -2,12 +2,9 @@
 ## Load SOURCE
 ####################################
 
-source("indiv_source.R")
-source("indiv_vartab_varplot_functions.R")
+#source("indiv_source.R")
+#source("indiv_vartab_varplot_functions.R")
 
-
-library(magrittr)
-library(qwraps2)
 
 
 ####################################

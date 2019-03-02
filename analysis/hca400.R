@@ -2,10 +2,9 @@
 ## Load Contrib SOURCE
 ####################################
 
-source("indiv_source.R")
+#source("indiv_source.R")
 source("hca400_functions.R")
-source("indiv_vartab_varplot_functions.R")
-library(bbplot)
+#source("indiv_vartab_varplot_functions.R")
 
 ########################################
 ## Determine Model 1980-2002
@@ -319,7 +318,6 @@ post_df <- post_cluster_df(df_analysis, df_org, hca, y1, y2)
 
 
 #Make Plots
-source("hca_functions.R")
 make_partisan_plot(hca, df_org, gtitle, gfile)
 
 
