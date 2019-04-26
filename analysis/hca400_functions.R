@@ -49,7 +49,7 @@ spread_chr <- function(data, key_col, value_cols, fill = NA,
 post_cluster_df <- function(df, df_hca, hca_model, cycle_min = 1980, cycle_max = 2020){
   #Inspect Clusters
   dfclust <- rejoin_clusters_data(df_hca, hca_model) %>% 
-    select(cid_master, cluster)
+    select(cid_master, cluster) 
   
 
   df_simple <- df %>%
@@ -73,9 +73,13 @@ post_cluster_df <- function(df, df_hca, hca_model, cycle_min = 1980, cycle_max =
               mean_ps_max = mean(as.numeric(partisan_score_max), na.rm = TRUE)
               #sum_pid_count = sum(as.numeric(party_id_count))
     )
-  
+  #print(df_simple)
   #Join
-  df_post_cluster <- full_join(dfclust, df_simple)
+  df_post_cluster <- full_join(dfclust, df_simple) %>% 
+    mutate(cycle_min = cycle_min,
+           cycle_max = cycle_max,
+           cycle_mean = mean(c(cycle_min, cycle_max))
+    )
   
   return(df_post_cluster)
   
@@ -146,6 +150,7 @@ prepare_hca_df <- function(input_df, cycle_min = 1980, cycle_max = 2020){
     
     #M
     df <- na.aggregate(df)
+    df <- Filter(function(x)!all(is.na(x)), df)
     df <- na.omit(df)
     
     #Prep and Standardize Data
