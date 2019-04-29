@@ -126,41 +126,59 @@ df_hca_cycles <- bind_rows(
 #DEM/OTHER --> REP (REP Converts) REP/OTHER --> DEM (Dem Converts)
 #Waivering --> OTH REP DEM ---> Amphibious
 
-## join post cluster to df_analysis
-df_hca_all <- left_join(df_analysis, df_hca_cycles, 
+
+
+df_refined_clusters <- df_hca_cycles %>% 
+  select(cid_master, cycle_mean, cycle_min, cycle_max, cluster_party, median_ps) %>% 
+  mutate(cp = as.numeric(factor(cluster_party,
+                     levels = c("DEM", "OTH", "REP")))) %>% 
+  distinct() %>% 
+  arrange(cid_master, cycle_mean) %>%
+  mutate(cycle = as.numeric(cycle_mean))
+
+library(nlme)
+model1<- lme(cp ~ cycle, data=df_refined_clusters, random= ~cycle | cid_master, method="ML")
+mcoefs <- as.data.frame(coef(model1))
+mfit <- as.data.frame(fitted(model1))
+mpred <- as.data.frame(predict(model1))
+
+df_refined_lme <- bind_cols(df_refined_clusters, mfit) %>% 
+  rename(pred = `fitted(model1)`) %>% 
+  group_by(cid_master) %>% 
+  mutate(mean_pred = mean(pred, na.rm = TRUE)) %>% 
+  select(-cycle)
+
+
+# join post cluster to df_analysis
+df_hca_all <- left_join(df_analysis, df_refined_lme, 
                         by = c("cid_master" = "cid_master", 
                                "contributor_cycle" = "cycle_mean"))
 mean(df_hca_all$partisan_score, na.rm = TRUE)
-mean(df_hca_all$median_ps)
-mean(df_hca_all$median_pid2)
-mean(df_hca_all$var_pid2)
 table(df_hca_all$pid2)
+
 
 ## join post cluster to df_analysis
 df_hca_all_dem <- df_hca_all %>% 
-  filter(cluster_party == "DEM")
+  #filter(cluster_party == "DEM")
+  filter(mean_pred <= 1.6)
 mean(df_hca_all_dem$partisan_score, na.rm = TRUE)
-mean(df_hca_all_dem$median_ps)
-mean(df_hca_all_dem$median_pid2)
-mean(df_hca_all_dem$var_pid2)
 table(df_hca_all_dem$pid2)
 
 ## join post cluster to df_analysis
 df_hca_all_rep <- df_hca_all %>% 
-  filter(cluster_party == "REP")
+  #filter(cluster_party == "REP")
+  filter(mean_pred >= 2.4)
 mean(df_hca_all_rep$partisan_score, na.rm = TRUE)
-mean(df_hca_all_rep$median_ps)
-mean(df_hca_all_rep$median_pid2)
-mean(df_hca_all_rep$var_pid2)
 table(df_hca_all_rep$pid2)
 
 
 ## join post cluster to df_analysis
 df_hca_all_oth <- df_hca_all %>% 
-  filter(cluster_party == "OTH")
+  #filter(cluster_party == "OTH")
+  filter(mean_pred >= 1.6 & mean_pred <= 2.4)
 mean(df_hca_all_oth$partisan_score, na.rm = TRUE)
-mean(df_hca_all_oth$median_ps)
-mean(df_hca_all_oth$median_pid2)
-mean(df_hca_all_oth$var_pid2)
 table(df_hca_all_oth$pid2)
+
+
+
 
