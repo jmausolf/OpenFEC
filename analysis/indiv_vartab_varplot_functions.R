@@ -12,6 +12,69 @@ colors_base1 <- pal(2)
 tab_blue = "#1770aa"
 tab_orange = "#fc7d0b"
 
+
+####################################
+## Custom Polarization Function
+####################################
+
+calc_polarization <- function(x, ...){
+
+  args <- rlang::list2(...)
+
+  #Check for Dim, NA Errors  
+  if(is.null(x)){
+    return(NA)
+  } else {
+  }
+  
+  if(length(x) <= 1){
+    return(NA)
+  } else {
+  }
+  
+  if (is.data.frame(x)) x <- as.matrix(x) else stopifnot(is.atomic(x))
+  x <- na.omit(x)
+  
+  v <- var(x)
+  if(v == 0){
+    #Approximation of additional unique element to set if
+    #var == 0, to avoid NaN skew and kurtosis
+    m = mean(x)
+    e = m+(m/100)
+    x = c(x, e)
+  } else{
+  }
+  
+  s <- timeSeries::colSkewness(x)
+  k <- timeSeries::colKurtosis(x)
+  
+  p <- abs(s)*abs(k)*(1-v)
+  
+  if(is.element('skewness', args)){
+    return(s)
+  }
+  
+  if(is.element('kurtosis', args)){
+    return(k)
+  } 
+
+  return(p)
+  
+}
+
+
+polarization <- function(...){
+  args <- rlang::list2(...)
+  
+  tryCatch({do.call(calc_polarization, args)},
+           error=function(error_message) {
+             message(error_message)
+             return(NA)
+           })
+  do.call(calc_polarization, args)
+}
+
+
 ########################################
 #Variance Table + Graph Functions
 ########################################
@@ -33,7 +96,11 @@ make_var_df <- function(input_df, company_var){
            !is.na(occ3)) %>%
     mutate(occ = occ3) %>% 
     group_by_(.dots = groupvars) %>% 
-    summarize(varpid = var(as.numeric(pid2)))
+    summarize(var_pid = var(as.numeric(pid2)),
+              skewness_pid = polarization(as.numeric(pid2), "skewness"),
+              kurtosis_pid = polarization(as.numeric(pid2), "kurtosis"),
+              polarization_raw_pid = polarization(as.numeric(pid2))
+    ) 
   
   #Get Variance All Levels
   df1b <-  input_df %>%
@@ -43,7 +110,11 @@ make_var_df <- function(input_df, company_var){
     mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) %>%
     mutate(occ = occ4) %>%
     group_by_(.dots = groupvars) %>% 
-    summarize(varpid = var(as.numeric(pid2)))
+    summarize(var_pid = var(as.numeric(pid2)),
+              skewness_pid = polarization(as.numeric(pid2), "skewness"),
+              kurtosis_pid = polarization(as.numeric(pid2), "kurtosis"),
+              polarization_raw_pid = polarization(as.numeric(pid2))
+    ) 
   
   df1 <- rbind(df1a, df1b) %>%
     #remove "others" from pre 2004, only all exists before levels can be det.
@@ -71,7 +142,11 @@ make_var_df_partisan <- function(input_df, company_var){
            !is.na(occ3)) %>%
     mutate(occ = occ3) %>% 
     group_by_(.dots = groupvars) %>% 
-    summarize(varpid = var(as.numeric(partisan_score)))
+    summarize(var_ps = var(as.numeric(partisan_score)),
+              skewness_ps = polarization(as.numeric(partisan_score), "skewness"),
+              kurtosis_ps = polarization(as.numeric(partisan_score), "kurtosis"),
+              polarization_raw_ps = polarization(as.numeric(partisan_score))
+    ) 
   
   #Get Variance All Levels
   df1b <-  input_df %>%
@@ -81,7 +156,11 @@ make_var_df_partisan <- function(input_df, company_var){
     mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) %>%
     mutate(occ = occ4) %>%
     group_by_(.dots = groupvars) %>% 
-    summarize(varpid = var(as.numeric(partisan_score)))
+    summarize(var_ps = var(as.numeric(partisan_score)),
+              skewness_ps = polarization(as.numeric(partisan_score), "skewness"),
+              kurtosis_ps = polarization(as.numeric(partisan_score), "kurtosis"),
+              polarization_raw_ps = polarization(as.numeric(partisan_score))
+    ) 
   
   df1 <- rbind(df1a, df1b) %>%
     #remove "others" from pre 2004, only all exists before levels can be det.
@@ -111,7 +190,7 @@ make_partisan_hist_df <- function(input_df, company_var, party_var){
            !is.na(occ3)) %>%
     mutate(occ = occ3) %>% 
     group_by_(.dots = groupvars) 
-    #summarize(varpid = var(as.numeric(partisan_score)))
+
   
   #Get Variance All Levels
   df1b <-  input_df %>%
@@ -121,7 +200,7 @@ make_partisan_hist_df <- function(input_df, company_var, party_var){
     mutate(occ4 = fct_collapse(occ3, ALL = c("CSUITE", "MANAGEMENT", "OTHERS"))) %>%
     mutate(occ = occ4) %>%
     group_by_(.dots = groupvars) 
-    #summarize(varpid = var(as.numeric(partisan_score)))
+
   
   df1 <- rbind(df1a, df1b) %>%
     #remove "others" from pre 2004, only all exists before levels can be det.
@@ -141,9 +220,9 @@ var_sum_table <- function(df,
                           tabtitle="title") {
   vartab <- df %>% 
     group_by(occ) %>% 
-    summarise(meanvar = mean(varpid, na.rm = T),
-              medvar = median(varpid, na.rm = T),
-              sdvar = sd(varpid, na.rm = T)
+    summarise(meanvar = mean(var_pid, na.rm = T),
+              medvar = median(var_pid, na.rm = T),
+              sdvar = sd(var_pid, na.rm = T)
     ) %>% 
     rename("Organizational Hierarchy" = occ,
            "Mean Variance" = meanvar,
@@ -167,7 +246,7 @@ var_cycle_table <- function(df,
                             tabtitle="title") {
   vartab <- df %>% 
     group_by(occ, cycle) %>% 
-    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    summarise(meanvar = mean(var_pid, na.rm = T)) %>%
     filter(!is.nan(meanvar)) %>% 
     spread(cycle, meanvar) %>% 
     rename("Organizational Hierarchy" = occ)
@@ -197,7 +276,7 @@ make_var_graph_base_pid <- function(df, plt_type="cid_master", plt_title="", plt
   
   df_var_cycle_graph <- df %>% 
     group_by(occ, cycle) %>% 
-    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    summarise(meanvar = mean(var_pid, na.rm = T)) %>%
     filter(!is.nan(meanvar)) %>% 
     mutate(polarization = 1-meanvar)
   
@@ -245,7 +324,7 @@ make_var_graph_base_ps <- function(df, plt_type="cid_master", plt_title="", plt_
     
   df_var_cycle_graph <- df %>% 
     group_by(occ, cycle) %>% 
-    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    summarise(meanvar = mean(var_ps, na.rm = T)) %>%
     filter(!is.nan(meanvar)) %>% 
     mutate(polarization = 1-meanvar)
   
@@ -295,7 +374,7 @@ make_var_graph_dem_pid <- function(df, plt_type="cid_master", plt_caption="", pl
   
   df_var_cycle_graph <- df %>% 
     group_by(occ, cycle) %>% 
-    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    summarise(meanvar = mean(var_pid, na.rm = T)) %>%
     filter(!is.nan(meanvar)) %>% 
     mutate(polarization = 1-meanvar)
   
@@ -341,7 +420,7 @@ make_var_graph_dem_ps <- function(df, plt_type="cid_master", plt_caption="", plt
   
   df_var_cycle_graph <- df %>% 
     group_by(occ, cycle) %>% 
-    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    summarise(meanvar = mean(var_ps, na.rm = T)) %>%
     filter(!is.nan(meanvar)) %>% 
     mutate(polarization = 1-meanvar)
   
@@ -390,7 +469,7 @@ make_var_graph_rep_pid <- function(df, plt_type="cid_master", plt_caption="", pl
   
   df_var_cycle_graph <- df %>% 
     group_by(occ, cycle) %>% 
-    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    summarise(meanvar = mean(var_pid, na.rm = T)) %>%
     filter(!is.nan(meanvar)) %>% 
     mutate(polarization = 1-meanvar)
   
@@ -436,7 +515,7 @@ make_var_graph_rep_ps <- function(df, plt_type="cid_master", plt_caption="", plt
   
   df_var_cycle_graph <- df %>% 
     group_by(occ, cycle) %>% 
-    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    summarise(meanvar = mean(var_ps, na.rm = T)) %>%
     filter(!is.nan(meanvar)) %>% 
     mutate(polarization = 1-meanvar)
   
@@ -484,7 +563,7 @@ make_var_graph_oth_pid <- function(df, plt_type="cid_master", plt_caption="", pl
   
   df_var_cycle_graph <- df %>% 
     group_by(occ, cycle) %>% 
-    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    summarise(meanvar = mean(var_pid, na.rm = T)) %>%
     filter(!is.nan(meanvar)) %>% 
     mutate(polarization = 1-meanvar)
   
@@ -530,7 +609,7 @@ make_var_graph_oth_ps <- function(df, plt_type="cid_master", plt_caption="", plt
   
   df_var_cycle_graph <- df %>% 
     group_by(occ, cycle) %>% 
-    summarise(meanvar = mean(varpid, na.rm = T)) %>%
+    summarise(meanvar = mean(var_ps, na.rm = T)) %>%
     filter(!is.nan(meanvar)) %>% 
     mutate(polarization = 1-meanvar)
   
