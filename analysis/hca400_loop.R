@@ -46,7 +46,7 @@ hca_by_cycle <- function(df, year1, year2, hca_method="agnes_ward", k=3) {
   method = strsplit(hca_method, '_')[[1]][2]
 
   hca_df <- prepare_hca_df(df, year1, year2)
-  print(hca_df)
+  #print(hca_df)
   df_org <- hca_df[[1]]
   df <- hca_df[[2]]
   
@@ -73,6 +73,9 @@ cycles <- c(1980, 1982, 1984, 1986, 1988,
             2000, 2002, 2004, 2006, 2008,
             2010, 2012, 2014, 2016, 2018)
 
+cycle_lower_bound = 1980
+cycle_upper_bound = 2018
+
 #cycles <- c(2002, 2004)
 
 single_election_cycles <- list()
@@ -91,7 +94,11 @@ for (i in seq_along(cycles)) {
 #Cluster Base Cycle and Next Cycle 
 for (i in seq_along(cycles)) {
   c1 = cycles[[i]]
-  c2 = cycles[[i]]+2
+  if(cycles[[i]] == cycle_upper_bound){
+    c2 = cycles[[i]]
+  } else{
+    c2 = cycles[[i]]+2
+  }
   print(c(c1, c2))
   df_tmp <- hca_by_cycle(df_analysis, c1, c2)
   base_cycle_and_next_cycle[[i]] <- df_tmp
@@ -99,14 +106,18 @@ for (i in seq_along(cycles)) {
 
 #Cluster Base Cycle and Last Election Cycle
 for (i in seq_along(cycles)) {
-  c1 = cycles[[i]]-2
   c2 = cycles[[i]]
+  if(cycles[[i]] == cycle_lower_bound){
+    c1 = cycles[[i]]
+  } else{
+    c1 = cycles[[i]]-2
+  }
   print(c(c1, c2))
   df_tmp <- hca_by_cycle(df_analysis, c1, c2)
   base_cycle_and_last_cycle[[i]] <- df_tmp
 }
 
-
+#Append HCA Cycle Classes
 df_hca_cycles <- bind_rows(
                   single_election_cycles,
                   base_cycle_and_next_cycle,
@@ -118,36 +129,18 @@ df_hca_cycles <- bind_rows(
          cycle_mean = as.character(cycle_mean))
 
 
-
-#TODO Using the HCA Loop Data
-#Impose a further classification
-#Instead of just what the class is for a given year,
-#Prior to Join, Create A Stable Dem, Stable Rep, Stable Amphibious
-#DEM/OTHER --> REP (REP Converts) REP/OTHER --> DEM (Dem Converts)
-#Waivering --> OTH REP DEM ---> Amphibious
+#Determine Party Switches and Firm Classes from HCA Patterns
+source("get_indiv_party_switch.R")
 
 
 
-df_refined_clusters <- df_hca_cycles %>% 
-  select(cid_master, cycle_mean, cycle_min, cycle_max, cluster_party, median_ps) %>% 
-  mutate(cp = as.numeric(factor(cluster_party,
-                     levels = c("DEM", "OTH", "REP")))) %>% 
-  distinct() %>% 
-  arrange(cid_master, cycle_mean) %>%
-  mutate(cycle = as.numeric(cycle_mean))
+###################################
+## Method = Final Max Simple
+###################################
 
-library(nlme)
-model1<- lme(cp ~ cycle, data=df_refined_clusters, random= ~cycle | cid_master, method="ML")
-mcoefs <- as.data.frame(coef(model1))
-mfit <- as.data.frame(fitted(model1))
-mpred <- as.data.frame(predict(model1))
-
-df_refined_lme <- bind_cols(df_refined_clusters, mfit) %>% 
-  rename(pred = `fitted(model1)`) %>% 
-  group_by(cid_master) %>% 
-  mutate(mean_pred = mean(pred, na.rm = TRUE)) %>% 
-  select(-cycle)
-
+method = "final_max_simple"
+base = TRUE
+oth = TRUE
 
 # join post cluster to df_analysis
 df_hca_all <- left_join(df_analysis, df_refined_lme, 
@@ -159,26 +152,166 @@ table(df_hca_all$pid2)
 
 ## join post cluster to df_analysis
 df_hca_all_dem <- df_hca_all %>% 
-  #filter(cluster_party == "DEM")
-  filter(mean_pred <= 1.6)
+  filter(final_max == "dem")
 mean(df_hca_all_dem$partisan_score, na.rm = TRUE)
 table(df_hca_all_dem$pid2)
 
+trans_dems <- df_hca_all_dem %>% select(cid_master, party_pat) %>% distinct()
+trans_dems
+
 ## join post cluster to df_analysis
 df_hca_all_rep <- df_hca_all %>% 
-  #filter(cluster_party == "REP")
-  filter(mean_pred >= 2.4)
+  filter(final_max == "rep")
 mean(df_hca_all_rep$partisan_score, na.rm = TRUE)
 table(df_hca_all_rep$pid2)
+
+trans_reps <- df_hca_all_rep %>% select(cid_master, party_pat) %>% distinct()
+trans_reps
 
 
 ## join post cluster to df_analysis
 df_hca_all_oth <- df_hca_all %>% 
-  #filter(cluster_party == "OTH")
-  filter(mean_pred >= 1.6 & mean_pred <= 2.4)
+  filter(final_max == 'oth')
 mean(df_hca_all_oth$partisan_score, na.rm = TRUE)
 table(df_hca_all_oth$pid2)
 
+trans_oth <- df_hca_all_oth %>% select(cid_master, party_pat) %>% distinct()
+trans_oth
+
+check_total = rbind(trans_dems, trans_reps, trans_oth) %>% distinct()
+
+## Make Graphs
+source("indiv_mean_party_hca_loop.R")
 
 
+###################################
+## Method = Converts Only
+###################################
+
+method = "converts_only"
+base = FALSE
+oth = FALSE
+
+# join post cluster to df_analysis
+df_hca_all <- left_join(df_analysis, df_refined_lme, 
+                        by = c("cid_master" = "cid_master", 
+                               "contributor_cycle" = "cycle_mean"))
+mean(df_hca_all$partisan_score, na.rm = TRUE)
+table(df_hca_all$pid2)
+
+
+## join post cluster to df_analysis
+df_hca_all_dem <- df_hca_all %>% 
+  filter(party_class == "converted_amp_dem" |
+         party_class == "converted_rep_dem"  )
+mean(df_hca_all_dem$partisan_score, na.rm = TRUE)
+table(df_hca_all_dem$pid2)
+
+trans_dems <- df_hca_all_dem %>% select(cid_master, party_pat) %>% distinct()
+trans_dems
+
+## join post cluster to df_analysis
+df_hca_all_rep <- df_hca_all %>% 
+  filter(party_class == "converted_amp_rep" |
+           party_class == "converted_dem_rep"  )
+mean(df_hca_all_rep$partisan_score, na.rm = TRUE)
+table(df_hca_all_rep$pid2)
+
+trans_reps <- df_hca_all_rep %>% select(cid_master, party_pat) %>% distinct()
+trans_reps
+
+
+## Make Graphs
+source("indiv_mean_party_hca_loop.R")
+
+
+
+###################################
+## Method = Opp Converts Only
+###################################
+
+method = "opp_converts_only"
+base = FALSE
+oth = FALSE
+
+# join post cluster to df_analysis
+df_hca_all <- left_join(df_analysis, df_refined_lme, 
+                        by = c("cid_master" = "cid_master", 
+                               "contributor_cycle" = "cycle_mean"))
+mean(df_hca_all$partisan_score, na.rm = TRUE)
+table(df_hca_all$pid2)
+
+
+## join post cluster to df_analysis
+df_hca_all_dem <- df_hca_all %>% 
+  filter(party_class == "converted_rep_dem")
+mean(df_hca_all_dem$partisan_score, na.rm = TRUE)
+table(df_hca_all_dem$pid2)
+
+trans_dems <- df_hca_all_dem %>% select(cid_master, party_pat) %>% distinct()
+trans_dems
+
+## join post cluster to df_analysis
+df_hca_all_rep <- df_hca_all %>% 
+  filter(party_class == "converted_dem_rep")
+mean(df_hca_all_rep$partisan_score, na.rm = TRUE)
+table(df_hca_all_rep$pid2)
+
+trans_reps <- df_hca_all_rep %>% select(cid_master, party_pat) %>% distinct()
+trans_reps
+
+## Make Graphs
+source("indiv_mean_party_hca_loop.R")
+
+
+
+
+######################################
+## Method = Final Max and LME Filter
+######################################
+
+method = "final_max_and_lme"
+base = TRUE
+oth = TRUE
+
+# join post cluster to df_analysis
+df_hca_all <- left_join(df_analysis, df_refined_lme, 
+                        by = c("cid_master" = "cid_master", 
+                               "contributor_cycle" = "cycle_mean"))
+mean(df_hca_all$partisan_score, na.rm = TRUE)
+table(df_hca_all$pid2)
+
+
+## join post cluster to df_analysis
+df_hca_all_dem <- df_hca_all %>% 
+  filter(final_max == 'dem' & mean_pred <= 1.65)
+mean(df_hca_all_dem$partisan_score, na.rm = TRUE)
+table(df_hca_all_dem$pid2)
+
+trans_dems <- df_hca_all_dem %>% select(cid_master, party_pat) %>% distinct()
+trans_dems
+
+## join post cluster to df_analysis
+df_hca_all_rep <- df_hca_all %>% 
+  filter(final_max == 'rep' & mean_pred >= 2.35)
+mean(df_hca_all_rep$partisan_score, na.rm = TRUE)
+table(df_hca_all_rep$pid2)
+
+trans_reps <- df_hca_all_rep %>% select(cid_master, party_pat) %>% distinct()
+trans_reps
+
+
+## join post cluster to df_analysis
+df_hca_all_oth <- df_hca_all %>% 
+  filter((final_max == 'oth') | (final_max != 'oth' & mean_pred < 2.35 & mean_pred > 1.65))
+mean(df_hca_all_oth$partisan_score, na.rm = TRUE)
+table(df_hca_all_oth$pid2)
+
+trans_oth <- df_hca_all_oth %>% select(cid_master, party_pat) %>% distinct()
+trans_oth
+
+check_total = rbind(trans_dems, trans_reps, trans_oth) %>% distinct()
+
+## Make Graphs
+source("indiv_mean_party_hca_loop.R")
 
