@@ -285,6 +285,8 @@ dist_ts <- TSclust::diss(SERIES = matrix_list, METHOD = "DTWARP")
 
 hca <- agnes(dist_ts, method = "ward")
 hc <- as.hclust(hca)
+hc1 <- as.hclust(hca)
+dend1 <- as.dendrogram(hc1)
 
 
 df_labels <- stats::cutree(hc, k = 3) %>% # hclus <- cluster::pam(dist_ts, k = 2)$clustering has a similar result

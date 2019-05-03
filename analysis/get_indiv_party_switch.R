@@ -162,12 +162,12 @@ final_clusters <- left_join(switch_clusters, first_last_max_clusters) %>%
 
   #Make a Factor
   mutate(party_class = factor(party_class,
-         labels = c("stable_rep", "converted_amp_rep", "converted_dem_rep",
+         levels = c("stable_rep", "converted_amp_rep", "converted_dem_rep",
                     "moderate_amphibians", "true_amphibians", 
                     "converted_rep_amp", "converted_dem_amp",
                     "stable_dem", "converted_amp_dem", "converted_rep_dem"
                     )
-         ))
+         )) 
                     
 
 

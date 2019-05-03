@@ -1,5 +1,5 @@
 
-hca_model <- hc
+# hca_model <- hc
 
 make_partisan_plot_tsclust <- function(hca_model, gtitle="my graph title", gtyp="graph_spec"){
   
