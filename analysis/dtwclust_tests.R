@@ -40,8 +40,7 @@ df_filtered <- df_analysis %>%
             mean_ps_mode = mean(as.numeric(partisan_score_mode), na.rm = TRUE), 
             mean_ps_min = mean(as.numeric(partisan_score_min), na.rm = TRUE),
             mean_ps_max = mean(as.numeric(partisan_score_max), na.rm = TRUE)
-            #sum_pid_count = sum(as.numeric(party_id_count))
-            
+            #sum_pid_count = sum(as.numeric(party_id_count))      
   )
 
 
@@ -99,21 +98,17 @@ df <- scale(df, center = FALSE)
 #i.e. use Manager/Other etc to fill missing exec / manager
 #need to transpose first
 #in this way, na fill uses relevant values from that firm-year instead of the whole dataset
-  
 dfT <- t(df)
 dfT <- na.locf(dfT, fromLast = TRUE)
 df <- as.data.frame(t(dfT))
-
 
 
 #Fowardfill Any Remaining NA from Next Column
 #i.e. use CSUTIE/Manager/Other etc to fill missing Manager/Other
 #need to transpose first
 #in this way, na fill uses relevant values from that firm-year instead of the whole dataset
-
 dfT2 <- t(df)
 dfT2 <- na.locf(dfT2, fromLast = FALSE)
-
 df <- as.data.frame(t(dfT2))
 
 dfna2 <- df[!complete.cases(df), ]

@@ -45,6 +45,52 @@ infer_partisanship <- function(df) {
   
 }
 
+dend_color_order <- function(party_order, ...){
+  other_args <- rlang::list2(...)
+  
+  # "#BF1200" = "REP",
+  # "#3A084A" = "OTH",
+  # "#2129B0" = "DEM"
+  
+  order1 = c("REP", "OTH", "DEM")
+  order2 = c("REP", "DEM", "OTH")
+  order3 = c("OTH", "DEM", "REP")
+  order4 = c("OTH", "REP", "DEM")
+  order5 = c("DEM", "REP", "OTH")
+  order6 = c("DEM", "OTH", "REP")
+  
+  if(identical(party_order, order1)){
+    print(order1)
+    return(c("#BF1200", "#3A084A", "#2129B0"))
+  }
+  
+  if(identical(party_order, order2)){
+    print(order2)
+    return(c("#BF1200", "#2129B0", "#3A084A"))
+  }
+  
+  if(identical(party_order, order3)){
+    print(order3)
+    return(c("#3A084A", "#2129B0", "#BF1200"))
+  }
+
+  if(identical(party_order, order4)){
+    print(order4)
+    return(c("#3A084A", "#BF1200", "#2129B0"))
+  } 
+  
+  if(identical(party_order, order5)){
+    print(order5)
+    return(c("#2129B0", "#BF1200", "#3A084A"))
+  } 
+  
+  if(identical(party_order, order6)){
+    print(order6)
+    return(c("#2129B0", "#3A084A", "#BF1200"))
+    
+  } 
+
+}
 
 
 spread_chr <- function(data, key_col, value_cols, fill = NA, 
@@ -69,40 +115,30 @@ spread_chr <- function(data, key_col, value_cols, fill = NA,
 
 
 #TODO, INPUT THE COMBINED GRAPH INTO THIS
-post_cluster_df_k <- function(prep_df, df_hca, hca_model, cycle_min = 1980, cycle_max = 2020, K=3){
+post_cluster_df_k <- function(df, df_hca, hca_model, cycle_min = 1980, cycle_max = 2020, K=3){
   
   #Inspect Clusters
   dfclust <- cutree(as.hclust(hca_model), k = K, order_clusters_as_data = FALSE) %>% 
     as.data.frame(.) %>%
     dplyr::rename(.,cluster = .) %>%
     tibble::rownames_to_column("cid_master")
-  
-  
-  # df_simple <- df %>%
-  #   filter(cycle >= cycle_min & cycle <= cycle_max ) %>% 
+
+
+  df_simple <- df %>%
+    filter(cycle >= cycle_min & cycle <= cycle_max ) %>% 
     
-  #   #Group by Company (Collapse Across Cycles)
-  #   group_by(cid_master) %>%
+    #Group by Company (Collapse Across Cycles)
+    group_by(cid_master) %>%
     
-  #   #Features
-  #   summarize(#var_pid2 = var(as.numeric(pid2), na.rm = TRUE),
-  #             #var_ps = var(as.numeric(partisan_score), na.rm = TRUE),
-  #             mean_pid2 = mean(as.numeric(pid2), na.rm = TRUE),
-  #             #mean_pid3 = mean(as.numeric(pid3), na.rm = TRUE),
-  #             #median_pid = median(as.numeric(pid), na.rm = TRUE),
-  #             median_pid2 = median(as.numeric(pid2), na.rm = TRUE),
-  #             #median_pid3 = median(as.numeric(pid3), na.rm = TRUE),
-  #             mean_ps = mean(partisan_score, na.rm = TRUE),
-  #             median_ps = median(partisan_score, na.rm = TRUE),
-  #             mean_ps_mode = mean(as.numeric(partisan_score_mode), na.rm = TRUE), 
-  #             mean_ps_min = mean(as.numeric(partisan_score_min), na.rm = TRUE),
-  #             mean_ps_max = mean(as.numeric(partisan_score_max), na.rm = TRUE)
-  #             #sum_pid_count = sum(as.numeric(party_id_count))
-  #   )
-  # #print(df_simple)
+    #Features (For Infering Partisanship)
+    summarize(mean_pid2 = mean(as.numeric(pid2), na.rm = TRUE),
+              median_pid2 = median(as.numeric(pid2), na.rm = TRUE),
+              mean_ps = mean(partisan_score, na.rm = TRUE),
+              median_ps = median(partisan_score, na.rm = TRUE),
+    )
 
   # #Join
-  df_post_cluster <- full_join(dfclust, prep_df) %>% 
+  df_post_cluster <- full_join(dfclust, df_simple) %>% 
     mutate(cycle_min = cycle_min,
            cycle_max = cycle_max,
            cycle_mean = mean(c(cycle_min, cycle_max))
@@ -225,8 +261,17 @@ prepare_hca_ts_df <- function(input_df, additional_feature_df, cycle_min = 1980,
 
 
 
-make_partisan_plot_tsclust <- function(hca_model, prep_df, y1, y2, K=3, gtitle="my graph title", gtyp="graph_spec"){
-  
+make_partisan_plot_tsclust <- function(hca_model, prep_df, y1, y2, K=3, 
+                                       gtitle="my graph title", gtyp="graph_spec",
+                                       party_viz="NONE"){
+  if(identical(party_viz, "NONE")){
+    party_color_vec <- c("#3A084A", "#2129B0", "#BF1200")
+  } else {
+    party_color_vec <- dend_color_order(party_viz)
+  }
+
+  print(party_color_vec)
+
   #Rejoin HCA Clusters to Original Data for Better Plots
   #df_filtered <- rejoin_clusters_data(df_filtered, hca_model)
   # df_filtered <- cutree(as.hclust(hca_model), k = 3, order_clusters_as_data = FALSE) %>% 
@@ -241,7 +286,7 @@ make_partisan_plot_tsclust <- function(hca_model, prep_df, y1, y2, K=3, gtitle="
     dplyr::rename(.,cluster = .) %>%
     tibble::rownames_to_column("cid_master")
 
-  df_post <- post_cluster_df_k(prep_df, df_labels, hc1, y1, y2, K=3)
+  df_post <- post_cluster_df_k(df_analysis, df_labels, hc1, y1, y2, K=3)
 
   df_filtered <- infer_partisanship(df_post) %>% 
     select(cid_master, cluster, cluster_party)
@@ -279,8 +324,8 @@ make_partisan_plot_tsclust <- function(hca_model, prep_df, y1, y2, K=3, gtitle="
   
   #Specify Graph Options
   dend <- as.dendrogram(hca_model) %>% 
-    color_branches(k = 3, col=c("#3A084A", "#BF1200", "#2129B0")) %>% 
-    color_labels(k = 3, col=c("#3A084A", "#BF1200", "#2129B0")) %>% 
+    color_branches(k = 3, col=party_color_vec) %>% 
+    color_labels(k = 3, col=party_color_vec) %>% 
     assign_values_to_leaves_nodePar(value=shapevec, "pch") %>% 
     assign_values_to_leaves_nodePar(value=markervec, "cex") %>% 
     assign_values_to_leaves_nodePar(value=colorvec, "col") 
@@ -316,7 +361,11 @@ make_partisan_plot_tsclust <- function(hca_model, prep_df, y1, y2, K=3, gtitle="
   hz(gtitle)
   dev.off()
 
-  return(df_post)
+  #Make File for Analysis
+  df_post_cluster <- full_join(prep_df, df_filtered) 
+  df_post_cluster <- full_join(df_analysis, df_post_cluster)
+  
+  return(df_post_cluster)
 
 }
 

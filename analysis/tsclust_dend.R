@@ -1,15 +1,17 @@
 
 # hca_model <- hc
 
-make_partisan_plot_tsclust <- function(hca_model, gtitle="my graph title", gtyp="graph_spec"){
+make_partisan_plot_tsclust <- function(hca_model, gtitle="my graph title", gtyp="graph_spec", K=3){
   
   #Rejoin HCA Clusters to Original Data for Better Plots
   #df_filtered <- rejoin_clusters_data(df_filtered, hca_model)
-  df_filtered <- cutree(as.hclust(hca_model), k = 3, order_clusters_as_data = FALSE) %>% 
+  df_filtered <- cutree(as.hclust(hca_model), k = K, order_clusters_as_data = FALSE) %>% 
   #df_filtered <- stats::cutree(hca_model, k = 3) %>% 
     as.data.frame(.) %>%
     dplyr::rename(.,cluster = .) %>%
     tibble::rownames_to_column("cid_master")
+
+  df_filtered <-
   
   
   dfclust <- df_filtered %>%
