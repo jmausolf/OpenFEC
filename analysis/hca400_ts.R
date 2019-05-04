@@ -53,50 +53,49 @@ dend0 <- as.dendrogram(hc0)
 
 
 ##Make HCA Plot
-df_post_cluster <- make_partisan_plot_tsclust(hc0, m0_prep_df, y1, y2, K=3, gtitle, gfile, party_viz = "NONE")
-
-df_clust_simple_m0 <- df_post_cluster %>% 
-  select(cid_master, cluster_party) %>% 
-  distinct()
+df_post_cluster_m0 <- make_partisan_plot_tsclust(hc0, m0_prep_df, y1, y2, K=3, gtitle, gfile, party_viz = "NONE")
 
 ##Adjust HCA Plot Visual Colors to Match Clusters
 party_order = c("OTH", "REP", "DEM")
-df_post_cluster <- make_partisan_plot_tsclust(hc0, m0_prep_df, y1, y2, K=3, gtitle, gfile, party_viz = party_order)
+df_post_cluster_m0 <- make_partisan_plot_tsclust(hc0, m0_prep_df, y1, y2, K=3, gtitle, gfile, party_viz = party_order)
+
+df_clust_simple_m0 <- df_post_cluster_m0 %>% 
+  select(cid_master, cluster_party) %>% 
+  distinct()
 
 
+# ## Make Graphs From Results
+# method = "time_series_hca_ward_k3_polar_m0"
+# base = TRUE
+# oth = TRUE
 
-## Make Graphs From Results
-method = "time_series_hca_ward_k3_polar_m0"
-base = TRUE
-oth = TRUE
-
-# join post cluster to df_analysis
-df_hca_all <- df_post_cluster
-mean(df_hca_all$partisan_score, na.rm = TRUE)
-table(df_hca_all$pid2)
-
-
-## join post cluster to df_analysis
-df_hca_all_dem <- df_hca_all %>% 
-  filter(cluster_party == "DEM")
-mean(df_hca_all_dem$partisan_score, na.rm = TRUE)
-table(df_hca_all_dem$pid2)
+# # join post cluster to df_analysis
+# df_hca_all <- df_post_cluster_m0
+# mean(df_hca_all$partisan_score, na.rm = TRUE)
+# table(df_hca_all$pid2)
 
 
-## join post cluster to df_analysis
-df_hca_all_rep <- df_hca_all %>% 
-  filter(cluster_party == "REP")
-mean(df_hca_all_rep$partisan_score, na.rm = TRUE)
-table(df_hca_all_rep$pid2)
+# ## join post cluster to df_analysis
+# df_hca_all_dem <- df_hca_all %>% 
+#   filter(cluster_party == "DEM")
+# mean(df_hca_all_dem$partisan_score, na.rm = TRUE)
+# table(df_hca_all_dem$pid2)
 
 
-df_hca_all_oth <- df_hca_all %>% 
-  filter(cluster_party == "OTH")
-mean(df_hca_all_oth$partisan_score, na.rm = TRUE)
-table(df_hca_all_oth$pid2)
+# ## join post cluster to df_analysis
+# df_hca_all_rep <- df_hca_all %>% 
+#   filter(cluster_party == "REP")
+# mean(df_hca_all_rep$partisan_score, na.rm = TRUE)
+# table(df_hca_all_rep$pid2)
 
-## Make Graphs
-source("indiv_mean_party_hca_loop.R")
+
+# df_hca_all_oth <- df_hca_all %>% 
+#   filter(cluster_party == "OTH")
+# mean(df_hca_all_oth$partisan_score, na.rm = TRUE)
+# table(df_hca_all_oth$pid2)
+
+# ## Make Graphs
+# source("indiv_mean_party_hca_loop.R")
 
 
 
@@ -151,49 +150,47 @@ dend1 <- as.dendrogram(hc1)
 
 
 ##Make HCA Plot
-df_post_cluster <- make_partisan_plot_tsclust(hc1, m1_prep_df, y1, y2, K=3, gtitle, gfile, party_viz = "NONE")
+df_post_cluster_m1 <- make_partisan_plot_tsclust(hc1, m1_prep_df, y1, y2, K=3, gtitle, gfile, party_viz = "NONE")
 
-df_clust_simple_m1 <- df_post_cluster %>% 
+##Adjust HCA Plot Visual Colors to Match Clusters
+party_order = c("REP", "OTH", "DEM")
+df_post_cluster_m1 <- make_partisan_plot_tsclust(hc1, m1_prep_df, y1, y2, K=3, gtitle, gfile, party_viz = party_order)
+
+df_clust_simple_m1 <- df_post_cluster_m1 %>% 
   select(cid_master, cluster_party) %>% 
   distinct()
 
 
-##Adjust HCA Plot Visual Colors to Match Clusters
-party_order = c("REP", "OTH", "DEM")
-df_post_cluster <- make_partisan_plot_tsclust(hc1, m1_prep_df, y1, y2, K=3, gtitle, gfile, party_viz = party_order)
+# ## Make Graphs From Results
+# method = "time_series_hca_ward_k3_polar_m1"
+# base = TRUE
+# oth = TRUE
+
+# # join post cluster to df_analysis
+# df_hca_all <- df_post_cluster_m1
+# mean(df_hca_all$partisan_score, na.rm = TRUE)
+# table(df_hca_all$pid2)
 
 
-
-## Make Graphs From Results
-method = "time_series_hca_ward_k3_polar_m1"
-base = TRUE
-oth = TRUE
-
-# join post cluster to df_analysis
-df_hca_all <- df_post_cluster
-mean(df_hca_all$partisan_score, na.rm = TRUE)
-table(df_hca_all$pid2)
+# ## join post cluster to df_analysis
+# df_hca_all_dem <- df_hca_all %>% 
+#   filter(cluster_party == "DEM")
+# mean(df_hca_all_dem$partisan_score, na.rm = TRUE)
+# table(df_hca_all_dem$pid2)
 
 
-## join post cluster to df_analysis
-df_hca_all_dem <- df_hca_all %>% 
-  filter(cluster_party == "DEM")
-mean(df_hca_all_dem$partisan_score, na.rm = TRUE)
-table(df_hca_all_dem$pid2)
+# ## join post cluster to df_analysis
+# df_hca_all_rep <- df_hca_all %>% 
+#   filter(cluster_party == "REP")
+# mean(df_hca_all_rep$partisan_score, na.rm = TRUE)
+# table(df_hca_all_rep$pid2)
 
 
-## join post cluster to df_analysis
-df_hca_all_rep <- df_hca_all %>% 
-  filter(cluster_party == "REP")
-mean(df_hca_all_rep$partisan_score, na.rm = TRUE)
-table(df_hca_all_rep$pid2)
+# df_hca_all_oth <- df_hca_all %>% 
+#   filter(cluster_party == "OTH")
+# mean(df_hca_all_oth$partisan_score, na.rm = TRUE)
+# table(df_hca_all_oth$pid2)
 
-
-df_hca_all_oth <- df_hca_all %>% 
-  filter(cluster_party == "OTH")
-mean(df_hca_all_oth$partisan_score, na.rm = TRUE)
-table(df_hca_all_oth$pid2)
-
-## Make Graphs
-source("indiv_mean_party_hca_loop.R")
+# ## Make Graphs
+# source("indiv_mean_party_hca_loop.R")
 
