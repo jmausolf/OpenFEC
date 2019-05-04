@@ -221,7 +221,6 @@ prepare_hca_ts_df <- function(base_features_df, additional_feature_df, cycle_min
         ungroup() %>% 
         select(-cid_master, -cycle) 
 
-      df <- na.aggregate(df)
       df <- Filter(function(x)!all(is.na(x)), df)
       df <- na.omit(df)
       matrix_list[[i]] <- data.matrix(df)
