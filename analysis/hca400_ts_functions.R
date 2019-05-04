@@ -29,7 +29,7 @@ infer_partisanship <- function(df) {
   cluster_party_key <- df %>% 
     group_by(cluster) %>%
     summarize(mean_pid2_med = mean(median_pid2, na.rm = TRUE),
-              mean_ps_med = mean(median_ps, na.rm = TRUE),
+              mean_ps_med = mean(median_ps, na.rm = TRUE)
     ) %>% 
     mutate(cluster_party = "OTH") %>% 
     mutate(cluster_party = ifelse(    mean_pid2_med == max(mean_pid2_med) &
@@ -134,7 +134,7 @@ post_cluster_df_k <- function(df, df_hca, hca_model, cycle_min = 1980, cycle_max
     summarize(mean_pid2 = mean(as.numeric(pid2), na.rm = TRUE),
               median_pid2 = median(as.numeric(pid2), na.rm = TRUE),
               mean_ps = mean(partisan_score, na.rm = TRUE),
-              median_ps = median(partisan_score, na.rm = TRUE),
+              median_ps = median(partisan_score, na.rm = TRUE)
     )
 
   # #Join
@@ -149,28 +149,11 @@ post_cluster_df_k <- function(df, df_hca, hca_model, cycle_min = 1980, cycle_max
 }
 
 
-prepare_hca_ts_df <- function(input_df, additional_feature_df, cycle_min = 1980, cycle_max = 2020){
+prepare_hca_ts_df <- function(base_features_df, additional_feature_df, cycle_min = 1980, cycle_max = 2020){
   
-
-  df_filtered <- input_df %>% 
-    filter(cycle >= cycle_min & cycle <= cycle_max) %>%  
-    filter(!is.na(pid2),
-          !is.na(partisan_score),
-          !is.na(occ3),
-          !is.na(occlevels)) %>% 
-    #Group by Company (Collapse Across Cycles)
-    group_by(cycle, cid_master, occ3) %>% 
-    summarize(mean_pid2 = mean(as.numeric(pid2), na.rm = TRUE),
-              mean_pid3 = mean(as.numeric(pid3), na.rm = TRUE),
-              median_pid2 = median(as.numeric(pid2), na.rm = TRUE),
-              median_pid3 = median(as.numeric(pid3), na.rm = TRUE),
-              mean_ps = mean(partisan_score, na.rm = TRUE),
-              median_ps = median(partisan_score, na.rm = TRUE),
-              mean_ps_mode = mean(as.numeric(partisan_score_mode), na.rm = TRUE), 
-              mean_ps_min = mean(as.numeric(partisan_score_min), na.rm = TRUE),
-              mean_ps_max = mean(as.numeric(partisan_score_max), na.rm = TRUE),
-              sum_pid_count = sum(as.numeric(party_id_count))      
-    )
+    #Base Features
+    df_filtered <- base_features_df %>% 
+      filter(cycle >= cycle_min & cycle <= cycle_max)
 
     #Filter Additional Features for Given Years
     df_polarization_prep <- additional_feature_df %>% 
@@ -286,7 +269,7 @@ make_partisan_plot_tsclust <- function(hca_model, prep_df, y1, y2, K=3,
     dplyr::rename(.,cluster = .) %>%
     tibble::rownames_to_column("cid_master")
 
-  df_post <- post_cluster_df_k(df_analysis, df_labels, hc1, y1, y2, K=3)
+  df_post <- post_cluster_df_k(df_analysis, df_labels, hca_model, y1, y2, K=3)
 
   df_filtered <- infer_partisanship(df_post) %>% 
     select(cid_master, cluster, cluster_party)
