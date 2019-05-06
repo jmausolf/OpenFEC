@@ -5,6 +5,10 @@
 source("hca400_ts_functions.R")
 source("hca400_ts_base_features.R")
 
+#TODO
+#https://academic.oup.com/bioinformatics/article/22/12/1540/207339
+#pvclust bootstrapping explore
+
 ########################################
 ## HCA TS Model 0 - B0, A1
 ########################################
