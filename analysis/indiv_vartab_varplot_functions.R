@@ -41,8 +41,23 @@ calc_polarization <- function(x, ...){
   if(v == 0){
     #Approximation of additional unique element to set if
     #var == 0, to avoid NaN skew and kurtosis
+    #as such, need to use abs(skew) because adding the 1/100 the mean
+    #to the constant value reverses skew directionality
+    #depending on the mean
+    #e.g. if other cycles are skewed [1 --> 2]
+    #but all values == [2] 
+    #changing the dist to [2, 2 + e] makes [2 <-- 2 + e]
+    #skew magnitude is approximated but direction is unreliable
+    #without for example hardcoding the possible directions and choosing
+    #to add or subtract the mean accordingly
     m = mean(x)
-    e = m+(m/100)
+
+    if(m < 1.5){
+      e = m+(m/100)
+    } else{
+      e = m-(m/100)
+    }
+
     x = c(x, e)
   } else{
   }
@@ -50,14 +65,14 @@ calc_polarization <- function(x, ...){
   s <- timeSeries::colSkewness(x)
   k <- timeSeries::colKurtosis(x)
   
-  p <- abs(s)*abs(k)*(1-v)
+  p <- abs(s)*log(k+10)*(1-v)
   
   if(is.element('skewness', args)){
     return(s)
   }
   
   if(is.element('kurtosis', args)){
-    return(k)
+    return(log(k+10))
   } 
 
   return(p)
@@ -306,7 +321,7 @@ make_polar_graph_base_pid <- function(df_in, key, plt_type="cid_master", plt_tit
   geom_point(data = df %>% filter(occ == "ALL"), shape=24, alpha=1,
              pch=21, size=3, fill=colors_base[4]) +
   
-    #Add bbcstyle
+  #Add bbcstyle
   bbc_style() +
   
   #Manual Scales
@@ -345,6 +360,113 @@ make_polar_graph_base_pid <- function(df_in, key, plt_type="cid_master", plt_tit
   return(g)
   
 }
+
+
+##----------------------------  
+## Base Graph - Pre HCA
+make_polar_graph <- function(df_in, key, plt_type="base",
+                             file_label="cid_master", plt_title="", plt_caption=""){
+
+  #Set color by plot type
+  if(plt_type == "base"){
+    scol = "#3A084A"
+    colors_vec = colors_base
+  }
+
+  if(plt_type == "dem"){
+    scol = "#2129B0"
+    colors_vec = colors_dem
+  }
+
+  if(plt_type == "rep"){
+    scol = "#BF1200"
+    colors_vec = colors_rep
+  }
+
+  if(plt_type == "oth"){
+    scol = "#3A084A"
+    colors_vec = colors_neutral
+  }
+
+  #Set ylim by key type
+  if(key == "polarization_pid"){
+    y_lim = 0.125
+  }
+
+  if(key == "polarization_ps"){
+    y_lim = 0.09
+  }
+
+
+  key = sym(key)
+
+  out_by = paste("by_all_companies", file_label, sep = "_")
+  outfile <- wout("indiv_plt_polarization_occ", out_by)
+  
+  df <- df_in %>% 
+    group_by(occ, cycle) %>% 
+    summarise(meanvar = mean(!!key, na.rm = T)) %>%
+    filter(!is.nan(meanvar)) %>% 
+    mutate(polarization = meanvar)
+  
+  g <- ggplot(df, aes(make_datetime(cycle), polarization)) +
+  geom_smooth(color=scol, alpha=0.15, size=0.5) +
+  geom_line(aes(color=occ), alpha=0.9) +
+  
+  #Add Point to Add the Shape by Occ
+  geom_point(aes(shape=occ), alpha=1, size=3) +
+
+  #Fill Each Occ Shape / Get Outline Independently
+  geom_point(data = df %>% filter(occ == "CSUITE"), shape=21, alpha=1,
+             pch=21, size=3, fill=colors_vec[1]) +
+  geom_point(data = df %>% filter(occ == "MANAGEMENT"), shape=22, alpha=1,
+             pch=21, size=3, fill=colors_vec[2]) +
+  geom_point(data = df %>% filter(occ == "OTHERS"), shape=23, alpha=1,
+             pch=21, size=3, fill=colors_vec[3]) +
+  geom_point(data = df %>% filter(occ == "ALL"), shape=24, alpha=1,
+             pch=21, size=3, fill=colors_vec[4]) +
+  
+  #Add bbcstyle
+  bbc_style() +
+  
+  #Manual Scales
+  scale_color_manual("", values=colors_vec, labels=occ_labels) +
+  scale_shape_manual("", values=c(21, 22, 23, 24), labels=occ_labels) +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+  scale_y_continuous(limits = c(0, y_lim)) +
+  
+  #Xaxis Line
+  geom_hline(yintercept = 0.0, size = 1, colour="#333333") +
+  
+  #Add axis titles
+  theme(axis.title = element_text(size = 18)) +
+  xlab("Contribution Cycle") +
+  ylab("Partisan Polarization [0, 1]") +
+  labs(title = plt_title,
+       caption = plt_caption) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  
+  #Adjust Legend Position
+  theme(
+    legend.justification='left',
+    legend.direction='vertical',
+    legend.position=c(0.0,.9)
+  ) +
+  
+  #Add x axis ticks
+  theme(
+    axis.ticks.x = element_line(colour = "#333333"), 
+    axis.ticks.length =  unit(0.26, "cm"),
+    axis.text = element_text(size=10, color="#222222")) +
+
+  #Override the Legend Fill
+  guides(shape = guide_legend(override.aes = list(fill = colors_vec)))
+  
+  finalise_plot(g, plt_caption, outfile, footer=FALSE)
+  return(g)
+  
+}
+
 
 
 
