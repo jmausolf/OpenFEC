@@ -61,6 +61,19 @@ make_partisan_graph(df_mean_ps_rep, key="mean_ps", plt_type = "rep",
                     file_label = paste("hca", method, sep='_'), plt_title = plt_title2)
 
 
+plt_title1 = "Republican vs. Democratic Firms - Mean Partisanship (PID)"
+plt_title2 = "Republican vs. Democratic Firms - Mean Partisanship (PS)"
+
+make_competing_partisans_graph(df_in_dem=df_mean_pid_dem, 
+                               df_in_rep=df_mean_pid_rep, 
+                               key="mean_pid", plt_type = "dem_rep",
+                               file_label = paste("hca", method, sep='_'), plt_title = plt_title1)
+
+make_competing_partisans_graph(df_in_dem=df_mean_ps_dem, 
+                               df_in_rep=df_mean_ps_rep, 
+                               key="mean_ps", plt_type = "dem_rep",
+                               file_label = paste("hca", method, sep='_'), plt_title = plt_title2)
+
 
 ##---------------------------- 
 ## Amphibious Firm Graphs
