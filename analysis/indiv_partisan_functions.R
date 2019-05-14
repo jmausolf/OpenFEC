@@ -175,6 +175,133 @@ make_median_ps_df <- function(input_df, company_var){
 #Mean Graph Functions
 ########################################
 
+make_partisan_graph <- function(df_in, key, plt_type="base",
+                                file_label="cid_master", plt_title="", plt_caption=""){
+  
+  #Set color by plot type
+  if(plt_type == "base"){
+    scol = "#3A084A"
+    colors_vec = colors_base
+  }
+  
+  if(plt_type == "dem"){
+    scol = "#2129B0"
+    colors_vec = colors_dem
+  }
+  
+  if(plt_type == "rep"){
+    scol = "#BF1200"
+    colors_vec = colors_rep
+  }
+  
+  if(plt_type == "oth"){
+    scol = "#3A084A"
+    colors_vec = colors_neutral
+  }
+  
+  #Set ylim by key type
+  if(key == "mean_pid"){
+    y_lim = c(0, 1.0)
+    y_int = 0.0
+    y_axis_lab = "Mean Party ID: [DEM = 0, REP = 1]"
+  }
+  
+  if(key == "median_pid"){
+    y_lim = c(0, 1.0)
+    y_int = 0.0
+    y_axis_lab = "Median Party ID: [DEM = 0, REP = 1]"
+  }
+  
+  if(key == "mean_ps"){
+    y_lim = c(-1.0, 1.0)
+    y_int = -1.0
+    y_axis_lab = "Mean Partisan Score: [DEM = -1, REP = 1]"
+  }
+  
+  if(key == "median_ps"){
+    y_lim = c(-1.0, 1.0)
+    y_int = -1.0
+    y_axis_lab = "Median Partisan Score: [DEM = -1, REP = 1]"
+  }
+  
+  key = sym(key)
+  
+  out_by = paste(plt_type, key, file_label, sep = "_")
+  outfile <- wout("indiv_partisan_occ", out_by)
+  
+  
+  df <- df_in %>% 
+    group_by(occ, cycle) %>% 
+    summarise(meanvar = mean(!!key, na.rm = T)) %>%
+    filter(!is.nan(meanvar)) %>% 
+    mutate(avgparty = meanvar)
+  
+  
+  
+  g <- ggplot(df, aes(make_datetime(cycle), avgparty)) +
+    geom_smooth(color=scol, alpha=0.15, size=0.75) +
+    geom_line(aes(color=occ), alpha=0.9) +
+    
+    #Add Point to Add the Shape by Occ
+    geom_point(aes(shape=occ), alpha=1, size=3) +
+    
+    #Fill Each Occ Shape / Get Outline Independently
+    geom_point(data = df %>% filter(occ == "CSUITE"), shape=21, alpha=1,
+               pch=21, size=3, fill=colors_vec[1]) +
+    geom_point(data = df %>% filter(occ == "MANAGEMENT"), shape=22, alpha=1,
+               pch=21, size=3, fill=colors_vec[2]) +
+    geom_point(data = df %>% filter(occ == "OTHERS"), shape=23, alpha=1,
+               pch=21, size=3, fill=colors_vec[3]) +
+    geom_point(data = df %>% filter(occ == "ALL"), shape=24, alpha=1,
+               pch=21, size=3, fill=colors_vec[4]) +
+    
+    #Add bbcstyle
+    bbc_style() +
+    
+    #Manual Scales
+    scale_color_manual("", values=colors_vec, labels=occ_labels) +
+    scale_shape_manual("", values=c(21, 22, 23, 24), labels=occ_labels) +
+    scale_x_datetime(date_labels = "%Y",
+                     #Make 1982 - 2018 every 4 years
+                     date_breaks = "4 year"
+                     # #Make 1980 - 2016 every 4 years
+                     # breaks = seq(as.POSIXct("1980-01-01"),
+                     #              as.POSIXct("2020-01-01"), "4 years")
+    ) +
+    scale_y_continuous(limits = y_lim) +
+    
+    #Xaxis Line
+    geom_hline(yintercept = y_int, size = 1, colour="#333333") +
+    
+    #Add axis titles
+    theme(axis.title = element_text(size = 18)) +
+    xlab("Contribution Cycle") +
+    ylab(y_axis_lab) +
+    labs(title = plt_title,
+         caption = plt_caption) +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    
+    #Adjust Legend Position
+    theme(
+      legend.spacing.x = unit(2.0, 'mm'),
+      legend.text = element_text(size=18)
+    ) +
+    
+    #Add x axis ticks
+    theme(
+      axis.ticks.x = element_line(colour = "#333333"), 
+      axis.ticks.length =  unit(0.26, "cm"),
+      axis.text = element_text(size=14, color="#222222")) +
+    
+    #Override the Legend Fill
+    guides(shape = guide_legend(override.aes = list(fill = colors_vec)))
+  
+  finalise_plot(g, plt_caption, outfile, footer=FALSE)
+  return(g)
+  
+}
+
+
 make_mean_graph_base_pid <- function(df, plt_type="cid_master", plt_title="", plt_caption=""){
 
   out_by = paste("by_all_companies", plt_type, sep = "_")

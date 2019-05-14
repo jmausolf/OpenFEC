@@ -1,33 +1,33 @@
-# ## Model 0
-# #Set DF for Model Method
-# df <- m0_dist_ts
+## Model 0
+#Set DF for Model Method
+df <- m0_dist_ts
 
 
-# #Agnes Evaluation Types
-# m <- c( "average", "weighted", "single", "complete", "ward")
-# names(m) <- c( "AGNES, UPGMA", "AGNES, WPGMA", "AGNES, Single Linkage", "AGNES, Complete Linkage", "AGNES, Ward's Method")
+#Agnes Evaluation Types
+m <- c( "average", "weighted", "single", "complete", "ward")
+names(m) <- c( "AGNES, UPGMA", "AGNES, WPGMA", "AGNES, Single Linkage", "AGNES, Complete Linkage", "AGNES, Ward's Method")
 
-# #Function to Compute Agnes Coef
-# ac <- function(x) {
-#   agnes(df, method = x)$ac
-# }
+#Function to Compute Agnes Coef
+ac <- function(x) {
+  agnes(df, method = x)$ac
+}
 
-# #Agnes Coefs
-# coef <- map_dbl(m, ac)
-# df_agnes <- data.frame(coef, stringsAsFactors=FALSE)
-# df_agnes
+#Agnes Coefs
+coef <- map_dbl(m, ac)
+df_agnes <- data.frame(coef, stringsAsFactors=FALSE)
+df_agnes
 
 
-# #Diana Coef
-# coef <-  diana(df)$dc
-# names(coef) <- c("Diana")
-# df_diana <- data.frame(coef, stringsAsFactors=FALSE)
-# df_diana
+#Diana Coef
+coef <-  diana(df)$dc
+names(coef) <- c("Diana")
+df_diana <- data.frame(coef, stringsAsFactors=FALSE)
+df_diana
 
-# #Combined Coefs
-# coefs <- rbind(df_agnes, df_diana)
-# coefs_m0 <- coefs %>% 
-#   rename("Model 0" = "coef")
+#Combined Coefs
+coefs <- rbind(df_agnes, df_diana)
+coefs_m0 <- coefs %>% 
+  rename("Model 1" = "coef")
 
 
 
@@ -61,7 +61,7 @@ df_diana
 #Combined Coefs
 coefs <- rbind(df_agnes, df_diana)
 coefs_m1 <- coefs %>% 
-  rename("Model 1" = "coef")
+  rename("Model 2" = "coef")
 
 
 
@@ -99,36 +99,36 @@ coefs_m1 <- coefs %>%
 
 
 
-## Model 3
-#Set DF for Model Method
-df <- m3_dist_ts
+# ## Model 3
+# #Set DF for Model Method
+# df <- m3_dist_ts
 
 
-#Agnes Evaluation Types
-m <- c( "average", "weighted", "single", "complete", "ward")
-names(m) <- c( "AGNES, UPGMA", "AGNES, WPGMA", "AGNES, Single Linkage", "AGNES, Complete Linkage", "AGNES, Ward's Method")
+# #Agnes Evaluation Types
+# m <- c( "average", "weighted", "single", "complete", "ward")
+# names(m) <- c( "AGNES, UPGMA", "AGNES, WPGMA", "AGNES, Single Linkage", "AGNES, Complete Linkage", "AGNES, Ward's Method")
 
-#Function to Compute Agnes Coef
-ac <- function(x) {
-  agnes(df, method = x)$ac
-}
+# #Function to Compute Agnes Coef
+# ac <- function(x) {
+#   agnes(df, method = x)$ac
+# }
 
-#Agnes Coefs
-coef <- map_dbl(m, ac)
-df_agnes <- data.frame(coef, stringsAsFactors=FALSE)
-df_agnes
+# #Agnes Coefs
+# coef <- map_dbl(m, ac)
+# df_agnes <- data.frame(coef, stringsAsFactors=FALSE)
+# df_agnes
 
 
-#Diana Coef
-coef <-  diana(df)$dc
-names(coef) <- c("Diana")
-df_diana <- data.frame(coef, stringsAsFactors=FALSE)
-df_diana
+# #Diana Coef
+# coef <-  diana(df)$dc
+# names(coef) <- c("Diana")
+# df_diana <- data.frame(coef, stringsAsFactors=FALSE)
+# df_diana
 
-#Combined Coefs
-coefs <- rbind(df_agnes, df_diana)
-coefs_m3 <- coefs %>% 
-  rename("Model 2" = "coef")
+# #Combined Coefs
+# coefs <- rbind(df_agnes, df_diana)
+# coefs_m3 <- coefs %>% 
+#   rename("Model 2" = "coef")
 
 
 
@@ -169,12 +169,12 @@ coefs_m4 <- coefs %>%
 ## Combined Model Determination
 ########################################
 
-# model_name <- rownames(coefs_m0)
+model_name <- rownames(coefs_m0)
 # coefs_all_periods <- cbind(model_name, coefs_m0, coefs_m1, coefs_m2, coefs_m3, coefs_m4) %>% 
 #   rename("Model, Method" = model_name)
 # coefs_all_periods
 
-coefs_all_periods <- cbind(model_name, coefs_m1, coefs_m3, coefs_m4) %>% 
+coefs_all_periods <- cbind(model_name, coefs_m0, coefs_m1, coefs_m4) %>% 
   rename("Model, Method" = model_name)
 coefs_all_periods
 

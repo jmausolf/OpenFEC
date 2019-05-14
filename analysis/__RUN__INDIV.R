@@ -2,7 +2,7 @@
 ## RUN INDIV ANALYSIS
 ####################################
 
-# setwd('~/Box Sync/Dissertation_v2/CH1_OpenFEC/OpenFEC_test_MASTER/analysis/')
+setwd('~/Box Sync/Dissertation_v2/CH1_OpenFEC/OpenFEC_test_MASTER/analysis/')
 
 ##Load Data Source and Core Functions
 source("indiv_source.R")
@@ -63,14 +63,19 @@ source("indiv_vartab_varplot_main.R")
 
 
 source("hca400_ts.R")
-source("hca400_ts_base_features.R")
+source("hca400_ts_model_coefs.R")
 
 
 #############################
 ## Post HCA - TS Graphs
 #############################
 
-source("indiv_post_hca_ts_graphs.R")
+#source("indiv_post_hca_ts_graphs.R")
+
+
+source("indiv_post_hca_ts_graphs_filtered.R")
+
+
 
 # source("indiv_vartab_varplot_hca.R")
 # source("indiv_mean_party_hca.R")
@@ -85,4 +90,6 @@ source("indiv_post_hca_ts_graphs.R")
 ## MSCI
 #############################
 
-source("prep_msci.R")
+#source("prep_msci.R")
+
+source("prep_msci_filtered.R")
