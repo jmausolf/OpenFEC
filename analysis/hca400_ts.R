@@ -60,7 +60,7 @@ dend0 <- as.dendrogram(hc0)
 df_post_cluster_m0 <- make_partisan_plot_tsclust(hc0, m0_prep_df, y1, y2, K=3, gtitle, gfile, party_viz = "NONE")
 
 ##Adjust HCA Plot Visual Colors to Match Clusters
-party_order = c("OTH", "REP", "DEM")
+party_order = c("REP", "OTH", "DEM")
 df_post_cluster_m0 <- make_partisan_plot_tsclust(hc0, m0_prep_df, y1, y2, K=3, gtitle, gfile, party_viz = party_order)
 
 df_clust_simple_m0 <- df_post_cluster_m0 %>% 

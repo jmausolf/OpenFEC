@@ -1,3 +1,7 @@
+##Load Data Source and Core Functions
+source("indiv_vartab_varplot_functions.R")
+source("indiv_partisan_functions.R")
+
 
 #Input Post Model DF List
 models_list = list( df_post_cluster_m0,
@@ -39,7 +43,7 @@ for(i in seq_along(models_list)){
     mean(df_hca_all_oth$partisan_score, na.rm = TRUE)
 
     source("indiv_mean_party_hca_loop.R")
-    #source("indiv_median_party_hca_loop.R")
-    #source("indiv_vartab_varplot_hca_loop.R")
+    source("indiv_median_party_hca_loop.R")
+    source("indiv_vartab_varplot_hca_loop.R")
     
 }

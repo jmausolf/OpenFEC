@@ -309,19 +309,7 @@ df_post_cluster_m0_sm <- bind_rows(df_partisan_m0$dems, df_partisan_m0$rep,
          oth = if_else(cluster_party == "OTH", 1, 0)
   ) %>% 
   select(cid_master, cluster_party,
-         dem, rep, oth,
-         mean_pid2, median_pid2,
-         mean_ps, median_ps,
-         polarization_pid,
-         polarization_ps,
-         polarization_raw_pid,
-         polarization_raw_ps,
-         skewness_pid,
-         skewness_ps,
-         kurtosis_pid,
-         kurtosis_ps,
-         var_pid,
-         var_ps) %>% 
+         dem, rep, oth) %>% 
   summarise_if(is.numeric, mean, na.rm = TRUE) 
 
 
@@ -329,15 +317,23 @@ df_post_cluster_m0_sm <- bind_rows(df_partisan_m0$dems, df_partisan_m0$rep,
 msci_div <- msci_base %>% 
   select(-year) %>% 
   select(cid_master, 
-         div_con_c, div_con_d, 
-         div_str_c, div_str_d,
+         div_con_c, 
+         div_con_d, 
+         div_str_c,
          div_str_f,
          div_str_g, 
          div_con_num, div_str_num,
-         hum_str_g, emp_con_a) %>% 
+         hum_str_g,
+         env_con_num,
+
+         cgov_con_num,
+  
+         emp_con_a,
+         emp_con_num, 
+         pro_con_e
+         ) %>% 
   group_by(cid_master) %>%
   mutate_all(list(as.numeric)) %>% 
-  #summarise_if(is.numeric, list(~mean(.), ~sum(.)), na.rm = TRUE) %>% 
   summarise_if(is.numeric, list(~sum(.)), na.rm = TRUE) %>% 
   ungroup() 
 
@@ -347,7 +343,6 @@ msci_cluster_div <- inner_join(df_post_cluster_m0_sm, msci_div) %>%
   rename("Board of Directors - No Women" = div_con_c,
          "Board of Directors - No Minorities" = div_con_d,
          "Board of Directors - Strong Gender Diversity" = div_str_c,
-         "Strong Work Life Benefits" = div_str_d,
          "Diversity - Number of Concerns" = div_con_num,
          "Diversity - Number of Strengths" = div_str_num,
          "Progressive Gay & Lesbian Policies" = div_str_g,
@@ -355,14 +350,14 @@ msci_cluster_div <- inner_join(df_post_cluster_m0_sm, msci_div) %>%
          "Labor Rights Strength" = hum_str_g,
          "Union Relations Concerns" = emp_con_a,
          
+         "Anti-Competitive Business Practices" = pro_con_e,
+         "Employee Relations - Number of Concerns" = emp_con_num,
+         "Environmental Practice - Number of Concerns" = env_con_num,
+         "Corporate Governance - Number of Concerns" = cgov_con_num,
          
          "Democratic Firm" = dem,
          "Republican Firm" = rep,
-         "Amphibious Firm" = oth,
-         "Mean Party ID [Dem, Rep]" = mean_pid2,
-         "Median Party ID [Dem, Rep]" = median_pid2,
-         "Mean Partisan Score [Dem, Rep]" = mean_ps,
-         "Median Partisan Score [Dem, Rep]" = median_ps
+         "Amphibious Firm" = oth
       )
        
 
@@ -380,13 +375,14 @@ p.mat <- cor_pmat(msci_cluster_div)
 g <- ggcorrplot(corr, p.mat = p.mat, hc.order = FALSE,
                 type = "upper", insig = "blank", tl.cex= 7, 
                 sig.level = 0.05,
-                colors = c("#2129B0", "white", "#BF1200")) 
-
-  # bbc_style() 
+                colors = c("#2129B0", "white", "#BF1200")) +
+  labs(title = "Significant Correlations, HCA Clustered Firms and MSCI Data, 1991-2016") +
+  theme(plot.title = element_text(hjust = 0.65)) 
 
 out_by = paste("msci", "diversity_m0", sep = "_")
 outfile <- wout("corr", out_by)
 ggsave(outfile, dpi = 1200)
+
 
 
 
@@ -404,18 +400,6 @@ df_post_cluster_m1_sm <- bind_rows(df_partisan_m1$dems, df_partisan_m1$rep,
   ) %>% 
   select(cid_master, cluster_party,
          dem, rep, oth
-         # mean_pid2, median_pid2,
-         # mean_ps, median_ps,
-         # polarization_pid,
-         # polarization_ps,
-         # polarization_raw_pid,
-         # polarization_raw_ps,
-         # skewness_pid,
-         # skewness_ps,
-         # kurtosis_pid,
-         # kurtosis_ps,
-         # var_pid,
-         # var_ps
          ) %>% 
   summarise_if(is.numeric, mean, na.rm = TRUE) 
 
@@ -424,8 +408,9 @@ df_post_cluster_m1_sm <- bind_rows(df_partisan_m1$dems, df_partisan_m1$rep,
 msci_div <- msci_base %>% 
   select(-year) %>% 
   select(cid_master, 
-         div_con_c, div_con_d, 
-         div_str_c, div_str_d,
+         div_con_c,
+         div_con_d, 
+         div_str_c,
          div_str_f,
          div_str_g, 
          div_con_num, div_str_num,
@@ -442,22 +427,15 @@ msci_cluster_div <- inner_join(df_post_cluster_m1_sm, msci_div) %>%
   rename("Board of Directors - No Women" = div_con_c,
          "Board of Directors - No Minorities" = div_con_d,
          "Board of Directors - Strong Gender Diversity" = div_str_c,
-         "Strong Work Life Benefits" = div_str_d,
          "Diversity - Number of Concerns" = div_con_num,
          "Diversity - Number of Strengths" = div_str_num,
          "Progressive Gay & Lesbian Policies" = div_str_g,
          "Employment of the Disabled" = div_str_f,
          "Labor Rights Strength" = hum_str_g,
          "Union Relations Concerns" = emp_con_a,
-         
-         
          "Democratic Firm" = dem,
          "Republican Firm" = rep,
          "Amphibious Firm" = oth
-         # "Mean Party ID [Dem, Rep]" = mean_pid2,
-         # "Median Party ID [Dem, Rep]" = median_pid2,
-         # "Mean Partisan Score [Dem, Rep]" = mean_ps,
-         # "Median Partisan Score [Dem, Rep]" = median_ps
          
   )
 
@@ -478,7 +456,7 @@ g <- ggcorrplot(corr, p.mat = p.mat, hc.order = FALSE,
                 sig.level = 0.05,
                 colors = c("#2129B0", "white", "#BF1200")) +
     labs(title = "Significant Correlations, HCA Clustered Firms and MSCI Data, 1991-2016") +
-    theme(plot.title = element_text(hjust = 0.5)) 
+    theme(plot.title = element_text(hjust = 0.65)) 
 
 out_by = paste("msci", "diversity_m1", sep = "_")
 outfile <- wout("corr", out_by)

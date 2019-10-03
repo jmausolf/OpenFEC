@@ -432,7 +432,13 @@ make_polar_graph <- function(df_in, key, plt_type="base",
   #Manual Scales
   scale_color_manual("", values=colors_vec, labels=occ_labels) +
   scale_shape_manual("", values=c(21, 22, 23, 24), labels=occ_labels) +
-  scale_x_datetime(date_labels = "%Y", date_breaks = "2 year") +
+  scale_x_datetime(date_labels = "%Y",
+                    #Make 1982 - 2018 every 4 years
+                    date_breaks = "4 year"
+                    # #Make 1980 - 2016 every 4 years
+                    # breaks = seq(as.POSIXct("1980-01-01"),
+                    #              as.POSIXct("2020-01-01"), "4 years")
+  ) +
   scale_y_continuous(limits = c(0, y_lim)) +
   
   #Xaxis Line
@@ -448,9 +454,8 @@ make_polar_graph <- function(df_in, key, plt_type="base",
   
   #Adjust Legend Position
   theme(
-    legend.justification='left',
-    legend.direction='vertical',
-    legend.position=c(0.0,.9)
+    legend.spacing.x = unit(2.0, 'mm'),
+    legend.text = element_text(size=18)
   ) +
   
   #Add x axis ticks
