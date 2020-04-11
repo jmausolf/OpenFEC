@@ -21,6 +21,7 @@ cycles = [int(year) for year in years]
 from data.companies import *
 
 N = 105
+#N = 15
 cmaster = "data/fortune1000-list_alias_master.csv"
 companies = concat_alias(cmaster, limit=N)
 company_key = key_aliases(cmaster, limit=N)

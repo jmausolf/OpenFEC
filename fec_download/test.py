@@ -140,12 +140,12 @@ print(df.shape)
 
 
 #now join with original
-df = pd.merge(df, df_levels, 
+df_new = pd.merge(df, df_levels, 
 					on=['contributor_employer_clean', 'contributor_occupation_clean'])
 
 
-print(df.shape)
-print(df.head(10))
+print(df_new.shape)
+print(df_new.head(10))
 
 x = df.loc[(df['executive_emp'] == True) | (df['executive_occ'] == True)]
 print(x.shape)
