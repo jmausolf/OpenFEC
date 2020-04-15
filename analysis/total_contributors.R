@@ -73,8 +73,8 @@ g <- ggplot(df, aes(make_datetime(cycle), avgtotal)) +
   #Add axis titles
   theme(axis.title = element_text(size = 18)) +
   xlab("Contribution Cycle") +
-  ylab("Number of Individual Contributors Per Firm") +
-  labs(title = "Average Number of Contributors Per Firm",
+  ylab("Number of Individual Contributors") +
+  labs(title = "Average Individual Contributors by Firm",
        caption = "") +
   theme(plot.title = element_text(hjust = 0.5)) +
   
@@ -136,8 +136,8 @@ g <- ggplot(df, aes(make_datetime(cycle), sumtotal)) +
   #Add axis titles
   theme(axis.title = element_text(size = 18)) +
   xlab("Contribution Cycle") +
-  ylab("Total Number of Individual Contributors Across All Firms") +
-  labs(title = "Total Number of Contributors",
+  ylab("Number of Individual Contributors") +
+  labs(title = "Total Individual Contributors All Firms",
        caption = "") +
   theme(plot.title = element_text(hjust = 0.5)) +
   
